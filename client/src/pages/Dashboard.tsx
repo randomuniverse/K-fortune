@@ -22,7 +22,7 @@ export default function Dashboard() {
       <Layout>
         <div className="flex-1 flex flex-col items-center justify-center">
           <Loader2 className="w-12 h-12 text-primary animate-spin mb-4" />
-          <p className="text-muted-foreground animate-pulse">Consulting the oracles...</p>
+          <p className="text-muted-foreground animate-pulse">우주의 신탁을 듣는 중...</p>
         </div>
       </Layout>
     );
@@ -33,11 +33,11 @@ export default function Dashboard() {
       <Layout>
         <div className="flex-1 flex flex-col items-center justify-center max-w-md mx-auto text-center">
           <AlertCircle className="w-16 h-16 text-destructive mb-4" />
-          <h2 className="text-2xl font-serif text-white mb-2">User Not Found</h2>
+          <h2 className="text-2xl font-serif text-white mb-2">사용자를 찾을 수 없습니다</h2>
           <p className="text-muted-foreground mb-8">
-            The stars cannot locate a traveler with ID <span className="text-primary font-mono">{telegramId}</span>.
+            해당 ID(<span className="text-primary font-mono">{telegramId}</span>)를 가진 여행자를 별들이 찾을 수 없습니다.
           </p>
-          <Button variant="outline" onClick={() => setLocation("/")}>Return Home</Button>
+          <Button variant="outline" onClick={() => setLocation("/")}>홈으로 돌아가기</Button>
         </div>
       </Layout>
     );
@@ -47,14 +47,14 @@ export default function Dashboard() {
     generateFortune.mutate(telegramId, {
       onSuccess: () => {
         toast({
-          title: "Fortune Revealed",
-          description: "The stars have spoken. Check your new reading.",
+          title: "운세가 밝혀졌습니다",
+          description: "별들이 당신에게 속삭입니다. 새로운 운세를 확인하세요.",
         });
       },
       onError: (error) => {
         toast({
           variant: "destructive",
-          title: "Connection Severed",
+          title: "연결 끊김",
           description: error.message,
         });
       },
@@ -69,10 +69,10 @@ export default function Dashboard() {
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
           <div>
             <h2 className="text-3xl md:text-4xl font-serif text-white mb-1">
-              Welcome, <span className="text-primary text-glow">{user.name}</span>
+              환영합니다, <span className="text-primary text-glow">{user.name}</span>님
             </h2>
             <p className="text-muted-foreground">
-              Born {user.birthDate} at {user.birthTime} • {user.gender === 'male' ? 'Yang' : 'Yin'} Energy
+              생년월일 {user.birthDate} • 태어난 시간 {user.birthTime} • {user.gender === 'male' ? '양(陽)' : '음(陰)'}의 에너지
             </p>
           </div>
           
@@ -85,11 +85,11 @@ export default function Dashboard() {
           >
             {generateFortune.isPending ? (
               <>
-                <Loader2 className="mr-2 h-5 w-5 animate-spin" /> Divining...
+                <Loader2 className="mr-2 h-5 w-5 animate-spin" /> 점치는 중...
               </>
             ) : (
               <>
-                <Sparkles className="mr-2 h-5 w-5" /> Reveal Today's Fate
+                <Sparkles className="mr-2 h-5 w-5" /> 오늘의 운세 보기
               </>
             )}
           </Button>
@@ -99,7 +99,7 @@ export default function Dashboard() {
         <div className="grid gap-8">
           <div className="flex items-center gap-4">
              <div className="h-px bg-gradient-to-r from-transparent via-primary/50 to-transparent flex-1" />
-             <h3 className="text-xl font-serif text-primary/80 uppercase tracking-widest text-sm">Destiny Log</h3>
+             <h3 className="text-xl font-serif text-primary/80 uppercase tracking-widest text-sm">운명 기록</h3>
              <div className="h-px bg-gradient-to-r from-transparent via-primary/50 to-transparent flex-1" />
           </div>
 
@@ -120,9 +120,9 @@ export default function Dashboard() {
                     animate={{ opacity: 1 }}
                     className="col-span-full py-16 text-center glass-panel rounded-xl"
                   >
-                    <p className="text-muted-foreground text-lg mb-4">Your fate remains unwritten.</p>
+                    <p className="text-muted-foreground text-lg mb-4">아직 당신의 운명이 기록되지 않았습니다.</p>
                     <Button variant="link" onClick={handleGenerate} className="text-primary">
-                      Cast the first stone
+                      첫 번째 신탁을 받아보세요
                     </Button>
                   </motion.div>
                 )}

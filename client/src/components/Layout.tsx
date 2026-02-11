@@ -14,12 +14,12 @@ export function Layout({ children }: { children: React.ReactNode }) {
               <Sparkles className="w-6 h-6 text-primary animate-pulse" />
             </div>
             <h1 className="text-xl md:text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary via-amber-200 to-primary text-glow">
-              Celestial Insights
+              천상의 운세
             </h1>
           </Link>
           <nav>
             <Link href="/" className="text-sm font-medium hover:text-primary transition-colors">
-              Home
+              홈
             </Link>
           </nav>
         </div>
@@ -30,7 +30,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
       </main>
 
       <footer className="py-8 text-center text-muted-foreground text-sm border-t border-white/5 bg-background/50 backdrop-blur-sm">
-        <p>© {new Date().getFullYear()} Celestial Insights. Your fate awaits.</p>
+        <p>© {new Date().getFullYear()} 천상의 운세. 당신의 운명이 기다립니다.</p>
       </footer>
     </div>
   );

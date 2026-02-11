@@ -3,6 +3,8 @@ import { motion } from "framer-motion";
 import { format } from "date-fns";
 import { Sparkles, Calendar } from "lucide-react";
 
+import { ko } from "date-fns/locale";
+
 interface FortuneCardProps {
   fortune: Fortune;
   index: number;
@@ -23,7 +25,7 @@ export function FortuneCard({ fortune, index }: FortuneCardProps) {
       <div className="relative z-10">
         <div className="flex items-center gap-2 mb-4 text-muted-foreground text-sm">
           <Calendar className="w-4 h-4 text-primary" />
-          <span>{format(new Date(fortune.createdAt || new Date()), "MMMM do, yyyy 'at' h:mm a")}</span>
+          <span>{format(new Date(fortune.createdAt || new Date()), "yyyy년 MM월 dd일 a h:mm", { locale: ko })}</span>
         </div>
         
         <div className="prose prose-invert prose-p:text-lg prose-p:leading-relaxed text-foreground/90 max-w-none">

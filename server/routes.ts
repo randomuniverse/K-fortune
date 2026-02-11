@@ -60,27 +60,27 @@ export async function registerRoutes(
 
       // 1. Generate Fortune with OpenAI
       const prompt = `
-        Analyze the daily fortune for a person with the following details:
-        Name: ${user.name}
-        Birth Date: ${user.birthDate}
-        Birth Time: ${user.birthTime}
-        Gender: ${user.gender}
+        다음 정보를 가진 사람의 오늘의 운세를 분석해줘:
+        이름: ${user.name}
+        생년월일: ${user.birthDate}
+        태어난 시간: ${user.birthTime}
+        성별: ${user.gender === 'male' ? '남성' : '여성'}
         
-        Please provide a summary including:
-        1. Today's overall fortune score (0-100)
-        2. Lucky direction
-        3. Things to be careful about
-        4. Special notes
+        다음 내용을 포함해서 요약해줘:
+        1. 오늘의 종합 운세 점수 (0-100)
+        2. 행운의 방향
+        3. 조심해야 할 점
+        4. 특이사항
         
-        Keep it concise and suitable for a Telegram message.
+        텔레그램 메시지로 보내기 적합하도록 간결하게 한국어로 작성해줘.
       `;
 
       const completion = await openai.chat.completions.create({
         model: "gpt-5.1",
-        messages: [{ role: "user", content: prompt }],
+        messages: [{ role: "system", content: "당신은 전문 사주풀이 및 점성술 전문가입니다." }, { role: "user", content: prompt }],
       });
 
-      const fortuneContent = completion.choices[0].message.content || "Could not generate fortune.";
+      const fortuneContent = completion.choices[0].message.content || "운세를 생성할 수 없습니다.";
 
       // 2. Save to DB
       const fortune = await storage.createFortune({
@@ -92,7 +92,7 @@ export async function registerRoutes(
       console.log(`[MOCK TELEGRAM] Sending to ${user.telegramId}: ${fortuneContent}`);
 
       res.status(201).json({
-        message: "Fortune generated and sent!",
+        message: "운세가 생성되어 전송되었습니다!",
         fortune
       });
     } catch (error) {

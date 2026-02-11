@@ -30,19 +30,19 @@ export default function Home() {
         >
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 text-primary mb-4 backdrop-blur-sm">
             <Star className="w-4 h-4 fill-primary" />
-            <span className="text-sm font-medium tracking-wide">Daily Cosmic Guidance</span>
+            <span className="text-sm font-medium tracking-wide">매일 전해지는 우주의 인도</span>
           </div>
           
           <h1 className="text-5xl md:text-7xl font-serif font-bold leading-tight">
-            Unlock the <br />
+            별들의 <br />
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-200 via-primary to-amber-500 text-glow">
-              Wisdom of Stars
+              지혜를 깨우다
             </span>
           </h1>
           
           <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-            Your personal Saju and Zodiac analysis delivered daily via Telegram. 
-            Discover your fortune, lucky directions, and daily warnings.
+            당신만을 위한 사주와 별자리 분석 결과를 매일 텔레그램으로 보내드립니다.
+            오늘의 운세, 행운의 방향, 그리고 주의해야 할 점을 확인하세요.
           </p>
         </motion.div>
 
@@ -60,9 +60,9 @@ export default function Home() {
               <Sparkles className="w-8 h-8 text-primary" />
             </div>
             <div>
-              <h3 className="text-2xl font-serif text-white mb-2">New Traveler?</h3>
+              <h3 className="text-2xl font-serif text-white mb-2">처음 오셨나요?</h3>
               <p className="text-muted-foreground text-sm">
-                Register your birth details to begin receiving personalized daily insights.
+                태어난 정보를 등록하고 개인 맞춤형 운세 서비스를 시작하세요.
               </p>
             </div>
             <Button 
@@ -71,7 +71,7 @@ export default function Home() {
               size="lg"
               onClick={() => setLocation("/register")}
             >
-              Begin Journey <ArrowRight className="ml-2 w-4 h-4" />
+              여정 시작하기 <ArrowRight className="ml-2 w-4 h-4" />
             </Button>
           </motion.div>
 
@@ -86,20 +86,20 @@ export default function Home() {
               <Moon className="w-8 h-8 text-amber-200" />
             </div>
             <div>
-              <h3 className="text-2xl font-serif text-white mb-2">Returning?</h3>
+              <h3 className="text-2xl font-serif text-white mb-2">다시 오셨나요?</h3>
               <p className="text-muted-foreground text-sm">
-                Enter your Telegram ID to view your dashboard and history.
+                텔레그램 ID를 입력하여 대시보드와 과거 운세를 확인하세요.
               </p>
             </div>
             <form onSubmit={handleLogin} className="w-full mt-auto flex gap-2">
               <Input 
-                placeholder="Telegram Username" 
+                placeholder="텔레그램 사용자 ID" 
                 value={telegramIdInput}
                 onChange={(e) => setTelegramIdInput(e.target.value)}
                 className="bg-black/20 border-white/10 focus:border-primary/50 text-white placeholder:text-white/20"
               />
               <Button type="submit" variant="secondary">
-                Go
+                이동
               </Button>
             </form>
           </motion.div>

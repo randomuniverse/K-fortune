@@ -32,15 +32,15 @@ export default function Register() {
     createUser.mutate(data, {
       onSuccess: (user) => {
         toast({
-          title: "Destiny Awaits",
-          description: `Welcome, ${user.name}. Your chart has been mapped.`,
+          title: "운명이 연결되었습니다",
+          description: `환영합니다, ${user.name}님. 당신의 사주 지도가 완성되었습니다.`,
         });
         setLocation(`/dashboard/${user.telegramId}`);
       },
       onError: (error) => {
         toast({
           variant: "destructive",
-          title: "Alignment Error",
+          title: "정렬 오류",
           description: error.message,
         });
       },
@@ -57,9 +57,9 @@ export default function Register() {
           className="w-full"
         >
           <div className="text-center mb-8">
-            <h2 className="text-3xl font-serif text-glow mb-2">Begin Your Journey</h2>
+            <h2 className="text-3xl font-serif text-glow mb-2">여정 시작하기</h2>
             <p className="text-muted-foreground">
-              Provide your details to align the stars. Your Telegram ID ensures daily delivery.
+              태어난 정보를 입력하여 별들과 정렬하세요. 텔레그램 ID를 통해 매일 운세를 보내드립니다.
             </p>
           </div>
 
@@ -72,9 +72,9 @@ export default function Register() {
                   name="name"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-primary/90">Full Name</FormLabel>
+                      <FormLabel className="text-primary/90">이름</FormLabel>
                       <FormControl>
-                        <Input placeholder="Orion Blackwood" {...field} className="bg-black/20 border-white/10 text-white placeholder:text-white/20 focus:border-primary/50" />
+                        <Input placeholder="홍길동" {...field} className="bg-black/20 border-white/10 text-white placeholder:text-white/20 focus:border-primary/50" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -86,11 +86,11 @@ export default function Register() {
                   name="telegramId"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-primary/90">Telegram Username (without @)</FormLabel>
+                      <FormLabel className="text-primary/90">텔레그램 사용자 ID (@ 제외)</FormLabel>
                       <FormControl>
-                        <Input placeholder="orion_stars" {...field} className="bg-black/20 border-white/10 text-white placeholder:text-white/20 focus:border-primary/50" />
+                        <Input placeholder="my_telegram_id" {...field} className="bg-black/20 border-white/10 text-white placeholder:text-white/20 focus:border-primary/50" />
                       </FormControl>
-                      <p className="text-xs text-muted-foreground">Search for our bot on Telegram to start receiving messages.</p>
+                      <p className="text-xs text-muted-foreground">메시지를 받으시려면 텔레그램에서 저희 봇을 검색해 주세요.</p>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -102,7 +102,7 @@ export default function Register() {
                     name="birthDate"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-primary/90">Birth Date</FormLabel>
+                        <FormLabel className="text-primary/90">생년월일</FormLabel>
                         <FormControl>
                           <Input type="date" {...field} className="bg-black/20 border-white/10 text-white focus:border-primary/50" />
                         </FormControl>
@@ -116,7 +116,7 @@ export default function Register() {
                     name="birthTime"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-primary/90">Birth Time</FormLabel>
+                        <FormLabel className="text-primary/90">태어난 시간</FormLabel>
                         <FormControl>
                           <Input type="time" {...field} className="bg-black/20 border-white/10 text-white focus:border-primary/50" />
                         </FormControl>
@@ -131,16 +131,16 @@ export default function Register() {
                   name="gender"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-primary/90">Energy</FormLabel>
+                      <FormLabel className="text-primary/90">성별</FormLabel>
                       <Select onValueChange={field.onChange} defaultValue={field.value}>
                         <FormControl>
                           <SelectTrigger className="bg-black/20 border-white/10 text-white focus:border-primary/50">
-                            <SelectValue placeholder="Select energy type" />
+                            <SelectValue placeholder="성별을 선택하세요" />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent className="bg-secondary border-primary/20 text-white">
-                          <SelectItem value="male"><span className="flex items-center gap-2"><Sun className="w-4 h-4" /> Male / Yang</span></SelectItem>
-                          <SelectItem value="female"><span className="flex items-center gap-2"><Moon className="w-4 h-4" /> Female / Yin</span></SelectItem>
+                          <SelectItem value="male"><span className="flex items-center gap-2"><Sun className="w-4 h-4" /> 남성 / 양(陽)</span></SelectItem>
+                          <SelectItem value="female"><span className="flex items-center gap-2"><Moon className="w-4 h-4" /> 여성 / 음(陰)</span></SelectItem>
                         </SelectContent>
                       </Select>
                       <FormMessage />
@@ -157,11 +157,11 @@ export default function Register() {
                 >
                   {createUser.isPending ? (
                     <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Aligning Stars...
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" /> 별들을 정렬하는 중...
                     </>
                   ) : (
                     <>
-                      Connect Destiny <ArrowRight className="ml-2 h-4 w-4" />
+                      운명 연결하기 <ArrowRight className="ml-2 h-4 w-4" />
                     </>
                   )}
                 </Button>
