@@ -3,7 +3,7 @@ import { generateFortuneForUser, sendTelegramMessage } from "./fortune-engine";
 import pRetry from "p-retry";
 import pLimit from "p-limit";
 
-const limit = pLimit(2);
+const limit = pLimit(2); // 동시 생성 최대 2명 (API rate limit 방지)
 
 async function generateFortuneWithRetry(user: {
   id: number;
@@ -22,9 +22,9 @@ async function generateFortuneWithRetry(user: {
       retries: 3,
       minTimeout: 2000,
       maxTimeout: 10000,
-      onFailedAttempt: (context) => {
+      onFailedAttempt: (error) => {
         console.log(
-          `[SCHEDULER] ${user.name} 운세 생성 실패 (시도 ${context.attemptNumber}/${context.attemptNumber + context.retriesLeft}): ${context.error.message}`
+          `[SCHEDULER] ${user.name} 운세 생성 실패 (시도 ${error.attemptNumber}/${error.attemptNumber + error.retriesLeft}): ${error.message}`
         );
       },
     }
@@ -125,6 +125,8 @@ export function startScheduler() {
   scheduleNext();
 }
 
+// 직접 실행 지원 (cron job 대체)
+// tsx server/scheduler.ts --run-now 로 실행 가능
 const args = process.argv.slice(2);
 if (args.includes("--run-now")) {
   console.log("[SCHEDULER] Manual run triggered");

@@ -6,7 +6,8 @@ import { z } from "zod";
 import pRetry from "p-retry";
 
 const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
+  apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY,
+  baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
 });
 
 export async function sendTelegramMessage(chatId: string, text: string): Promise<boolean> {
@@ -128,6 +129,7 @@ export interface FortuneGenerationResult {
   displayContent: string;
 }
 
+// 개별 AI 호출에 재시도 적용
 async function generateWithRetry(sys: string, usr: string, label: string): Promise<string> {
   return pRetry(
     async () => {
@@ -145,9 +147,9 @@ async function generateWithRetry(sys: string, usr: string, label: string): Promi
       retries: 2,
       minTimeout: 1500,
       maxTimeout: 5000,
-      onFailedAttempt: (context) => {
+      onFailedAttempt: (error) => {
         console.warn(
-          `[FORTUNE] ${label} API 호출 실패 (시도 ${context.attemptNumber}/${context.attemptNumber + context.retriesLeft}): ${context.error.message}`
+          `[FORTUNE] ${label} API 호출 실패 (시도 ${error.attemptNumber}/${error.attemptNumber + error.retriesLeft}): ${error.message}`
         );
       },
     }
@@ -277,6 +279,7 @@ ${user.birthCountry ? `출생지: ${user.birthCountry} ${user.birthCity || ''}` 
 2. 수비학 기반 오늘의 메시지
 를 알려주세요.`;
 
+  // 9개 병렬 호출 — 각각 개별 재시도 적용
   const [saju1, saju2, saju3, zodiac1, zodiac2, zodiac3, num1, num2, num3] = await Promise.all([
     generateWithRetry(sajuSystemPrompt, sajuUserPrompt, "사주1"),
     generateWithRetry(sajuSystemPrompt, sajuUserPrompt, "사주2"),
