@@ -237,8 +237,8 @@ export function calculateMonthPillar(year: number, month: number, day: number, y
 
 export function calculateDayPillar(year: number, month: number, day: number): Pillar {
   const jdn = getJDN(year, month, day);
-  const stemIdx = ((jdn - 1) % 10 + 10) % 10;
-  const branchIdx = ((jdn + 1) % 12 + 12) % 12;
+  const stemIdx = ((jdn + 2) % 10 + 10) % 10;
+  const branchIdx = ((jdn) % 12 + 12) % 12;
   return makePillar(stemIdx, branchIdx);
 }
 
@@ -337,32 +337,90 @@ export function calculateFiveElements(
 
 export function getDayMasterStrength(
   dayPillar: Pillar,
-  fiveElements: { element: string; ratio: number }[]
+  fiveElements: { element: string; ratio: number }[],
+  monthBranchIdx: number
 ): "극왕" | "왕" | "중화" | "약" | "극약" {
-  const dayElement = FIVE_ELEMENTS[STEM_ELEMENTS[dayPillar.stemIndex].element];
-  const producesDay = FIVE_ELEMENTS[(STEM_ELEMENTS[dayPillar.stemIndex].element + 4) % 5];
+  const dayElIdx = STEM_ELEMENTS[dayPillar.stemIndex].element;
+  const dayElement = FIVE_ELEMENTS[dayElIdx];
+  const producesDay = FIVE_ELEMENTS[(dayElIdx + 4) % 5];
 
   const dayRatio = fiveElements.find(e => e.element === dayElement)?.ratio || 0;
   const supportRatio = fiveElements.find(e => e.element === producesDay)?.ratio || 0;
-  const totalSupport = dayRatio + supportRatio;
+  let totalSupport = dayRatio + supportRatio;
 
-  if (totalSupport >= 60) return "극왕";
-  if (totalSupport >= 45) return "왕";
-  if (totalSupport >= 30) return "중화";
+  const monthMainStem = BRANCH_HIDDEN_STEMS[monthBranchIdx][0];
+  const monthElIdx = STEM_ELEMENTS[monthMainStem].element;
+
+  const controlsDay = (monthElIdx + 2) % 5 === dayElIdx;
+  const dayControls = (dayElIdx + 2) % 5 === monthElIdx;
+  const monthProducesDay = (monthElIdx + 1) % 5 === dayElIdx;
+  const monthSameAsDay = monthElIdx === dayElIdx;
+
+  if (controlsDay) {
+    totalSupport *= 0.65;
+  } else if (dayControls) {
+    totalSupport *= 0.85;
+  } else if (monthProducesDay || monthSameAsDay) {
+    totalSupport *= 1.25;
+  }
+
+  if (totalSupport >= 55) return "극왕";
+  if (totalSupport >= 42) return "왕";
+  if (totalSupport >= 28) return "중화";
   if (totalSupport >= 15) return "약";
   return "극약";
+}
+
+function getJohuYongShin(
+  dayElIdx: number,
+  monthBranchIdx: number
+): { element: string; elementHanja: string; reason: string } | null {
+  const isSummer = [5, 6, 7].includes(monthBranchIdx);
+  const isWinter = [11, 0, 1].includes(monthBranchIdx);
+
+  if (!isSummer && !isWinter) return null;
+
+  const johuMap: Record<string, { elIdx: number; reason: string }> = {
+    "3_summer": { elIdx: 4, reason: "한여름에 태어난 금(金)이 불에 달궈져 있어 수(水)로 식혀야 합니다 (조후용신)." },
+    "3_winter": { elIdx: 1, reason: "한겨울에 태어난 금(金)이 얼어붙어 있어 화(火)로 녹여야 합니다 (조후용신)." },
+    "0_winter": { elIdx: 1, reason: "한겨울에 태어난 목(木)이 동결되어 화(火)로 따뜻하게 해야 합니다 (조후용신)." },
+    "0_summer": { elIdx: 4, reason: "한여름에 태어난 목(木)이 말라 수(水)로 촉촉하게 해야 합니다 (조후용신)." },
+    "1_winter": { elIdx: 0, reason: "한겨울에 태어난 화(火)가 꺼질 위험이 있어 목(木)으로 살려야 합니다 (조후용신)." },
+    "1_summer": { elIdx: 4, reason: "한여름에 태어난 화(火)가 과열되어 수(水)로 조절해야 합니다 (조후용신)." },
+    "4_summer": { elIdx: 3, reason: "한여름에 태어난 수(水)가 증발 위험이 있어 금(金)으로 생조해야 합니다 (조후용신)." },
+    "4_winter": { elIdx: 1, reason: "한겨울에 태어난 수(水)가 얼어붙어 화(火)로 따뜻하게 해야 합니다 (조후용신)." },
+    "2_summer": { elIdx: 4, reason: "한여름에 태어난 토(土)가 메말라 수(水)로 적셔야 합니다 (조후용신)." },
+    "2_winter": { elIdx: 1, reason: "한겨울에 태어난 토(土)가 얼어붙어 화(火)로 따뜻하게 해야 합니다 (조후용신)." },
+  };
+
+  const season = isSummer ? "summer" : "winter";
+  const key = `${dayElIdx}_${season}`;
+  const johu = johuMap[key];
+
+  if (!johu) return null;
+
+  return {
+    element: FIVE_ELEMENTS[johu.elIdx],
+    elementHanja: FIVE_ELEMENTS_HANJA[johu.elIdx],
+    reason: johu.reason,
+  };
 }
 
 export function calculateYongShin(
   dayPillar: Pillar,
   strength: "극왕" | "왕" | "중화" | "약" | "극약",
-  fiveElements: { element: string; elementHanja: string; ratio: number }[]
+  fiveElements: { element: string; elementHanja: string; ratio: number }[],
+  monthBranchIdx: number
 ): { element: string; elementHanja: string; reason: string } {
   const dayElIdx = STEM_ELEMENTS[dayPillar.stemIndex].element;
 
+  const johu = getJohuYongShin(dayElIdx, monthBranchIdx);
+  if (johu) {
+    return johu;
+  }
+
   if (strength === "극왕") {
     const drainIdx = (dayElIdx + 1) % 5;
-    const controlIdx = (dayElIdx + 3) % 5;
     return {
       element: FIVE_ELEMENTS[drainIdx],
       elementHanja: FIVE_ELEMENTS_HANJA[drainIdx],
@@ -501,8 +559,8 @@ export function calculateFullSaju(
 
   const fiveElementRatios = calculateFiveElements(yearPillar, monthPillar, dayPillar, hourPillar, monthPillar.branchIndex);
   const dominantEl = [...fiveElementRatios].sort((a, b) => b.ratio - a.ratio)[0];
-  const dayMasterStrength = getDayMasterStrength(dayPillar, fiveElementRatios);
-  const yongShin = calculateYongShin(dayPillar, dayMasterStrength, fiveElementRatios);
+  const dayMasterStrength = getDayMasterStrength(dayPillar, fiveElementRatios, monthPillar.branchIndex);
+  const yongShin = calculateYongShin(dayPillar, dayMasterStrength, fiveElementRatios, monthPillar.branchIndex);
 
   const { daeunList, startAge } = calculateDaeun(gender, yearPillar, monthPillar, year, month, day);
 
