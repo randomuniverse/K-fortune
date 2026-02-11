@@ -540,6 +540,60 @@ ${numResults.map((r, i) => `분석${i + 1}: ${JSON.stringify(r)}`).join("\n")}
     }
   });
 
+  app.post("/api/telegram/test-send/:telegramId", async (req, res) => {
+    try {
+      const user = await storage.getUserByTelegramId(req.params.telegramId);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      const chatIdToUse = user.telegramChatId || (/^\d+$/.test(user.telegramId) ? user.telegramId : null);
+      if (!chatIdToUse) {
+        return res.status(400).json({ message: "텔레그램 Chat ID가 설정되지 않았습니다.", debug: { telegramId: user.telegramId, telegramChatId: user.telegramChatId, telegramHandle: user.telegramHandle } });
+      }
+
+      const fortunes = await storage.getFortunesByUserId(user.id);
+      const latestFortune = fortunes[0];
+
+      let textToSend: string;
+      if (latestFortune) {
+        textToSend = latestFortune.content;
+      } else {
+        textToSend = `[테스트] ${user.name}님, 텔레그램 연동이 정상적으로 작동합니다! Chat ID: ${chatIdToUse}`;
+      }
+
+      const token = process.env.TELEGRAM_BOT_TOKEN;
+      if (!token) {
+        return res.status(500).json({ message: "TELEGRAM_BOT_TOKEN이 설정되지 않았습니다." });
+      }
+
+      const tgRes = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          chat_id: chatIdToUse,
+          text: textToSend,
+          parse_mode: "HTML",
+        }),
+      });
+      const tgData = await tgRes.json();
+
+      if (!tgData.ok) {
+        console.error("[TELEGRAM TEST] Send failed:", tgData);
+        return res.status(400).json({ 
+          message: `텔레그램 전송 실패: ${tgData.description}`, 
+          debug: { chatId: chatIdToUse, error: tgData.description, errorCode: tgData.error_code }
+        });
+      }
+
+      console.log(`[TELEGRAM TEST] Message sent to ${chatIdToUse}`);
+      res.json({ message: "텔레그램으로 전송 완료!", chatId: chatIdToUse });
+    } catch (error) {
+      console.error("[TELEGRAM TEST] Error:", error);
+      res.status(500).json({ message: "전송 중 오류 발생", error: String(error) });
+    }
+  });
+
   app.get(api.fortunes.list.path, async (req, res) => {
     const user = await storage.getUserByTelegramId(req.params.telegramId);
     if (!user) {

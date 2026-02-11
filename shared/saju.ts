@@ -363,15 +363,6 @@ export function calculateYongShin(
   if (strength === "극왕") {
     const drainIdx = (dayElIdx + 1) % 5;
     const controlIdx = (dayElIdx + 3) % 5;
-    const drainRatio = fiveElements[drainIdx].ratio;
-    const controlRatio = fiveElements[controlIdx].ratio;
-    if (controlRatio > 5) {
-      return {
-        element: FIVE_ELEMENTS[controlIdx],
-        elementHanja: FIVE_ELEMENTS_HANJA[controlIdx],
-        reason: `일간이 극왕하여 ${FIVE_ELEMENTS[controlIdx]}(${FIVE_ELEMENTS_HANJA[controlIdx]})으로 억제가 필요합니다.`,
-      };
-    }
     return {
       element: FIVE_ELEMENTS[drainIdx],
       elementHanja: FIVE_ELEMENTS_HANJA[drainIdx],

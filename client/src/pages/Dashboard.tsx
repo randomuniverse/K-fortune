@@ -3,7 +3,8 @@ import { useUser, useGenerateFortune, useFortunes, useSajuAnalysis } from "@/hoo
 import { Layout } from "@/components/Layout";
 import { Button } from "@/components/ui/button";
 import { FortuneCard } from "@/components/FortuneCard";
-import { Loader2, Sparkles, AlertCircle } from "lucide-react";
+import { Loader2, Sparkles, AlertCircle, Send } from "lucide-react";
+import { useState } from "react";
 import { motion } from "framer-motion";
 import { useToast } from "@/hooks/use-toast";
 import { getZodiacSign } from "@shared/schema";
@@ -99,13 +100,18 @@ export default function Dashboard() {
     });
   };
 
+  const chineseZodiacAnimal = sajuData?.sajuChart?.chineseZodiac ? `${sajuData.sajuChart.chineseZodiac}띠` : '';
+
   const infoItems = [
     `${user.birthDate} ${user.birthTime}생`,
     zodiacSign,
-    user.gender === 'male' ? '양(陽)' : '음(陰)',
-  ];
+    chineseZodiacAnimal,
+    user.gender === 'male' ? '남(陽)' : '여(陰)',
+  ].filter(Boolean);
   if (user.mbti) infoItems.push(user.mbti);
   if (user.birthCountry) infoItems.push(`${user.birthCountry}${user.birthCity ? ` ${user.birthCity}` : ''}`);
+
+  const [isSendingTelegram, setIsSendingTelegram] = useState(false);
 
   return (
     <Layout telegramId={telegramId}>
@@ -121,28 +127,64 @@ export default function Dashboard() {
             </p>
           </div>
           
-          <Button 
-            variant="mystical" 
-            size="lg" 
-            onClick={handleGenerate}
-            disabled={generateFortune.isPending || hasTodayFortune}
-            className="w-full md:w-auto min-w-[200px]"
-            data-testid="button-generate-fortune"
-          >
-            {generateFortune.isPending ? (
-              <>
-                <Loader2 className="mr-2 h-5 w-5 animate-spin" /> 교차 검증 중... (9회 분석)
-              </>
-            ) : hasTodayFortune ? (
-              <>
-                <Sparkles className="mr-2 h-5 w-5" /> 오늘의 운세 확인 완료
-              </>
-            ) : (
-              <>
-                <Sparkles className="mr-2 h-5 w-5" /> 오늘의 운세 보기
-              </>
+          <div className="flex flex-wrap gap-3">
+            <Button 
+              variant="mystical" 
+              size="lg" 
+              onClick={handleGenerate}
+              disabled={generateFortune.isPending || hasTodayFortune}
+              className="w-full md:w-auto min-w-[200px]"
+              data-testid="button-generate-fortune"
+            >
+              {generateFortune.isPending ? (
+                <>
+                  <Loader2 className="mr-2 h-5 w-5 animate-spin" /> 교차 검증 중... (9회 분석)
+                </>
+              ) : hasTodayFortune ? (
+                <>
+                  <Sparkles className="mr-2 h-5 w-5" /> 오늘의 운세 확인 완료
+                </>
+              ) : (
+                <>
+                  <Sparkles className="mr-2 h-5 w-5" /> 오늘의 운세 보기
+                </>
+              )}
+            </Button>
+            {hasTodayFortune && (
+              <Button
+                variant="outline"
+                size="lg"
+                onClick={async () => {
+                  setIsSendingTelegram(true);
+                  try {
+                    const res = await fetch(`/api/telegram/test-send/${telegramId}`, {
+                      method: "POST",
+                      credentials: "include",
+                    });
+                    const data = await res.json();
+                    if (res.ok) {
+                      toast({ title: "전송 완료", description: data.message });
+                    } else {
+                      toast({ variant: "destructive", title: "전송 실패", description: `${data.message}${data.debug ? ` (Debug: ${JSON.stringify(data.debug)})` : ''}` });
+                    }
+                  } catch (err) {
+                    toast({ variant: "destructive", title: "오류", description: "전송 중 오류가 발생했습니다." });
+                  } finally {
+                    setIsSendingTelegram(false);
+                  }
+                }}
+                disabled={isSendingTelegram}
+                className="w-full md:w-auto"
+                data-testid="button-telegram-test"
+              >
+                {isSendingTelegram ? (
+                  <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> 전송 중...</>
+                ) : (
+                  <><Send className="mr-2 h-4 w-4" /> 텔레그램 전송</>
+                )}
+              </Button>
             )}
-          </Button>
+          </div>
         </div>
 
         {sajuData && (
