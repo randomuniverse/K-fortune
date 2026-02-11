@@ -158,8 +158,8 @@ export async function registerRoutes(
         const m = (koreaTime.getMonth() + 1) + 12 * a - 3;
         return koreaTime.getDate() + Math.floor((153 * m + 2) / 5) + 365 * y + Math.floor(y / 4) - Math.floor(y / 100) + Math.floor(y / 400) - 32045;
       })();
-      const todayStemIdx = ((todayJDN - 1) % 10 + 10) % 10;
-      const todayBranchIdx = ((todayJDN + 1) % 12 + 12) % 12;
+      const todayStemIdx = ((todayJDN + 2) % 10 + 10) % 10;
+      const todayBranchIdx = ((todayJDN) % 12 + 12) % 12;
       const STEMS_H = ["甲", "乙", "丙", "丁", "戊", "己", "庚", "辛", "壬", "癸"];
       const BRANCHES_H = ["子", "丑", "寅", "卯", "辰", "巳", "午", "未", "申", "酉", "戌", "亥"];
       const todayStem = STEMS_H[todayStemIdx];
