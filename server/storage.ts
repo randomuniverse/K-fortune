@@ -21,7 +21,10 @@ export class DatabaseStorage implements IStorage {
 
   async getUserByTelegramId(telegramId: string): Promise<User | undefined> {
     const [user] = await db.select().from(users).where(eq(users.telegramId, telegramId));
-    return user;
+    if (user) return user;
+    const handle = telegramId.replace(/^@/, '');
+    const [byHandle] = await db.select().from(users).where(eq(users.telegramHandle, handle));
+    return byHandle;
   }
 
   async getUser(id: number): Promise<User | undefined> {

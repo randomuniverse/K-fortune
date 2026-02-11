@@ -35,6 +35,11 @@ export default function Dashboard() {
     );
   }
 
+  if (user && user.telegramId !== telegramId) {
+    setLocation(`/dashboard/${user.telegramId}`, { replace: true });
+    return null;
+  }
+
   if (!user || userError) {
     return (
       <Layout>

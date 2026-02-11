@@ -93,10 +93,11 @@ export default function Home() {
             </div>
             <form onSubmit={handleLogin} className="w-full mt-auto flex gap-2">
               <Input 
-                placeholder="텔레그램 사용자 ID" 
+                placeholder="ID 또는 핸들명" 
                 value={telegramIdInput}
                 onChange={(e) => setTelegramIdInput(e.target.value)}
                 className="bg-black/20 border-white/10 focus:border-primary/50 text-white placeholder:text-white/20"
+                data-testid="input-telegram-id"
               />
               <Button type="submit" variant="secondary">
                 이동

@@ -80,7 +80,7 @@ export async function registerRoutes(
       
       const existing = await storage.getUserByTelegramId(input.telegramId);
       if (existing) {
-        return res.status(409).json({ message: "User already exists" });
+        return res.status(409).json({ message: "User already exists", telegramId: existing.telegramId });
       }
 
       const user = await storage.createUser(input);

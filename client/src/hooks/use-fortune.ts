@@ -14,7 +14,12 @@ export function useCreateUser() {
       });
       
       if (!res.ok) {
-        if (res.status === 409) throw new Error("이미 등록된 텔레그램 ID입니다.");
+        if (res.status === 409) {
+          const body = await res.json();
+          const err = new Error("이미 등록된 텔레그램 ID입니다.") as Error & { telegramId?: string };
+          err.telegramId = body.telegramId;
+          throw err;
+        }
         if (res.status === 400) {
            const error = api.users.create.responses[400].parse(await res.json());
            throw new Error(error.message);

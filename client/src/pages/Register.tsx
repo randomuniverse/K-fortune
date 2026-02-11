@@ -67,7 +67,15 @@ export default function Register() {
         });
         setLocation(`/dashboard/${user.telegramId}`);
       },
-      onError: (error) => {
+      onError: (error: Error & { telegramId?: string }) => {
+        if (error.telegramId) {
+          toast({
+            title: "이미 등록된 계정입니다",
+            description: "기존 대시보드로 이동합니다.",
+          });
+          setLocation(`/dashboard/${error.telegramId}`);
+          return;
+        }
         toast({
           variant: "destructive",
           title: "등록 오류",
