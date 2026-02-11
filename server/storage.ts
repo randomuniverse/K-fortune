@@ -5,6 +5,7 @@ import { eq, desc, and, gte } from "drizzle-orm";
 export interface IStorage {
   createUser(user: InsertUser): Promise<User>;
   getUserByTelegramId(telegramId: string): Promise<User | undefined>;
+  updateUser(telegramId: string, data: Partial<InsertUser>): Promise<User | undefined>;
   createFortune(fortune: InsertFortune): Promise<Fortune>;
   getFortunesByUserId(userId: number): Promise<Fortune[]>;
   getUser(id: number): Promise<User | undefined>;
@@ -25,6 +26,15 @@ export class DatabaseStorage implements IStorage {
   async getUser(id: number): Promise<User | undefined> {
     const [user] = await db.select().from(users).where(eq(users.id, id));
     return user;
+  }
+
+  async updateUser(telegramId: string, data: Partial<InsertUser>): Promise<User | undefined> {
+    const [updated] = await db
+      .update(users)
+      .set(data)
+      .where(eq(users.telegramId, telegramId))
+      .returning();
+    return updated;
   }
 
   async createFortune(fortune: InsertFortune): Promise<Fortune> {

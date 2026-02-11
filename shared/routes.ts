@@ -14,6 +14,18 @@ export const errorSchemas = {
   }),
 };
 
+export const updateUserSchema = z.object({
+  name: z.string().min(1).optional(),
+  telegramHandle: z.string().nullable().optional(),
+  birthDate: z.string().optional(),
+  birthTime: z.string().optional(),
+  gender: z.string().optional(),
+  mbti: z.string().nullable().optional(),
+  birthCountry: z.string().nullable().optional(),
+  birthCity: z.string().nullable().optional(),
+  preferredDeliveryTime: z.string().optional(),
+});
+
 export const api = {
   users: {
     create: {
@@ -21,12 +33,15 @@ export const api = {
       path: '/api/users' as const,
       input: insertUserSchema.extend({
         telegramHandle: z.string().optional(),
-        preferredDeliveryTime: z.string().default("09:00"),
+        preferredDeliveryTime: z.string().default("07:00"),
+        mbti: z.string().nullable().optional(),
+        birthCountry: z.string().nullable().optional(),
+        birthCity: z.string().nullable().optional(),
       }),
       responses: {
         201: z.custom<typeof users.$inferSelect>(),
         400: errorSchemas.validation,
-        409: z.object({ message: z.string() }), // Conflict
+        409: z.object({ message: z.string() }),
       },
     },
     get: {
@@ -36,7 +51,16 @@ export const api = {
         200: z.custom<typeof users.$inferSelect>(),
         404: errorSchemas.notFound,
       },
-    }
+    },
+    update: {
+      method: 'PUT' as const,
+      path: '/api/users/:telegramId' as const,
+      input: updateUserSchema,
+      responses: {
+        200: z.custom<typeof users.$inferSelect>(),
+        404: errorSchemas.notFound,
+      },
+    },
   },
   fortunes: {
     generate: {

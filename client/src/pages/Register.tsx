@@ -10,7 +10,23 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Layout } from "@/components/Layout";
 import { motion } from "framer-motion";
-import { ArrowRight, Moon, Sun, Loader2 } from "lucide-react";
+import { ArrowRight, Loader2 } from "lucide-react";
+import { z } from "zod";
+
+const MBTI_TYPES = [
+  "ISTJ", "ISFJ", "INFJ", "INTJ",
+  "ISTP", "ISFP", "INFP", "INTP",
+  "ESTP", "ESFP", "ENFP", "ENTP",
+  "ESTJ", "ESFJ", "ENFJ", "ENTJ",
+];
+
+const registerSchema = insertUserSchema.extend({
+  telegramHandle: z.string().optional(),
+  preferredDeliveryTime: z.string().default("07:00"),
+  mbti: z.string().nullable().optional(),
+  birthCountry: z.string().nullable().optional(),
+  birthCity: z.string().nullable().optional(),
+});
 
 export default function Register() {
   const [, setLocation] = useLocation();
@@ -18,7 +34,7 @@ export default function Register() {
   const createUser = useCreateUser();
 
   const form = useForm<InsertUser>({
-    resolver: zodResolver(insertUserSchema),
+    resolver: zodResolver(registerSchema),
     defaultValues: {
       name: "",
       telegramId: "",
@@ -26,12 +42,21 @@ export default function Register() {
       birthDate: "",
       birthTime: "",
       gender: "male",
-      preferredDeliveryTime: "09:00",
+      preferredDeliveryTime: "07:00",
+      mbti: "",
+      birthCountry: "",
+      birthCity: "",
     },
   });
 
   const onSubmit = (data: InsertUser) => {
-    createUser.mutate(data, {
+    const payload = {
+      ...data,
+      mbti: data.mbti || null,
+      birthCountry: data.birthCountry || null,
+      birthCity: data.birthCity || null,
+    };
+    createUser.mutate(payload, {
       onSuccess: (user) => {
         toast({
           title: "운명이 연결되었습니다",
@@ -42,12 +67,14 @@ export default function Register() {
       onError: (error) => {
         toast({
           variant: "destructive",
-          title: "정렬 오류",
+          title: "등록 오류",
           description: error.message,
         });
       },
     });
   };
+
+  const inputClass = "bg-black/20 border-white/10 text-white placeholder:text-white/20 focus:border-primary/50";
 
   return (
     <Layout>
@@ -77,7 +104,7 @@ export default function Register() {
                       <FormItem>
                         <FormLabel className="text-primary/90">이름</FormLabel>
                         <FormControl>
-                          <Input placeholder="홍길동" {...field} className="bg-black/20 border-white/10 text-white placeholder:text-white/20 focus:border-primary/50" />
+                          <Input placeholder="홍길동" {...field} className={inputClass} data-testid="input-name" />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -91,7 +118,7 @@ export default function Register() {
                       <FormItem>
                         <FormLabel className="text-primary/90">텔레그램 핸들 (선택)</FormLabel>
                         <FormControl>
-                          <Input placeholder="@username" {...field} value={field.value || ""} className="bg-black/20 border-white/10 text-white placeholder:text-white/20 focus:border-primary/50" />
+                          <Input placeholder="@username" {...field} value={field.value || ""} className={inputClass} data-testid="input-telegram-handle" />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -106,7 +133,7 @@ export default function Register() {
                     <FormItem>
                       <FormLabel className="text-primary/90">텔레그램 사용자 ID (숫자)</FormLabel>
                       <FormControl>
-                        <Input placeholder="123456789" {...field} className="bg-black/20 border-white/10 text-white placeholder:text-white/20 focus:border-primary/50" />
+                        <Input placeholder="123456789" {...field} className={inputClass} data-testid="input-telegram-id" />
                       </FormControl>
                       <p className="text-xs text-muted-foreground">텔레그램 @userinfobot 등을 통해 확인 가능한 숫자 ID입니다.</p>
                       <FormMessage />
@@ -122,7 +149,7 @@ export default function Register() {
                       <FormItem>
                         <FormLabel className="text-primary/90">생년월일</FormLabel>
                         <FormControl>
-                          <Input type="date" {...field} className="bg-black/20 border-white/10 text-white focus:border-primary/50" />
+                          <Input type="date" {...field} className={inputClass} data-testid="input-birth-date" />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -136,7 +163,7 @@ export default function Register() {
                       <FormItem>
                         <FormLabel className="text-primary/90">태어난 시간</FormLabel>
                         <FormControl>
-                          <Input type="time" {...field} className="bg-black/20 border-white/10 text-white focus:border-primary/50" />
+                          <Input type="time" {...field} className={inputClass} data-testid="input-birth-time" />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -153,7 +180,7 @@ export default function Register() {
                         <FormLabel className="text-primary/90">성별</FormLabel>
                         <Select onValueChange={field.onChange} defaultValue={field.value}>
                           <FormControl>
-                            <SelectTrigger className="bg-black/20 border-white/10 text-white focus:border-primary/50">
+                            <SelectTrigger className={inputClass} data-testid="select-gender">
                               <SelectValue placeholder="성별 선택" />
                             </SelectTrigger>
                           </FormControl>
@@ -169,12 +196,52 @@ export default function Register() {
 
                   <FormField
                     control={form.control}
-                    name="preferredDeliveryTime"
+                    name="mbti"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-primary/90">알림 희망 시간</FormLabel>
+                        <FormLabel className="text-primary/90">MBTI (선택)</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value || ""}>
+                          <FormControl>
+                            <SelectTrigger className={inputClass} data-testid="select-mbti">
+                              <SelectValue placeholder="MBTI 선택" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent className="bg-secondary border-primary/20 text-white max-h-[200px]">
+                            <SelectItem value="none">선택 안함</SelectItem>
+                            {MBTI_TYPES.map(t => (
+                              <SelectItem key={t} value={t}>{t}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="birthCountry"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-primary/90">출생 국가 (선택)</FormLabel>
                         <FormControl>
-                          <Input type="time" {...field} className="bg-black/20 border-white/10 text-white focus:border-primary/50" />
+                          <Input placeholder="대한민국" {...field} value={field.value || ""} className={inputClass} data-testid="input-birth-country" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="birthCity"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-primary/90">출생 도시 (선택)</FormLabel>
+                        <FormControl>
+                          <Input placeholder="서울" {...field} value={field.value || ""} className={inputClass} data-testid="input-birth-city" />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -182,12 +249,27 @@ export default function Register() {
                   />
                 </div>
 
+                <FormField
+                  control={form.control}
+                  name="preferredDeliveryTime"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-primary/90">알림 희망 시간</FormLabel>
+                      <FormControl>
+                        <Input type="time" {...field} className={inputClass} data-testid="input-delivery-time" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
                 <Button 
                   type="submit" 
                   variant="mystical" 
                   size="lg" 
                   className="w-full mt-4"
                   disabled={createUser.isPending}
+                  data-testid="button-submit-register"
                 >
                   {createUser.isPending ? (
                     <>

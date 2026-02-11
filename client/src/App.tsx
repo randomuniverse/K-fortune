@@ -7,6 +7,7 @@ import NotFound from "@/pages/not-found";
 import Home from "@/pages/Home";
 import Register from "@/pages/Register";
 import Dashboard from "@/pages/Dashboard";
+import Settings from "@/pages/Settings";
 
 function Router() {
   return (
@@ -14,6 +15,7 @@ function Router() {
       <Route path="/" component={Home} />
       <Route path="/register" component={Register} />
       <Route path="/dashboard/:telegramId" component={Dashboard} />
+      <Route path="/settings/:telegramId" component={Settings} />
       <Route component={NotFound} />
     </Switch>
   );

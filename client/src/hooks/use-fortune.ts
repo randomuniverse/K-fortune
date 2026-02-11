@@ -2,10 +2,6 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api, buildUrl } from "@shared/routes";
 import { type InsertUser } from "@shared/schema";
 
-// ============================================
-// USERS
-// ============================================
-
 export function useCreateUser() {
   const queryClient = useQueryClient();
   return useMutation({
@@ -18,22 +14,21 @@ export function useCreateUser() {
       });
       
       if (!res.ok) {
-        if (res.status === 409) throw new Error("This Telegram ID is already registered.");
+        if (res.status === 409) throw new Error("이미 등록된 텔레그램 ID입니다.");
         if (res.status === 400) {
            const error = api.users.create.responses[400].parse(await res.json());
            throw new Error(error.message);
         }
-        throw new Error("Failed to register user");
+        throw new Error("회원가입에 실패했습니다.");
       }
       return api.users.create.responses[201].parse(await res.json());
     },
-    // We don't invalidate lists here as this is a new user setup
   });
 }
 
 export function useUser(telegramId: string | null) {
   return useQuery({
-    queryKey: [api.users.get.path, telegramId],
+    queryKey: ['/api/users', telegramId],
     queryFn: async () => {
       if (!telegramId) return null;
       const url = buildUrl(api.users.get.path, { telegramId });
@@ -49,9 +44,25 @@ export function useUser(telegramId: string | null) {
   });
 }
 
-// ============================================
-// FORTUNES
-// ============================================
+export function useUpdateUser() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ telegramId, data }: { telegramId: string; data: Record<string, unknown> }) => {
+      const url = buildUrl(api.users.update.path, { telegramId });
+      const res = await fetch(url, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+        credentials: "include",
+      });
+      if (!res.ok) throw new Error("정보 수정에 실패했습니다.");
+      return res.json();
+    },
+    onSuccess: (_, { telegramId }) => {
+      queryClient.invalidateQueries({ queryKey: ['/api/users', telegramId] });
+    },
+  });
+}
 
 export function useGenerateFortune() {
   const queryClient = useQueryClient();
@@ -69,15 +80,15 @@ export function useGenerateFortune() {
         throw new Error(data.message || "오늘의 운세는 이미 확인하셨습니다.");
       }
       if (!res.ok) {
-        if (res.status === 404) throw new Error("User not found");
-        throw new Error("Failed to generate fortune");
+        if (res.status === 404) throw new Error("사용자를 찾을 수 없습니다.");
+        throw new Error("운세 생성에 실패했습니다.");
       }
       
       return api.fortunes.generate.responses[201].parse(await res.json());
     },
     onSuccess: (_, telegramId) => {
       queryClient.invalidateQueries({ 
-        queryKey: [api.fortunes.list.path, telegramId] 
+        queryKey: ['/api/fortunes', telegramId] 
       });
     },
   });
@@ -85,7 +96,7 @@ export function useGenerateFortune() {
 
 export function useFortunes(telegramId: string) {
   return useQuery({
-    queryKey: [api.fortunes.list.path, telegramId],
+    queryKey: ['/api/fortunes', telegramId],
     queryFn: async () => {
       const url = buildUrl(api.fortunes.list.path, { telegramId });
       const res = await fetch(url, { credentials: "include" });

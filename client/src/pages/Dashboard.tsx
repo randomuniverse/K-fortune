@@ -6,6 +6,9 @@ import { FortuneCard } from "@/components/FortuneCard";
 import { Loader2, Sparkles, AlertCircle } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useToast } from "@/hooks/use-toast";
+import { getZodiacSign } from "@shared/schema";
+import type { FortuneData } from "@shared/schema";
+import { FortuneScoreCard } from "@/components/FortuneScoreCard";
 
 export default function Dashboard() {
   const [match, params] = useRoute("/dashboard/:telegramId");
@@ -37,11 +40,13 @@ export default function Dashboard() {
           <p className="text-muted-foreground mb-8">
             해당 ID(<span className="text-primary font-mono">{telegramId}</span>)를 가진 여행자를 별들이 찾을 수 없습니다.
           </p>
-          <Button variant="outline" onClick={() => setLocation("/")}>홈으로 돌아가기</Button>
+          <Button variant="outline" onClick={() => setLocation("/")} data-testid="button-go-home">홈으로 돌아가기</Button>
         </div>
       </Layout>
     );
   }
+
+  const zodiacSign = getZodiacSign(user.birthDate);
 
   const hasTodayFortune = fortunes?.some((f) => {
     const fortuneDate = new Date(f.createdAt!);
@@ -51,6 +56,20 @@ export default function Dashboard() {
     };
     return toKSTDate(fortuneDate) === toKSTDate(new Date());
   });
+
+  const todayFortune = fortunes?.find((f) => {
+    const fortuneDate = new Date(f.createdAt!);
+    const toKSTDate = (d: Date) => {
+      const utc = d.getTime() + d.getTimezoneOffset() * 60000;
+      return new Date(utc + 9 * 3600000).toDateString();
+    };
+    return toKSTDate(fortuneDate) === toKSTDate(new Date());
+  });
+
+  let todayFortuneData: FortuneData | null = null;
+  if (todayFortune?.fortuneData) {
+    try { todayFortuneData = JSON.parse(todayFortune.fortuneData); } catch {}
+  }
 
   const handleGenerate = () => {
     if (hasTodayFortune) {
@@ -64,7 +83,7 @@ export default function Dashboard() {
       onSuccess: () => {
         toast({
           title: "운세가 밝혀졌습니다",
-          description: "3회 교차 검증을 거쳐 정교한 운세가 도착했습니다.",
+          description: "3회 교차 검증을 거쳐 종합 운세가 도착했습니다.",
         });
       },
       onError: (error) => {
@@ -77,19 +96,26 @@ export default function Dashboard() {
     });
   };
 
+  const infoItems = [
+    `${user.birthDate} ${user.birthTime}생`,
+    zodiacSign,
+    user.gender === 'male' ? '양(陽)' : '음(陰)',
+  ];
+  if (user.mbti) infoItems.push(user.mbti);
+  if (user.birthCountry) infoItems.push(`${user.birthCountry}${user.birthCity ? ` ${user.birthCity}` : ''}`);
+  infoItems.push(`매일 ${user.preferredDeliveryTime} 알림`);
+
   return (
-    <Layout>
+    <Layout telegramId={telegramId}>
       <div className="space-y-8">
         
-        {/* Header Section */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
           <div>
-            <h2 className="text-3xl md:text-4xl font-serif text-white mb-1">
+            <h2 className="text-3xl md:text-4xl font-serif text-white mb-1" data-testid="text-welcome">
               환영합니다, <span className="text-primary text-glow">{user.name}</span>님
             </h2>
-            <p className="text-muted-foreground">
-              {user.birthDate} {user.birthTime}생 • {user.gender === 'male' ? '양(陽)' : '음(陰)'}의 에너지 • 매일 {user.preferredDeliveryTime} 알림
-              {user.telegramHandle && ` • ${user.telegramHandle}`}
+            <p className="text-muted-foreground text-sm" data-testid="text-user-details">
+              {infoItems.join(" / ")}
             </p>
           </div>
           
@@ -103,7 +129,7 @@ export default function Dashboard() {
           >
             {generateFortune.isPending ? (
               <>
-                <Loader2 className="mr-2 h-5 w-5 animate-spin" /> 교차 검증 중... (3회 분석)
+                <Loader2 className="mr-2 h-5 w-5 animate-spin" /> 교차 검증 중... (9회 분석)
               </>
             ) : hasTodayFortune ? (
               <>
@@ -117,7 +143,10 @@ export default function Dashboard() {
           </Button>
         </div>
 
-        {/* Content Section */}
+        {todayFortuneData && (
+          <FortuneScoreCard data={todayFortuneData} zodiacSign={zodiacSign} />
+        )}
+
         <div className="grid gap-8">
           <div className="flex items-center gap-4">
              <div className="h-px bg-gradient-to-r from-transparent via-primary/50 to-transparent flex-1" />
@@ -143,7 +172,7 @@ export default function Dashboard() {
                     className="col-span-full py-16 text-center glass-panel rounded-xl"
                   >
                     <p className="text-muted-foreground text-lg mb-4">아직 당신의 운명이 기록되지 않았습니다.</p>
-                    <Button variant="link" onClick={handleGenerate} className="text-primary">
+                    <Button variant="link" onClick={handleGenerate} className="text-primary" data-testid="button-first-fortune">
                       첫 번째 신탁을 받아보세요
                     </Button>
                   </motion.div>

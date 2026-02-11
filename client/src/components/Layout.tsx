@@ -1,8 +1,13 @@
 import { StarField } from "./StarField";
-import { Sparkles } from "lucide-react";
+import { Sparkles, Settings } from "lucide-react";
 import { Link } from "wouter";
 
-export function Layout({ children }: { children: React.ReactNode }) {
+interface LayoutProps {
+  children: React.ReactNode;
+  telegramId?: string;
+}
+
+export function Layout({ children, telegramId }: LayoutProps) {
   return (
     <div className="min-h-screen text-foreground relative overflow-hidden flex flex-col">
       <StarField />
@@ -17,11 +22,14 @@ export function Layout({ children }: { children: React.ReactNode }) {
               천상의 운세
             </h1>
           </Link>
-          <nav>
-            <Link href="/" className="text-sm font-medium hover:text-primary transition-colors">
-              홈
-            </Link>
-          </nav>
+          {telegramId && (
+            <nav>
+              <Link href={`/settings/${telegramId}`} className="flex items-center gap-1.5 text-sm font-medium text-muted-foreground hover:text-primary transition-colors" data-testid="link-settings">
+                <Settings className="w-4 h-4" />
+                설정
+              </Link>
+            </nav>
+          )}
         </div>
       </header>
 
