@@ -94,6 +94,18 @@ export function useGenerateFortune() {
   });
 }
 
+export function useSajuAnalysis(telegramId: string) {
+  return useQuery({
+    queryKey: ['/api/saju', telegramId],
+    queryFn: async () => {
+      const res = await fetch(`/api/saju/${telegramId}`, { credentials: "include" });
+      if (!res.ok) throw new Error("Failed to fetch saju analysis");
+      return res.json();
+    },
+    enabled: !!telegramId,
+  });
+}
+
 export function useFortunes(telegramId: string) {
   return useQuery({
     queryKey: ['/api/fortunes', telegramId],

@@ -1,5 +1,5 @@
 import { useRoute, useLocation } from "wouter";
-import { useUser, useGenerateFortune, useFortunes } from "@/hooks/use-fortune";
+import { useUser, useGenerateFortune, useFortunes, useSajuAnalysis } from "@/hooks/use-fortune";
 import { Layout } from "@/components/Layout";
 import { Button } from "@/components/ui/button";
 import { FortuneCard } from "@/components/FortuneCard";
@@ -9,6 +9,8 @@ import { useToast } from "@/hooks/use-toast";
 import { getZodiacSign } from "@shared/schema";
 import type { FortuneData } from "@shared/schema";
 import { FortuneScoreCard } from "@/components/FortuneScoreCard";
+import { SajuInfoCard } from "@/components/SajuInfoCard";
+import { ZodiacInfoCard } from "@/components/ZodiacInfoCard";
 
 export default function Dashboard() {
   const [match, params] = useRoute("/dashboard/:telegramId");
@@ -17,6 +19,7 @@ export default function Dashboard() {
   
   const { data: user, isLoading: isUserLoading, error: userError } = useUser(telegramId);
   const { data: fortunes, isLoading: isFortunesLoading } = useFortunes(telegramId);
+  const { data: sajuData } = useSajuAnalysis(telegramId);
   const generateFortune = useGenerateFortune();
   const { toast } = useToast();
 
@@ -103,7 +106,6 @@ export default function Dashboard() {
   ];
   if (user.mbti) infoItems.push(user.mbti);
   if (user.birthCountry) infoItems.push(`${user.birthCountry}${user.birthCity ? ` ${user.birthCity}` : ''}`);
-  infoItems.push(`매일 ${user.preferredDeliveryTime} 알림`);
 
   return (
     <Layout telegramId={telegramId}>
@@ -142,6 +144,23 @@ export default function Dashboard() {
             )}
           </Button>
         </div>
+
+        {sajuData && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className="grid gap-4 md:grid-cols-2"
+          >
+            <SajuInfoCard
+              chart={sajuData.sajuChart}
+              birthDate={user.birthDate}
+              birthTime={user.birthTime}
+              userName={user.name}
+            />
+            <ZodiacInfoCard info={sajuData.zodiacInfo} />
+          </motion.div>
+        )}
 
         {todayFortuneData && (
           <FortuneScoreCard data={todayFortuneData} zodiacSign={zodiacSign} />

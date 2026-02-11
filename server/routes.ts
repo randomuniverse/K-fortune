@@ -3,7 +3,8 @@ import type { Server } from "http";
 import { storage } from "./storage";
 import { api, updateUserSchema } from "@shared/routes";
 import { z } from "zod";
-import { getZodiacSign, getLifePathNumber, type FortuneData } from "@shared/schema";
+import { getZodiacSign, getZodiacInfo, getLifePathNumber, type FortuneData } from "@shared/schema";
+import { calculateFullSaju } from "@shared/saju";
 import OpenAI from "openai";
 
 const openai = new OpenAI({
@@ -145,65 +146,102 @@ export async function registerRoutes(
       const dateStr = `${koreaTime.getFullYear()}년 ${koreaTime.getMonth() + 1}월 ${koreaTime.getDate()}일`;
 
       const zodiacSign = getZodiacSign(user.birthDate);
+      const zodiacInfo = getZodiacInfo(user.birthDate);
       const lifePathNumber = getLifePathNumber(user.birthDate);
 
-      const sajuSystemPrompt = `당신은 60년 경력의 사주팔자(四柱八字) 및 동양 점성술 대가입니다.
-사주팔자는 생년·생월·생일·생시의 네 기둥(天干·地支)으로 이루어집니다.
-반드시 아래 규칙을 엄격히 따르세요:
+      const gender = user.gender === "male" ? "male" : "female" as "male" | "female";
+      const sajuChart = calculateFullSaju(user.birthDate, user.birthTime, gender);
 
-[행운의 방향 규칙]
-- 행운의 방향은 오행(五行)과 십이지(十二支)에 기반하여 결정합니다.
-- 출생 일주(日柱)의 천간과 오늘 날짜의 천간·지지 관계로 방향을 도출합니다.
-- 동일한 사주와 동일한 날짜라면 행운의 방향은 반드시 같아야 합니다.
-- 방향은 동(東), 서(西), 남(南), 북(北), 동남, 동북, 서남, 서북 중 하나입니다.
+      const todayJDN = (() => {
+        const a = Math.floor((14 - (koreaTime.getMonth() + 1)) / 12);
+        const y = koreaTime.getFullYear() + 4800 - a;
+        const m = (koreaTime.getMonth() + 1) + 12 * a - 3;
+        return koreaTime.getDate() + Math.floor((153 * m + 2) / 5) + 365 * y + Math.floor(y / 4) - Math.floor(y / 100) + Math.floor(y / 400) - 32045;
+      })();
+      const todayStemIdx = ((todayJDN - 1) % 10 + 10) % 10;
+      const todayBranchIdx = ((todayJDN + 1) % 12 + 12) % 12;
+      const STEMS_H = ["甲", "乙", "丙", "丁", "戊", "己", "庚", "辛", "壬", "癸"];
+      const BRANCHES_H = ["子", "丑", "寅", "卯", "辰", "巳", "午", "未", "申", "酉", "戌", "亥"];
+      const todayStem = STEMS_H[todayStemIdx];
+      const todayBranch = BRANCHES_H[todayBranchIdx];
 
-[종합 운세 점수 규칙]
-- 0~100점 사이의 정수로 산출합니다.
-- 동일한 사주와 동일한 날짜라면 점수 편차는 ±3점 이내여야 합니다.
+      const sajuSystemPrompt = `당신은 60년 경력의 사주팔자(四柱八字) 전문가입니다.
+아래에 이 사람의 정확한 사주 사기둥이 제공됩니다. 이 데이터를 기반으로 오늘의 운세를 분석하세요.
 
-[조심할 점 규칙]
-- 오늘의 충(沖), 형(刑), 파(破), 해(害) 관계를 분석하여 구체적으로 서술합니다.
+[이 사람의 사주팔자 - 정확한 계산 결과]
+연주(年柱): ${sajuChart.yearPillar.stemHanja}${sajuChart.yearPillar.branchHanja} (${sajuChart.yearTenGod.name}/${sajuChart.yearBranchTenGod.name})
+월주(月柱): ${sajuChart.monthPillar.stemHanja}${sajuChart.monthPillar.branchHanja} (${sajuChart.monthTenGod.name}/${sajuChart.monthBranchTenGod.name})
+일주(日柱): ${sajuChart.dayPillar.stemHanja}${sajuChart.dayPillar.branchHanja} (일간/${sajuChart.dayBranchTenGod.name})
+시주(時柱): ${sajuChart.hourPillar.stemHanja}${sajuChart.hourPillar.branchHanja} (${sajuChart.hourTenGod.name}/${sajuChart.hourBranchTenGod.name})
 
-[특이사항 규칙]
-- 오늘 천간·지지의 합(合), 귀인(貴人), 역마(驛馬) 등 특수 관계를 분석합니다.
+일간 강약: ${sajuChart.dayMasterStrength}
+용신: ${sajuChart.yongShin.elementHanja}(${sajuChart.yongShin.element})
+오행 분포: ${sajuChart.fiveElementRatios.filter(e => e.ratio > 0).map(e => `${e.elementHanja}(${e.element}) ${e.ratio}%`).join(", ")}
+띠: ${sajuChart.chineseZodiac}
+
+오늘 일진: ${todayStem}${todayBranch}
+
+[분석 지침]
+1. 반드시 위의 정확한 사주 데이터를 사용하세요. 임의로 사주를 재계산하지 마세요.
+2. 오늘 일진(${todayStem}${todayBranch})과 이 사람의 일주(${sajuChart.dayPillar.stemHanja}${sajuChart.dayPillar.branchHanja}) 간의 관계를 분석하세요.
+3. 운세 요약에 "이번 달 ${sajuChart.dayPillar.stemHanja}${sajuChart.dayPillar.branchHanja} 일주가 ${todayStem}${todayBranch} 일진과 만나..." 등의 구체적 천간지지 관계를 언급하세요.
+4. 용신(${sajuChart.yongShin.elementHanja})의 기운이 오늘 어떤 영향을 미치는지 설명하세요.
+5. 행운의 방향은 용신의 오행 방위에 따라 결정하세요 (목=동, 화=남, 토=중앙, 금=서, 수=북).
 
 이모지를 절대 사용하지 마세요. 반드시 JSON 형식으로만 응답하세요:
 {
-  "score": 숫자,
+  "score": 숫자(0~100),
   "direction": "방향",
-  "caution": "조심할 점 내용",
-  "special": "특이사항 내용",
-  "summary": "전체 운세 요약 (3~4문장)"
+  "caution": "조심할 점 - 충/형/파/해 관계를 구체적으로 (3~4문장)",
+  "special": "특이사항 - 합/귀인/역마 등 (3~4문장)",
+  "summary": "이번 달 사주 흐름과 오늘의 운세 요약 - 천간지지 관계를 구체적으로 언급 (4~5문장)"
 }`;
 
       const sajuUserPrompt = `오늘 날짜: ${dateStr}
 이름: ${user.name}
-생년월일: ${user.birthDate}
+생년월일(양력): ${user.birthDate}
 태어난 시간: ${user.birthTime}
 성별: ${user.gender === 'male' ? '남성(陽)' : '여성(陰)'}
 ${user.birthCountry ? `출생지: ${user.birthCountry} ${user.birthCity || ''}` : ''}
-${user.mbti ? `MBTI: ${user.mbti}` : ''}
 
-이 사람의 사주팔자를 정밀 분석하여 오늘(${dateStr})의 운세를 알려주세요.`;
+위에 제공된 정확한 사주 사기둥 데이터를 기반으로 오늘(${dateStr}, 일진 ${todayStem}${todayBranch})의 운세를 분석해주세요.
+특히 일주 ${sajuChart.dayPillar.stemHanja}${sajuChart.dayPillar.branchHanja}와 오늘 일진의 관계, 용신 ${sajuChart.yongShin.elementHanja}의 영향을 구체적으로 서술해주세요.`;
 
-      const zodiacSystemPrompt = `당신은 서양 점성술 전문가입니다. 별자리별 운세를 정확하게 분석합니다.
+      const zodiacSystemPrompt = `당신은 서양 점성술 전문가입니다. 천체 운행과 행성 배치에 기반하여 별자리 운세를 분석합니다.
+
+[이 사람의 별자리 정보]
+별자리: ${zodiacSign} (${zodiacInfo.signEn})
+주관 행성: ${zodiacInfo.rulingPlanet} (${zodiacInfo.rulingPlanetEn})
+원소: ${zodiacInfo.element} (${zodiacInfo.elementEn})
+궁합 유형: ${zodiacInfo.quality} (${zodiacInfo.qualityEn})
+기간: ${zodiacInfo.dateRange}
+
+[분석 지침]
+1. 운세 설명에 반드시 실제 천체/행성 정보를 언급하세요. 예: "${zodiacInfo.rulingPlanet}이(가) 현재 어떤 위치/영향을 미치고 있어..."
+2. 목성, 토성, 화성 등 주요 행성의 트랜짓이 ${zodiacSign}에 미치는 영향을 언급하세요.
+3. 달의 위상(초승달/보름달 등)과 ${zodiacSign}의 관계를 고려하세요.
+4. 각 분야(연애, 재물, 건강, 직장)의 운세를 구체적 행성 배치로 설명하세요.
+5. 총평에서 "${zodiacInfo.rulingPlanet}의 영향으로..." 등 행성 근거를 반드시 포함하세요.
+
 이모지를 절대 사용하지 마세요. 반드시 JSON 형식으로만 응답하세요:
 {
   "score": 0~100 사이의 정수,
-  "love": "연애운 (2~3문장)",
-  "money": "재물운 (2~3문장)",
-  "health": "건강운 (2~3문장)",
-  "work": "직장/학업운 (2~3문장)",
-  "summary": "별자리 운세 총평 (3~4문장)"
+  "love": "연애운 - 금성/달의 영향을 언급 (3~4문장)",
+  "money": "재물운 - 목성/토성의 영향을 언급 (3~4문장)",
+  "health": "건강운 - 화성/관련 행성 영향 (3~4문장)",
+  "work": "직장/학업운 - 수성/토성의 영향 (3~4문장)",
+  "summary": "행성 배치와 트랜짓 기반 총평 - 주관 행성(${zodiacInfo.rulingPlanet})의 현재 영향 포함 (4~5문장)"
 }`;
 
       const zodiacUserPrompt = `오늘 날짜: ${dateStr}
-별자리: ${zodiacSign}
+별자리: ${zodiacSign} (${zodiacInfo.signEn})
+주관 행성: ${zodiacInfo.rulingPlanet} (${zodiacInfo.rulingPlanetEn})
 이름: ${user.name}
 생년월일: ${user.birthDate}
 성별: ${user.gender === 'male' ? '남성' : '여성'}
 
-이 사람의 ${zodiacSign} 별자리 운세를 분석하여 오늘(${dateStr})의 연애운, 재물운, 건강운, 직장운을 알려주세요.`;
+이 사람의 ${zodiacSign} 별자리 운세를 분석하여 오늘(${dateStr})의 연애운, 재물운, 건강운, 직장운을 알려주세요.
+반드시 행성 배치와 트랜짓 정보를 근거로 운세를 설명하세요.`;
 
       const numerologySystemPrompt = `당신은 수비학(Numerology) 전문가입니다.
 생년월일로부터 계산된 생명수(Life Path Number)와 오늘 날짜의 에너지를 결합하여 행운의 숫자와 메시지를 생성합니다.
@@ -408,8 +446,9 @@ ${numResults.map((r, i) => `분석${i + 1}: ${JSON.stringify(r)}`).join("\n")}
         fortuneData: JSON.stringify(fortuneData),
       });
 
-      if (user.telegramChatId) {
-        sendTelegramMessage(user.telegramChatId, displayContent).catch(err => {
+      const chatIdToUse = user.telegramChatId || (/^\d+$/.test(user.telegramId) ? user.telegramId : null);
+      if (chatIdToUse) {
+        sendTelegramMessage(chatIdToUse, displayContent).catch(err => {
           console.error("[TELEGRAM] Background send error:", err);
         });
       } else {
@@ -482,6 +521,22 @@ ${numResults.map((r, i) => `분석${i + 1}: ${JSON.stringify(r)}`).join("\n")}
     } catch (err) {
       console.error("[TELEGRAM WEBHOOK] Error:", err);
       res.json({ ok: true });
+    }
+  });
+
+  app.get("/api/saju/:telegramId", async (req, res) => {
+    try {
+      const user = await storage.getUserByTelegramId(req.params.telegramId);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      const gender = user.gender === "male" ? "male" : "female" as "male" | "female";
+      const sajuChart = calculateFullSaju(user.birthDate, user.birthTime, gender);
+      const zodiacInfo = getZodiacInfo(user.birthDate);
+      res.json({ sajuChart, zodiacInfo });
+    } catch (error) {
+      console.error("Error calculating saju:", error);
+      res.status(500).json({ message: "사주 계산 중 오류가 발생했습니다." });
     }
   });
 
