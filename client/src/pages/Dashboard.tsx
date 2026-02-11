@@ -23,6 +23,7 @@ export default function Dashboard() {
   const { data: sajuData } = useSajuAnalysis(telegramId);
   const generateFortune = useGenerateFortune();
   const { toast } = useToast();
+  const [isSendingTelegram, setIsSendingTelegram] = useState(false);
 
   if (isUserLoading) {
     return (
@@ -115,8 +116,6 @@ export default function Dashboard() {
   ].filter(Boolean);
   if (user.mbti) infoItems.push(user.mbti);
   if (user.birthCountry) infoItems.push(`${user.birthCountry}${user.birthCity ? ` ${user.birthCity}` : ''}`);
-
-  const [isSendingTelegram, setIsSendingTelegram] = useState(false);
 
   return (
     <Layout telegramId={telegramId}>
