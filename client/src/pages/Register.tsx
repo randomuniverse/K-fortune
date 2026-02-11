@@ -22,6 +22,7 @@ const MBTI_TYPES = [
 
 const registerSchema = insertUserSchema.extend({
   telegramHandle: z.string().optional(),
+  telegramChatId: z.string().nullable().optional(),
   preferredDeliveryTime: z.string().default("07:00"),
   mbti: z.string().nullable().optional(),
   birthCountry: z.string().nullable().optional(),
@@ -50,8 +51,10 @@ export default function Register() {
   });
 
   const onSubmit = (data: InsertUser) => {
+    const isNumericId = /^\d+$/.test(data.telegramId);
     const payload = {
       ...data,
+      telegramChatId: isNumericId ? data.telegramId : null,
       mbti: data.mbti || null,
       birthCountry: data.birthCountry || null,
       birthCity: data.birthCity || null,

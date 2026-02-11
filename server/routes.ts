@@ -408,9 +408,13 @@ ${numResults.map((r, i) => `분석${i + 1}: ${JSON.stringify(r)}`).join("\n")}
         fortuneData: JSON.stringify(fortuneData),
       });
 
-      sendTelegramMessage(user.telegramId, displayContent).catch(err => {
-        console.error("[TELEGRAM] Background send error:", err);
-      });
+      if (user.telegramChatId) {
+        sendTelegramMessage(user.telegramChatId, displayContent).catch(err => {
+          console.error("[TELEGRAM] Background send error:", err);
+        });
+      } else {
+        console.log("[TELEGRAM] No chat ID configured for user, skipping send");
+      }
 
       res.status(201).json({
         message: "운세가 생성되어 전송되었습니다!",
@@ -419,6 +423,65 @@ ${numResults.map((r, i) => `분석${i + 1}: ${JSON.stringify(r)}`).join("\n")}
     } catch (error) {
       console.error("Error generating fortune:", error);
       res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.post("/api/telegram/webhook", async (req, res) => {
+    try {
+      const message = req.body?.message;
+      if (!message) return res.json({ ok: true });
+
+      const chatId = String(message.chat?.id);
+      const username = message.from?.username;
+      const text = message.text;
+
+      if (text === "/start") {
+        const users = await storage.getAllUsers();
+        let matched = false;
+
+        for (const u of users) {
+          if (u.telegramChatId === chatId) {
+            matched = true;
+            break;
+          }
+          if (u.telegramId === chatId || (username && u.telegramId === username) || (username && u.telegramHandle === username) || (username && u.telegramHandle === `@${username}`)) {
+            await storage.updateUser(u.telegramId, { telegramChatId: chatId });
+            matched = true;
+
+            const token = process.env.TELEGRAM_BOT_TOKEN;
+            if (token) {
+              await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  chat_id: chatId,
+                  text: `${u.name}님, 텔레그램 연동이 완료되었습니다! 이제 운세가 자동으로 전송됩니다.`,
+                }),
+              });
+            }
+            break;
+          }
+        }
+
+        if (!matched) {
+          const token = process.env.TELEGRAM_BOT_TOKEN;
+          if (token) {
+            await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                chat_id: chatId,
+                text: `안녕하세요! 천상의 운세 봇입니다.\n귀하의 Chat ID: ${chatId}\n\n웹사이트에서 회원가입 시 이 Chat ID를 입력하시면 운세를 자동으로 받으실 수 있습니다.`,
+              }),
+            });
+          }
+        }
+      }
+
+      res.json({ ok: true });
+    } catch (err) {
+      console.error("[TELEGRAM WEBHOOK] Error:", err);
+      res.json({ ok: true });
     }
   });
 

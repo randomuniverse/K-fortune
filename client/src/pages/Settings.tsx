@@ -21,6 +21,7 @@ const MBTI_TYPES = [
 
 interface SettingsFormData {
   name: string;
+  telegramChatId: string;
   telegramHandle: string;
   birthDate: string;
   birthTime: string;
@@ -42,6 +43,7 @@ export default function Settings() {
   const form = useForm<SettingsFormData>({
     defaultValues: {
       name: "",
+      telegramChatId: "",
       telegramHandle: "",
       birthDate: "",
       birthTime: "",
@@ -57,6 +59,7 @@ export default function Settings() {
     if (user) {
       form.reset({
         name: user.name,
+        telegramChatId: user.telegramChatId || "",
         telegramHandle: user.telegramHandle || "",
         birthDate: user.birthDate,
         birthTime: user.birthTime,
@@ -75,6 +78,7 @@ export default function Settings() {
         telegramId,
         data: {
           ...data,
+          telegramChatId: data.telegramChatId || null,
           mbti: data.mbti || null,
           birthCountry: data.birthCountry || null,
           birthCity: data.birthCity || null,
@@ -166,19 +170,36 @@ export default function Settings() {
                   )}
                 />
 
-                <FormField
-                  control={form.control}
-                  name="telegramHandle"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="text-primary/90">텔레그램 핸들</FormLabel>
-                      <FormControl>
-                        <Input placeholder="@username" {...field} className={inputClass} data-testid="input-settings-handle" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                <div className="grid grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="telegramHandle"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-primary/90">텔레그램 핸들</FormLabel>
+                        <FormControl>
+                          <Input placeholder="@username" {...field} className={inputClass} data-testid="input-settings-handle" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="telegramChatId"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-primary/90">텔레그램 Chat ID</FormLabel>
+                        <FormControl>
+                          <Input placeholder="123456789" {...field} className={inputClass} data-testid="input-settings-chat-id" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+                <p className="text-xs text-muted-foreground -mt-3">Chat ID는 텔레그램에서 @userinfobot에게 메시지를 보내면 확인할 수 있습니다.</p>
 
                 <div className="grid grid-cols-2 gap-4">
                   <FormField

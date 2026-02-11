@@ -5,6 +5,7 @@ import { z } from "zod";
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
   telegramId: text("telegram_id").unique().notNull(),
+  telegramChatId: text("telegram_chat_id"),
   telegramHandle: text("telegram_handle"),
   name: text("name").notNull(),
   birthDate: text("birth_date").notNull(),

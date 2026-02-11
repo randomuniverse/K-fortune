@@ -16,6 +16,7 @@ export const errorSchemas = {
 
 export const updateUserSchema = z.object({
   name: z.string().min(1).optional(),
+  telegramChatId: z.string().nullable().optional(),
   telegramHandle: z.string().nullable().optional(),
   birthDate: z.string().optional(),
   birthTime: z.string().optional(),

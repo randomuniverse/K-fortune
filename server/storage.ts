@@ -10,6 +10,7 @@ export interface IStorage {
   getFortunesByUserId(userId: number): Promise<Fortune[]>;
   getUser(id: number): Promise<User | undefined>;
   getTodayFortuneByUserId(userId: number): Promise<Fortune | undefined>;
+  getAllUsers(): Promise<User[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -48,6 +49,10 @@ export class DatabaseStorage implements IStorage {
       .from(fortunes)
       .where(eq(fortunes.userId, userId))
       .orderBy(desc(fortunes.createdAt));
+  }
+
+  async getAllUsers(): Promise<User[]> {
+    return db.select().from(users);
   }
 
   async getTodayFortuneByUserId(userId: number): Promise<Fortune | undefined> {

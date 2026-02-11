@@ -4,7 +4,7 @@ import { Layout } from "@/components/Layout";
 import { Button } from "@/components/ui/button";
 import { FortuneCard } from "@/components/FortuneCard";
 import { Loader2, Sparkles, AlertCircle } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { useToast } from "@/hooks/use-toast";
 import { getZodiacSign } from "@shared/schema";
 import type { FortuneData } from "@shared/schema";
@@ -160,24 +160,22 @@ export default function Dashboard() {
              </div>
           ) : (
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-              <AnimatePresence mode="popLayout">
-                {fortunes && fortunes.length > 0 ? (
-                  fortunes.map((fortune, idx) => (
-                    <FortuneCard key={fortune.id} fortune={fortune} index={idx} />
-                  ))
-                ) : (
-                  <motion.div 
-                    initial={{ opacity: 0 }} 
-                    animate={{ opacity: 1 }}
-                    className="col-span-full py-16 text-center glass-panel rounded-xl"
-                  >
-                    <p className="text-muted-foreground text-lg mb-4">아직 당신의 운명이 기록되지 않았습니다.</p>
-                    <Button variant="link" onClick={handleGenerate} className="text-primary" data-testid="button-first-fortune">
-                      첫 번째 신탁을 받아보세요
-                    </Button>
-                  </motion.div>
-                )}
-              </AnimatePresence>
+              {fortunes && fortunes.length > 0 ? (
+                fortunes.map((fortune, idx) => (
+                  <FortuneCard key={fortune.id} fortune={fortune} index={idx} />
+                ))
+              ) : (
+                <motion.div 
+                  initial={{ opacity: 0 }} 
+                  animate={{ opacity: 1 }}
+                  className="col-span-full py-16 text-center glass-panel rounded-xl"
+                >
+                  <p className="text-muted-foreground text-lg mb-4">아직 당신의 운명이 기록되지 않았습니다.</p>
+                  <Button variant="link" onClick={handleGenerate} className="text-primary" data-testid="button-first-fortune">
+                    첫 번째 신탁을 받아보세요
+                  </Button>
+                </motion.div>
+              )}
             </div>
           )}
         </div>
