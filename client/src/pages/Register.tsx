@@ -22,10 +22,6 @@ export default function Register() {
     defaultValues: {
       name: "",
       telegramId: "",
-      birthDate: "",
-      birthTime: "",
-      name: "",
-      telegramId: "",
       telegramHandle: "",
       birthDate: "",
       birthTime: "",
