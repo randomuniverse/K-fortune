@@ -19,7 +19,10 @@ export const api = {
     create: {
       method: 'POST' as const,
       path: '/api/users' as const,
-      input: insertUserSchema,
+      input: insertUserSchema.extend({
+        telegramHandle: z.string().optional(),
+        preferredDeliveryTime: z.string().default("09:00"),
+      }),
       responses: {
         201: z.custom<typeof users.$inferSelect>(),
         400: errorSchemas.validation,

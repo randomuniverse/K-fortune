@@ -24,7 +24,13 @@ export default function Register() {
       telegramId: "",
       birthDate: "",
       birthTime: "",
+      name: "",
+      telegramId: "",
+      telegramHandle: "",
+      birthDate: "",
+      birthTime: "",
       gender: "male",
+      preferredDeliveryTime: "09:00",
     },
   });
 
@@ -67,30 +73,46 @@ export default function Register() {
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
                 
-                <FormField
-                  control={form.control}
-                  name="name"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="text-primary/90">이름</FormLabel>
-                      <FormControl>
-                        <Input placeholder="홍길동" {...field} className="bg-black/20 border-white/10 text-white placeholder:text-white/20 focus:border-primary/50" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                <div className="grid grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="name"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-primary/90">이름</FormLabel>
+                        <FormControl>
+                          <Input placeholder="홍길동" {...field} className="bg-black/20 border-white/10 text-white placeholder:text-white/20 focus:border-primary/50" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="telegramHandle"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-primary/90">텔레그램 핸들 (선택)</FormLabel>
+                        <FormControl>
+                          <Input placeholder="@username" {...field} value={field.value || ""} className="bg-black/20 border-white/10 text-white placeholder:text-white/20 focus:border-primary/50" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
 
                 <FormField
                   control={form.control}
                   name="telegramId"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-primary/90">텔레그램 사용자 ID (@ 제외)</FormLabel>
+                      <FormLabel className="text-primary/90">텔레그램 사용자 ID (숫자)</FormLabel>
                       <FormControl>
-                        <Input placeholder="my_telegram_id" {...field} className="bg-black/20 border-white/10 text-white placeholder:text-white/20 focus:border-primary/50" />
+                        <Input placeholder="123456789" {...field} className="bg-black/20 border-white/10 text-white placeholder:text-white/20 focus:border-primary/50" />
                       </FormControl>
-                      <p className="text-xs text-muted-foreground">메시지를 받으시려면 텔레그램에서 저희 봇을 검색해 주세요.</p>
+                      <p className="text-xs text-muted-foreground">텔레그램 @userinfobot 등을 통해 확인 가능한 숫자 ID입니다.</p>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -126,27 +148,43 @@ export default function Register() {
                   />
                 </div>
 
-                <FormField
-                  control={form.control}
-                  name="gender"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="text-primary/90">성별</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <div className="grid grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="gender"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-primary/90">성별</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <FormControl>
+                            <SelectTrigger className="bg-black/20 border-white/10 text-white focus:border-primary/50">
+                              <SelectValue placeholder="성별 선택" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent className="bg-secondary border-primary/20 text-white">
+                            <SelectItem value="male">남성</SelectItem>
+                            <SelectItem value="female">여성</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="preferredDeliveryTime"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-primary/90">알림 희망 시간</FormLabel>
                         <FormControl>
-                          <SelectTrigger className="bg-black/20 border-white/10 text-white focus:border-primary/50">
-                            <SelectValue placeholder="성별을 선택하세요" />
-                          </SelectTrigger>
+                          <Input type="time" {...field} className="bg-black/20 border-white/10 text-white focus:border-primary/50" />
                         </FormControl>
-                        <SelectContent className="bg-secondary border-primary/20 text-white">
-                          <SelectItem value="male"><span className="flex items-center gap-2"><Sun className="w-4 h-4" /> 남성 / 양(陽)</span></SelectItem>
-                          <SelectItem value="female"><span className="flex items-center gap-2"><Moon className="w-4 h-4" /> 여성 / 음(陰)</span></SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
 
                 <Button 
                   type="submit" 

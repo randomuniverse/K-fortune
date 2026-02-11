@@ -5,10 +5,12 @@ import { z } from "zod";
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
   telegramId: text("telegram_id").unique().notNull(),
+  telegramHandle: text("telegram_handle"), // @username
   name: text("name").notNull(),
   birthDate: text("birth_date").notNull(), // YYYY-MM-DD
   birthTime: text("birth_time").notNull(), // HH:mm
   gender: text("gender").notNull(), // 'male' | 'female'
+  preferredDeliveryTime: text("preferred_delivery_time").default("09:00").notNull(), // HH:mm
   createdAt: timestamp("created_at").defaultNow(),
 });
 

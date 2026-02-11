@@ -72,7 +72,8 @@ export default function Dashboard() {
               환영합니다, <span className="text-primary text-glow">{user.name}</span>님
             </h2>
             <p className="text-muted-foreground">
-              생년월일 {user.birthDate} • 태어난 시간 {user.birthTime} • {user.gender === 'male' ? '양(陽)' : '음(陰)'}의 에너지
+              {user.birthDate} {user.birthTime}생 • {user.gender === 'male' ? '양(陽)' : '음(陰)'}의 에너지 • 매일 {user.preferredDeliveryTime} 알림
+              {user.telegramHandle && ` • ${user.telegramHandle}`}
             </p>
           </div>
           
