@@ -64,6 +64,10 @@ export function useGenerateFortune() {
         credentials: "include",
       });
 
+      if (res.status === 429) {
+        const data = await res.json();
+        throw new Error(data.message || "오늘의 운세는 이미 확인하셨습니다.");
+      }
       if (!res.ok) {
         if (res.status === 404) throw new Error("User not found");
         throw new Error("Failed to generate fortune");

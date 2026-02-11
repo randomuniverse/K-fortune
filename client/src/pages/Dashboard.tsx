@@ -43,18 +43,34 @@ export default function Dashboard() {
     );
   }
 
+  const hasTodayFortune = fortunes?.some((f) => {
+    const fortuneDate = new Date(f.createdAt!);
+    const toKSTDate = (d: Date) => {
+      const utc = d.getTime() + d.getTimezoneOffset() * 60000;
+      return new Date(utc + 9 * 3600000).toDateString();
+    };
+    return toKSTDate(fortuneDate) === toKSTDate(new Date());
+  });
+
   const handleGenerate = () => {
+    if (hasTodayFortune) {
+      toast({
+        title: "오늘의 운세는 이미 확인하셨습니다",
+        description: "내일 새로운 운세를 확인해보세요.",
+      });
+      return;
+    }
     generateFortune.mutate(telegramId, {
       onSuccess: () => {
         toast({
           title: "운세가 밝혀졌습니다",
-          description: "별들이 당신에게 속삭입니다. 새로운 운세를 확인하세요.",
+          description: "3회 교차 검증을 거쳐 정교한 운세가 도착했습니다.",
         });
       },
       onError: (error) => {
         toast({
           variant: "destructive",
-          title: "연결 끊김",
+          title: "알림",
           description: error.message,
         });
       },
@@ -81,12 +97,17 @@ export default function Dashboard() {
             variant="mystical" 
             size="lg" 
             onClick={handleGenerate}
-            disabled={generateFortune.isPending}
+            disabled={generateFortune.isPending || hasTodayFortune}
             className="w-full md:w-auto min-w-[200px]"
+            data-testid="button-generate-fortune"
           >
             {generateFortune.isPending ? (
               <>
-                <Loader2 className="mr-2 h-5 w-5 animate-spin" /> 점치는 중...
+                <Loader2 className="mr-2 h-5 w-5 animate-spin" /> 교차 검증 중... (3회 분석)
+              </>
+            ) : hasTodayFortune ? (
+              <>
+                <Sparkles className="mr-2 h-5 w-5" /> 오늘의 운세 확인 완료
               </>
             ) : (
               <>

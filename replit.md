@@ -51,8 +51,16 @@ These are scaffolded utilities and may not all be actively wired into the main a
 ### Key API Endpoints
 - `POST /api/users` — Create a new user (registration)
 - `GET /api/users/:telegramId` — Get user by Telegram ID
-- `POST /api/fortunes/generate` — Generate a new fortune for a user (AI-powered)
-- Fortune history retrieval (by userId)
+- `POST /api/fortunes/generate` — Generate a new fortune for a user (AI-powered, daily limit 1회, 3회 교차 검증)
+- `GET /api/fortunes/:telegramId` — Fortune history retrieval (by userId)
+
+### Fortune Generation Logic (Cross-Validation Voting)
+1. **Daily Limit**: Each user can generate only 1 fortune per day. Returns 429 if already generated.
+2. **3-Way Parallel Generation**: 3 independent fortune readings are generated simultaneously via OpenAI (gpt-4o, temperature 0.3).
+3. **Structured JSON Output**: Each reading returns score, direction, caution, special notes in JSON format.
+4. **Voting/Averaging**: Score is averaged across 3 readings; direction uses majority vote.
+5. **Synthesis**: A final GPT call cross-validates all 3 results, only keeping content mentioned in 2+ readings.
+6. **Result**: The synthesized, cross-validated fortune is saved to DB and displayed to user.
 
 ## External Dependencies
 
