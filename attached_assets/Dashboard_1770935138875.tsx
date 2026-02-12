@@ -130,6 +130,7 @@ export default function Dashboard() {
   if (user.mbti) infoItems.push(user.mbti);
   if (user.birthCountry) infoItems.push(`${user.birthCountry}${user.birthCity ? ` ${user.birthCity}` : ""}`);
 
+  // 페이지네이션용 과거 운세 (오늘 제외)
   const pastFortunes = fortunes?.filter((f) => {
     if (!todayFortune) return true;
     return f.id !== todayFortune.id;
@@ -141,6 +142,7 @@ export default function Dashboard() {
     <Layout telegramId={telegramId}>
       <div className="space-y-6">
 
+        {/* 상단 인사 + 버튼 */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div>
             <h2 className="text-3xl md:text-4xl font-serif text-white mb-1" data-testid="text-welcome">
@@ -205,7 +207,8 @@ export default function Dashboard() {
           </div>
         </div>
 
-        <div className="flex gap-1 p-1 bg-white/[0.03] rounded-xl border border-white/5" data-testid="tab-navigation">
+        {/* 탭 네비게이션 */}
+        <div className="flex gap-1 p-1 bg-white/[0.03] rounded-xl border border-white/5">
           {TABS.map((tab) => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.id;
@@ -213,7 +216,6 @@ export default function Dashboard() {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                data-testid={`tab-${tab.id}`}
                 className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-lg text-sm font-medium transition-all duration-200 ${
                   isActive
                     ? "bg-primary/20 text-primary border border-primary/30 shadow-lg shadow-primary/10"
@@ -232,8 +234,10 @@ export default function Dashboard() {
           })}
         </div>
 
+        {/* 탭 콘텐츠 */}
         <div className="min-h-[400px]">
 
+          {/* 오늘의 운세 탭 */}
           {activeTab === "today" && (
             <motion.div
               key="today"
@@ -254,12 +258,13 @@ export default function Dashboard() {
                 >
                   <Sparkles className="w-12 h-12 text-primary/30 mx-auto mb-4" />
                   <p className="text-muted-foreground text-lg mb-4">아직 오늘의 운세가 없습니다.</p>
-                  <Button variant="mystical" onClick={handleGenerate} disabled={generateFortune.isPending} data-testid="button-first-fortune">
+                  <Button variant="mystical" onClick={handleGenerate} disabled={generateFortune.isPending}>
                     <Sparkles className="mr-2 h-4 w-4" /> 오늘의 운세 보기
                   </Button>
                 </motion.div>
               )}
 
+              {/* 운명 기록 (과거 운세) */}
               {pastFortunes.length > 0 && (
                 <div className="space-y-4">
                   <div className="flex items-center gap-4">
@@ -281,7 +286,6 @@ export default function Dashboard() {
                         size="sm"
                         onClick={() => setFortunesShown((prev) => prev + FORTUNES_PER_PAGE)}
                         className="text-muted-foreground"
-                        data-testid="button-load-more"
                       >
                         이전 운세 더 보기 ({pastFortunes.length - fortunesShown}개 남음)
                       </Button>
@@ -292,6 +296,7 @@ export default function Dashboard() {
             </motion.div>
           )}
 
+          {/* 2026년 총평 탭 */}
           {activeTab === "yearly" && (
             <motion.div
               key="yearly"
@@ -309,6 +314,7 @@ export default function Dashboard() {
             </motion.div>
           )}
 
+          {/* 사주 분석 탭 */}
           {activeTab === "saju" && (
             <motion.div
               key="saju"

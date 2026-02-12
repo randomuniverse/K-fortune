@@ -1,7 +1,7 @@
 import { type Fortune } from "@shared/schema";
 import { motion } from "framer-motion";
 import { format } from "date-fns";
-import { Calendar, ChevronDown, ChevronUp } from "lucide-react";
+import { Sparkles, Calendar, ChevronDown, ChevronUp } from "lucide-react";
 import { ko } from "date-fns/locale";
 import { useState } from "react";
 
@@ -10,10 +10,12 @@ interface FortuneCardProps {
   index: number;
 }
 
+// Telegram HTML 포맷을 깔끔한 텍스트로 변환
 function cleanTelegramContent(content: string): {
   title: string;
   sections: { label: string; text: string }[];
 } {
+  // HTML 태그 제거하고 구조화
   const clean = content
     .replace(/<b>/g, "")
     .replace(/<\/b>/g, "")
@@ -31,11 +33,13 @@ function cleanTelegramContent(content: string): {
   for (const line of lines) {
     const trimmed = line.trim();
 
+    // 제목줄
     if (trimmed.startsWith("[오늘의 운세]")) {
       title = trimmed.replace("[오늘의 운세] ", "");
       continue;
     }
 
+    // 섹션 헤더 (-- 로 시작)
     if (trimmed.startsWith("--")) {
       if (currentLabel && currentText.length > 0) {
         sections.push({ label: currentLabel, text: currentText.join("\n") });
@@ -45,15 +49,18 @@ function cleanTelegramContent(content: string): {
       continue;
     }
 
+    // 이름줄 스킵
     if (trimmed.includes("님") && trimmed.includes("(") && lines.indexOf(line) < 3) {
       continue;
     }
 
+    // 내용 수집
     if (currentLabel) {
       currentText.push(trimmed);
     }
   }
 
+  // 마지막 섹션 추가
   if (currentLabel && currentText.length > 0) {
     sections.push({ label: currentLabel, text: currentText.join("\n") });
   }
@@ -65,6 +72,7 @@ export function FortuneCard({ fortune, index }: FortuneCardProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const { title, sections } = cleanTelegramContent(fortune.content);
 
+  // fortuneData에서 점수 추출
   let score: number | null = null;
   if (fortune.fortuneData) {
     try {
@@ -92,12 +100,12 @@ export function FortuneCard({ fortune, index }: FortuneCardProps) {
       className="glass-panel rounded-xl relative group overflow-hidden mystical-border"
       data-testid={`card-fortune-${fortune.id}`}
     >
+      {/* 헤더 (항상 보임) */}
       <div
         className="p-5 cursor-pointer select-none"
         onClick={() => setIsExpanded(!isExpanded)}
-        data-testid={`button-fortune-toggle-${fortune.id}`}
       >
-        <div className="flex items-center justify-between flex-wrap gap-2">
+        <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Calendar className="w-4 h-4 text-primary shrink-0" />
             <span className="text-sm text-muted-foreground">
@@ -123,6 +131,7 @@ export function FortuneCard({ fortune, index }: FortuneCardProps) {
         </div>
       </div>
 
+      {/* 펼쳐진 내용 */}
       {isExpanded && (
         <motion.div
           initial={{ opacity: 0, height: 0 }}
