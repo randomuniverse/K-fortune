@@ -96,7 +96,12 @@ const BRANCHES_H = ["子", "丑", "寅", "卯", "辰", "巳", "午", "未", "申
 function parseJson<T>(raw: string, schema: z.ZodSchema<T>): T | null {
   try {
     const cleaned = raw.replace(/```json\s*/g, "").replace(/```/g, "").trim();
-    return schema.parse(JSON.parse(cleaned));
+    const parsed = JSON.parse(cleaned);
+    if (parsed.lucky_numbers && !parsed.luckyNumbers) {
+      parsed.luckyNumbers = parsed.lucky_numbers;
+      delete parsed.lucky_numbers;
+    }
+    return schema.parse(parsed);
   } catch { return null; }
 }
 
@@ -250,8 +255,13 @@ JSON 형식 응답:
 오늘 행성들이 내 별자리에 어떤 영향을 주는지 분석해줘.`;
 
   // 3. 수비학 프롬프트
-  const numerologySystemPrompt = `수비학 전문가로서 생명수(${lifePathNumber})와 오늘 날짜의 진동수를 분석하여 행운의 숫자(3개)와 메시지를 JSON으로 주세요.`;
-  const numerologyUserPrompt = `오늘 날짜: ${dateStr}, 생명수: ${lifePathNumber}. 행운의 숫자와 메시지 알려줘.`;
+  const numerologySystemPrompt = `수비학 전문가로서 생명수(${lifePathNumber})와 오늘 날짜의 진동수를 분석하여 행운의 숫자(3개)와 메시지를 JSON으로 주세요.
+이모지를 사용하지 말고, 반드시 아래 정확한 JSON 형식으로만 응답하세요:
+{
+  "luckyNumbers": [숫자1, 숫자2, 숫자3],
+  "message": "수비학 메시지 (2~3문장)"
+}`;
+  const numerologyUserPrompt = `오늘 날짜: ${dateStr}, 생명수: ${lifePathNumber}. 행운의 숫자와 메시지 알려줘. JSON으로만 응답해.`;
 
   // 병렬 API 호출
   const [sajuRes, zodiacRes, numRes] = await Promise.all([
@@ -265,7 +275,12 @@ JSON 형식 응답:
   const numData = parseJson(numRes, numSchema);
 
   if (!sajuData || !zodiacData || !numData) {
-    throw new Error("운세 데이터 파싱 실패");
+    const failures = [];
+    if (!sajuData) failures.push(`사주(raw: ${sajuRes.substring(0, 200)})`);
+    if (!zodiacData) failures.push(`별자리(raw: ${zodiacRes.substring(0, 200)})`);
+    if (!numData) failures.push(`수비학(raw: ${numRes.substring(0, 200)})`);
+    console.error("[FORTUNE] 파싱 실패 항목:", failures.join(" | "));
+    throw new Error("운세 데이터 파싱 실패: " + failures.map(f => f.split("(")[0]).join(", "));
   }
 
   // 4. [핵심] 교차 검증 및 종합 분석 (Synthesizer)
