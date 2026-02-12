@@ -38,6 +38,8 @@ export async function sendTelegramMessage(chatId: string, text: string): Promise
 export function formatFortuneForTelegram(data: FortuneData, userName: string, dateStr: string, zodiacSign: string): string {
   let coherenceEmoji = "🤔";
   let coherenceText = "복합적인 하루";
+  
+  // 점수 기준 세분화
   if (data.coherenceScore >= 85) {
     coherenceEmoji = "🌟";
     coherenceText = "운명적 일치 (강력 추천)";
@@ -59,7 +61,7 @@ ${data.coreMessage}
 <b>🔗 공통 키워드:</b> ${data.commonKeywords.join(", ")}
 
 <b>-- 종합 점수: ${data.combinedScore}점</b>
-  사주: ${data.sajuScore}점 | 별자리: ${data.zodiacScore}점
+  사주: ${data.sajuScore} | 별자리: ${data.zodiacScore}
 
 <b>-- 행운 가이드</b>
 방향: ${data.sajuDirection} | 숫자: ${data.luckyNumbers.join(", ")}
@@ -95,16 +97,10 @@ const BRANCHES_H = ["子", "丑", "寅", "卯", "辰", "巳", "午", "未", "申
 function parseJson<T>(raw: string, schema: z.ZodSchema<T>): T | null {
   try {
     const cleaned = raw.replace(/```json\s*/g, "").replace(/```/g, "").trim();
-    const parsed = JSON.parse(cleaned);
-    if (parsed.lucky_numbers && !parsed.luckyNumbers) {
-      parsed.luckyNumbers = parsed.lucky_numbers;
-      delete parsed.lucky_numbers;
-    }
-    return schema.parse(parsed);
+    return schema.parse(JSON.parse(cleaned));
   } catch { return null; }
 }
 
-// Zod 스키마 정의
 const sajuSchema = z.object({
   score: z.number().min(0).max(100),
   direction: z.string().min(1),
@@ -152,7 +148,7 @@ async function generateWithRetry(sys: string, usr: string, label: string): Promi
   return pRetry(
     async () => {
       const c = await openai.chat.completions.create({
-        model: "gpt-4o", temperature: 0.4, // 창의성보다는 분석력을 위해 온도를 약간 낮춤
+        model: "gpt-4o", temperature: 0.4,
         messages: [{ role: "system", content: sys }, { role: "user", content: usr }],
       });
       const content = c.choices[0].message.content || "";
@@ -227,7 +223,7 @@ JSON 형식 응답:
   const sajuUserPrompt = `오늘 날짜: ${dateStr}, 이름: ${user.name}
 내 사주 일주(${sajuChart.dayPillar.stemHanja}${sajuChart.dayPillar.branchHanja})와 오늘 일진(${todayStem}${todayBranch})의 관계를 분석해줘.`;
 
-  // 2. 별자리 프롬프트 (트랜짓 강조)
+  // 2. 별자리 프롬프트
   const zodiacSystemPrompt = `당신은 현대 심리 점성술과 고전 점성술에 능통한 전문가입니다.
 사용자의 태양 별자리와 오늘의 행성 배치(Transit)를 기반으로 운세를 분석하세요.
 
@@ -237,8 +233,7 @@ JSON 형식 응답:
 
 [분석 지침]
 1. 오늘 날짜(${dateStr}) 기준, ${zodiacInfo.rulingPlanet}이나 주요 행성(태양, 달, 화성, 목성, 토성)이 ${zodiacSign}에 미치는 영향(각도/Aspect)을 상상하여 분석하세요.
-2. 예: "화성이 긴장 각도를 맺어 다툼이 예상됨" 또는 "목성이 조화로워 금전운이 좋음".
-3. 구체적인 행성의 움직임을 언급하며 근거를 제시하세요.
+2. 구체적인 행성의 움직임을 언급하며 근거를 제시하세요.
 
 JSON 형식 응답:
 {
@@ -254,13 +249,8 @@ JSON 형식 응답:
 오늘 행성들이 내 별자리에 어떤 영향을 주는지 분석해줘.`;
 
   // 3. 수비학 프롬프트
-  const numerologySystemPrompt = `수비학 전문가로서 생명수(${lifePathNumber})와 오늘 날짜의 진동수를 분석하여 행운의 숫자(3개)와 메시지를 JSON으로 주세요.
-이모지를 사용하지 말고, 반드시 아래 정확한 JSON 형식으로만 응답하세요:
-{
-  "luckyNumbers": [숫자1, 숫자2, 숫자3],
-  "message": "수비학 메시지 (2~3문장)"
-}`;
-  const numerologyUserPrompt = `오늘 날짜: ${dateStr}, 생명수: ${lifePathNumber}. 행운의 숫자와 메시지 알려줘. JSON으로만 응답해.`;
+  const numerologySystemPrompt = `수비학 전문가로서 생명수(${lifePathNumber})와 오늘 날짜의 진동수를 분석하여 행운의 숫자(3개)와 메시지를 JSON으로 주세요.`;
+  const numerologyUserPrompt = `오늘 날짜: ${dateStr}, 생명수: ${lifePathNumber}. 행운의 숫자와 메시지 알려줘.`;
 
   // 병렬 API 호출
   const [sajuRes, zodiacRes, numRes] = await Promise.all([
@@ -274,15 +264,11 @@ JSON 형식 응답:
   const numData = parseJson(numRes, numSchema);
 
   if (!sajuData || !zodiacData || !numData) {
-    const failures = [];
-    if (!sajuData) failures.push(`사주(raw: ${sajuRes.substring(0, 200)})`);
-    if (!zodiacData) failures.push(`별자리(raw: ${zodiacRes.substring(0, 200)})`);
-    if (!numData) failures.push(`수비학(raw: ${numRes.substring(0, 200)})`);
-    console.error("[FORTUNE] 파싱 실패 항목:", failures.join(" | "));
-    throw new Error("운세 데이터 파싱 실패: " + failures.map(f => f.split("(")[0]).join(", "));
+    throw new Error("운세 데이터 파싱 실패");
   }
 
   // 4. [핵심] 3자 교차 검증 및 종합 분석 (Synthesizer)
+  // [변경점] 수비학 데이터까지 프롬프트에 포함하여 '3자 대면'을 시킴
   const synthesizePrompt = `당신은 '운명 데이터 융합 전문가'입니다.
 동양의 명리학(사주), 서양의 점성술(별자리), 그리고 수의 파동(수비학) 결과를 **교차 검증(Cross-Validation)**하여, 이 3가지 시스템이 **공통적으로 가리키는 진실**을 찾아내세요.
 
@@ -308,8 +294,6 @@ JSON 형식 응답:
 3. **핵심 메시지:** 3가지 운세가 만장일치로 합의한 '오늘의 가장 확실한 운명'을 한 문장으로 정의하세요.
 4. 만약 운세가 상충한다면, "사주와 별자리의 기운은 좋으나 수비학적으로는 신중함이 필요합니다" 처럼 구체적으로 서술하세요.
 
-중요: 각 원본 필드(sajuSummary, zodiacLove, numerologyMessage 등)는 위의 원본 내용을 그대로 가져와서 자연스럽게 다듬어 주세요. 특히 numerologyMessage는 위의 수비학 메시지 원본을 반드시 그대로 사용하세요.
-
 이모지를 사용하지 말고, 반드시 아래 JSON 형식으로 응답하세요:
 {
   "coherenceScore": 0~100 숫자,
@@ -323,7 +307,7 @@ JSON 형식 응답:
   "zodiacHealth": "별자리 원본 유지",
   "zodiacWork": "별자리 원본 유지",
   "zodiacSummary": "별자리 원본 요약 유지",
-  "numerologyMessage": "수비학 원본 메시지를 그대로 사용"
+  "numerologyMessage": "수비학 원본 유지"
 }`;
 
   const synthesisRaw = await generateWithRetry(
@@ -356,14 +340,12 @@ JSON 형식 응답:
     zodiacWork: synthesis.zodiacWork,
     zodiacSummary: synthesis.zodiacSummary,
     luckyNumbers: numData.luckyNumbers,
-    numerologyMessage: (synthesis.numerologyMessage && synthesis.numerologyMessage.length > 10 && !synthesis.numerologyMessage.includes("원본 유지"))
-      ? synthesis.numerologyMessage 
-      : numData.message,
+    numerologyMessage: synthesis.numerologyMessage,
     combinedScore: finalCombinedScore,
     coherenceScore: synthesis.coherenceScore,
     commonKeywords: synthesis.commonKeywords,
     coreMessage: synthesis.coreMessage,
-  };
+  } as any; 
 
   const displayContent = formatFortuneForTelegram(fortuneData, user.name, dateStr, zodiacSign);
 
