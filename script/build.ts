@@ -30,6 +30,8 @@ const allowlist = [
   "xlsx",
   "zod",
   "zod-validation-error",
+  "p-retry",
+  "p-limit",
 ];
 
 async function buildAll() {
@@ -52,6 +54,21 @@ async function buildAll() {
     bundle: true,
     format: "cjs",
     outfile: "dist/index.cjs",
+    define: {
+      "process.env.NODE_ENV": '"production"',
+    },
+    minify: true,
+    external: externals,
+    logLevel: "info",
+  });
+
+  console.log("building scheduler...");
+  await esbuild({
+    entryPoints: ["server/scheduler.ts"],
+    platform: "node",
+    bundle: true,
+    format: "cjs",
+    outfile: "dist/scheduler.cjs",
     define: {
       "process.env.NODE_ENV": '"production"',
     },
