@@ -4,7 +4,7 @@ import { storage } from "./storage";
 import { api, updateUserSchema } from "@shared/routes";
 import { z } from "zod";
 import { getZodiacInfo } from "@shared/schema";
-import { calculateFullSaju } from "@shared/saju";
+import { calculateFullSaju, analyzeSajuPersonality } from "@shared/saju";
 import { generateFortuneForUser, sendTelegramMessage } from "./fortune-engine";
 
 export async function registerRoutes(
@@ -172,8 +172,9 @@ export async function registerRoutes(
       }
       const gender = user.gender === "male" ? "male" : "female" as "male" | "female";
       const sajuChart = calculateFullSaju(user.birthDate, user.birthTime, gender);
+      const personality = analyzeSajuPersonality(sajuChart);
       const zodiacInfo = getZodiacInfo(user.birthDate);
-      res.json({ sajuChart, zodiacInfo });
+      res.json({ sajuChart, personality, zodiacInfo });
     } catch (error) {
       console.error("Error calculating saju:", error);
       res.status(500).json({ message: "사주 계산 중 오류가 발생했습니다." });
