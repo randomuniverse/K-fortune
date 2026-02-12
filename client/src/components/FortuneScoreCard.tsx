@@ -1,7 +1,8 @@
 import { motion } from "framer-motion";
-import { Compass, Hash, Heart, Wallet, Activity, Briefcase, Star } from "lucide-react";
+import { Compass, Hash, Heart, Wallet, Activity, Briefcase, Star, Link, Target } from "lucide-react";
 import type { FortuneData } from "@shared/schema";
 import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 
 interface Props {
   data: FortuneData;
@@ -95,6 +96,37 @@ export function FortuneScoreCard({ data, zodiacSign }: Props) {
             <MiniScore label="별자리" score={data.zodiacScore} />
           </div>
         </div>
+
+        {data.coherenceScore != null && (
+          <div className="mt-5 bg-white/[0.03] rounded-xl p-4 space-y-3">
+            <div className="flex items-center gap-2 mb-2">
+              <Target className="w-4 h-4 text-primary" />
+              <span className="text-xs font-serif text-primary">동서양 교차 검증</span>
+              <span className={`ml-auto text-sm font-bold ${
+                data.coherenceScore >= 80 ? "text-emerald-400" :
+                data.coherenceScore >= 60 ? "text-primary" :
+                "text-amber-400"
+              }`} data-testid="text-coherence-score">
+                일치도 {data.coherenceScore}%
+              </span>
+            </div>
+            {data.coreMessage && (
+              <p className="text-sm text-white/90 leading-relaxed font-medium" data-testid="text-core-message">
+                {data.coreMessage}
+              </p>
+            )}
+            {data.commonKeywords && data.commonKeywords.length > 0 && (
+              <div className="flex items-center gap-2 flex-wrap">
+                <Link className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+                {data.commonKeywords.map((kw, i) => (
+                  <Badge key={i} variant="secondary" className="text-xs" data-testid={`badge-keyword-${i}`}>
+                    {kw}
+                  </Badge>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
 
         <div className="grid grid-cols-2 gap-3 mt-6">
           <div className="bg-white/[0.03] rounded-xl p-4 flex items-center gap-3">

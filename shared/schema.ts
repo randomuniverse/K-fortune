@@ -124,4 +124,7 @@ export interface FortuneData {
   luckyNumbers: number[];
   numerologyMessage: string;
   combinedScore: number;
+  coherenceScore: number;
+  commonKeywords: string[];
+  coreMessage: string;
 }
