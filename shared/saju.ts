@@ -755,62 +755,110 @@ function detectSpecialSal(chart: SajuChart): SpecialSal[] {
   const dayBH = chart.dayPillar.branchHanja;
   const dayPillarStr = daySH + dayBH;
 
-  // 괴강살 (魁罡殺): 庚辰, 庚戌, 壬辰, 壬戌
-  const GWEGANG = ["庚辰", "庚戌", "壬辰", "壬戌"];
+  // 1. 괴강살 (魁罡殺)
+  const GWEGANG = ["庚辰", "庚戌", "壬辰", "壬戌", "戊戌"];
   if (GWEGANG.includes(dayPillarStr)) {
     const isGeum = daySH === "庚"; // 경금
     sals.push({
       name: "괴강살",
       hanja: "魁罡殺",
       description: isGeum
-        ? `${dayPillarStr} 일주의 괴강살입니다. 경금(庚金)의 강철 같은 기운에 괴강의 폭발적 에너지가 더해져, 평소에는 부드럽고 유연하지만 결정적인 위기 상황이나 목표 앞에서는 폭발적인 리더십과 카리스마가 튀어나오는 반전 매력의 소유자입니다.`
-        : `${dayPillarStr} 일주의 괴강살입니다. 임수(壬水)의 깊은 지혜에 괴강의 날카로운 판단력이 더해져, 결정적 순간에 누구도 예상 못한 대담한 결단을 내리는 전략가입니다.`,
+        ? `${dayPillarStr} 일주의 괴강살입니다. 평소에는 온화해 보이나, 결정적인 위기 상황이나 목표 앞에서는 폭발적인 리더십과 카리스마가 튀어나오는 '반전 매력'의 소유자입니다. 우두머리 기질이 있어 남 밑에 있기보다 주도적으로 일을 이끌어야 직성이 풀립니다.`
+        : `${dayPillarStr} 일주의 괴강살입니다. 깊은 지혜와 날카로운 판단력을 겸비했습니다. 위기 상황에서 누구도 예상 못한 대담한 결단을 내리는 전략가이며, 타인을 압도하는 강한 기운이 있습니다.`,
       personality: isGeum
         ? "겉은 온화하나 속은 강철 — 위기에 빛나는 리더"
         : "깊은 물속의 칼날 — 침착하지만 치명적인 전략가",
     });
   }
 
-  // 도화살 (桃花殺): 일지가 子/午/卯/酉
-  const DOHWA_BRANCHES = ["子", "午", "卯", "酉"];
-  if (DOHWA_BRANCHES.includes(dayBH)) {
+  // 2. 도화살 (桃花殺) - 년지 또는 일지 기준
+  const checkDohwa = (baseBranchIdx: number, targetBranchIdx: number) => {
+    const map: Record<number, number> = {};
+    [8, 0, 4].forEach(b => map[b] = 9); // 신자진 -> 유
+    [2, 6, 10].forEach(b => map[b] = 3); // 인오술 -> 묘
+    [5, 9, 1].forEach(b => map[b] = 6); // 사유축 -> 오
+    [11, 3, 7].forEach(b => map[b] = 0); // 해묘미 -> 자
+
+    return map[baseBranchIdx] === targetBranchIdx;
+  };
+
+  const branches = [
+    chart.yearPillar.branchIndex,
+    chart.monthPillar.branchIndex,
+    chart.dayPillar.branchIndex,
+    chart.hourPillar.branchIndex
+  ];
+
+  let hasDohwa = false;
+  for (let i = 0; i < 4; i++) {
+    if (i === 0) continue;
+    if (checkDohwa(branches[0], branches[i])) hasDohwa = true;
+  }
+  for (let i = 0; i < 4; i++) {
+    if (i === 2) continue;
+    if (checkDohwa(branches[2], branches[i])) hasDohwa = true;
+  }
+
+  if (hasDohwa) {
     sals.push({
       name: "도화살",
       hanja: "桃花殺",
-      description: "매력과 인기의 살입니다. 이성을 끌어당기는 자연스러운 매력이 있으며, 예술적 감각과 사교성이 뛰어납니다.",
-      personality: "타고난 매력 — 사람을 끌어당기는 자석",
+      description: "사람을 끌어당기는 강렬한 매력의 살입니다. 단순히 외모가 뛰어난 것을 넘어, 대중의 시선을 사로잡는 '끼'와 스타성이 있습니다. 연예, 예술, 방송 분야에서 두각을 나타냅니다.",
+      personality: "치명적인 매력 — 시선을 훔치는 스타성",
     });
   }
 
-  // 역마살 (驛馬殺): 일지 기준
-  const dayBI = chart.dayPillar.branchIndex;
-  const YEOKMA_MAP: Record<number, number[]> = {
-    0: [2], 1: [5], 2: [8], 3: [11], 4: [2], 5: [5],
-    6: [8], 7: [11], 8: [2], 9: [5], 10: [8], 11: [11],
+  // 3. 화개살 (華蓋殺) - 예술과 종교, 고독
+  const checkHwagae = (baseBranchIdx: number, targetBranchIdx: number) => {
+    const map: Record<number, number> = {};
+    [2, 6, 10].forEach(b => map[b] = 10); // 인오술 -> 술
+    [8, 0, 4].forEach(b => map[b] = 4);   // 신자진 -> 진
+    [5, 9, 1].forEach(b => map[b] = 1);   // 사유축 -> 축
+    [11, 3, 7].forEach(b => map[b] = 7);  // 해묘미 -> 미
+
+    return map[baseBranchIdx] === targetBranchIdx;
   };
-  const yeokmaTargets = YEOKMA_MAP[dayBI] || [];
-  const otherBranches = [chart.yearPillar.branchIndex, chart.monthPillar.branchIndex, chart.hourPillar.branchIndex];
-  if (otherBranches.some(b => yeokmaTargets.includes(b))) {
-    sals.push({
-      name: "역마살",
-      hanja: "驛馬殺",
-      description: "이동과 변화의 살입니다. 해외, 출장, 이사 등 움직임이 많으며 한 곳에 정착하기 어렵지만, 이동할수록 운이 열립니다.",
-      personality: "바람의 기질 — 움직일수록 운이 트이는 사람",
-    });
+
+  let hasHwagae = false;
+  for (let i = 0; i < 4; i++) {
+    if (checkHwagae(branches[0], branches[i])) hasHwagae = true;
+  }
+  for (let i = 0; i < 4; i++) {
+    if (checkHwagae(branches[2], branches[i])) hasHwagae = true;
   }
 
-  // 화개살 (華蓋殺): 일지 기준
-  const HWAGAE_MAP: Record<number, number> = {
-    0: 4, 1: 1, 2: 10, 3: 7, 4: 4, 5: 1,
-    6: 10, 7: 7, 8: 4, 9: 1, 10: 10, 11: 7,
-  };
-  const hwagaeTarget = HWAGAE_MAP[dayBI];
-  if (hwagaeTarget !== undefined && otherBranches.includes(hwagaeTarget)) {
+  if (hasHwagae) {
     sals.push({
       name: "화개살",
       hanja: "華蓋殺",
-      description: "예술과 영적 재능의 살입니다. 종교, 철학, 예술, 학문 등 정신적 분야에서 깊은 성취를 이루며, 고독 속에서 빛나는 천재성이 있습니다.",
-      personality: "고독한 천재 — 내면의 우주를 가진 사람",
+      description: "화려함을 덮고 내면을 들여다보는 '고독한 예술가'의 별입니다. 종교, 철학, 심리학, 예술(디자인) 분야에 탁월한 재능이 있으며, 내면의 세계가 깊고 복잡합니다. 과거를 복기하거나 정신적인 가치를 추구할 때 큰 성취를 이룹니다.",
+      personality: "고독한 천재 — 내면의 우주를 가진 예술가",
+    });
+  }
+
+  // 4. 역마살 (驛馬殺) - 이동과 변화
+  const checkYeokma = (baseBranchIdx: number, targetBranchIdx: number) => {
+    const map: Record<number, number> = {};
+    [2, 6, 10].forEach(b => map[b] = 8);  // 인오술 -> 신
+    [8, 0, 4].forEach(b => map[b] = 2);   // 신자진 -> 인
+    [5, 9, 1].forEach(b => map[b] = 11);  // 사유축 -> 해
+    [11, 3, 7].forEach(b => map[b] = 5);  // 해묘미 -> 사
+
+    return map[baseBranchIdx] === targetBranchIdx;
+  };
+
+  let hasYeokma = false;
+  for (let i = 0; i < 4; i++) {
+     if (i !== 0 && checkYeokma(branches[0], branches[i])) hasYeokma = true;
+     if (i !== 2 && checkYeokma(branches[2], branches[i])) hasYeokma = true;
+  }
+
+  if (hasYeokma) {
+    sals.push({
+      name: "역마살",
+      hanja: "驛馬殺",
+      description: "한곳에 머물지 못하고 끊임없이 움직이는 기운입니다. 이는 불안정이 아니라 '확장'을 의미합니다. 해외, 여행, 무역, 출장 등 활동 반경을 넓힐수록 운이 트이며, 변화 없는 삶에서는 답답함을 느낍니다.",
+      personality: "자유로운 영혼 — 움직여야 사는 개척자",
     });
   }
 
