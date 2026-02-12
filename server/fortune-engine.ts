@@ -176,8 +176,8 @@ export async function generateFortuneForUser(user: {
   const sajuChart = calculateFullSaju(user.birthDate, user.birthTime, gender);
 
   const todayJDN = getTodayJDN(koreaTime);
-  const todayStemIdx = ((todayJDN + 2) % 10 + 10) % 10;
-  const todayBranchIdx = ((todayJDN) % 12 + 12) % 12;
+  const todayStemIdx = ((todayJDN + 9) % 10 + 10) % 10;
+  const todayBranchIdx = ((todayJDN + 1) % 12 + 12) % 12;
   const todayStem = STEMS_H[todayStemIdx];
   const todayBranch = BRANCHES_H[todayBranchIdx];
 

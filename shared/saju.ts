@@ -237,8 +237,8 @@ export function calculateMonthPillar(year: number, month: number, day: number, y
 
 export function calculateDayPillar(year: number, month: number, day: number): Pillar {
   const jdn = getJDN(year, month, day);
-  const stemIdx = ((jdn + 2) % 10 + 10) % 10;
-  const branchIdx = ((jdn) % 12 + 12) % 12;
+  const stemIdx = ((jdn + 9) % 10 + 10) % 10;
+  const branchIdx = ((jdn + 1) % 12 + 12) % 12;
   return makePillar(stemIdx, branchIdx);
 }
 
