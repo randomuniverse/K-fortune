@@ -16,7 +16,7 @@ export interface GuardianReportData {
 }
 
 export function GuardianReport({ telegramId, userName }: { telegramId: string; userName: string }) {
-  const { data: report, isLoading } = useQuery<GuardianReportData>({
+  const { data: report, isLoading } = useQuery<GuardianReportData | null>({
     queryKey: ['/api/guardian-report', telegramId],
     queryFn: async () => {
       const res = await fetch(`/api/guardian-report/${telegramId}`);
@@ -28,20 +28,22 @@ export function GuardianReport({ telegramId, userName }: { telegramId: string; u
   });
 
   const generateReport = useMutation({
-    mutationFn: async (regenerate?: boolean) => {
-      const res = await apiRequest("POST", "/api/fortunes/guardian-report", { telegramId, regenerate: !!regenerate });
+    mutationFn: async (regenerate: boolean) => {
+      const res = await apiRequest("POST", "/api/fortunes/guardian-report", { telegramId, regenerate });
       return res.json();
     },
-    onSuccess: (data) => {
+    onSuccess: (data: GuardianReportData) => {
       queryClient.setQueryData(['/api/guardian-report', telegramId], data);
     },
   });
 
-  if (isLoading) {
+  if (isLoading || generateReport.isPending) {
     return (
       <Card className="bg-white/[0.03] border-white/10 p-8 text-center space-y-6" data-testid="guardian-report-loading">
         <Loader2 className="w-8 h-8 text-indigo-400 animate-spin mx-auto" />
-        <p className="text-sm text-white/60">저장된 가디언 리포트를 불러오는 중...</p>
+        <p className="text-sm text-white/60">
+          {generateReport.isPending ? "가디언이 당신의 운명 기록을 추적 중..." : "저장된 가디언 리포트를 불러오는 중..."}
+        </p>
       </Card>
     );
   }
@@ -62,16 +64,12 @@ export function GuardianReport({ telegramId, userName }: { telegramId: string; u
         <Button
           size="lg"
           variant="mystical"
-          onClick={() => generateReport.mutate()}
+          onClick={() => generateReport.mutate(false)}
           disabled={generateReport.isPending}
           className="min-w-[200px]"
           data-testid="button-generate-guardian"
         >
-          {generateReport.isPending ? (
-            <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> 가디언이 당신의 기록을 추적 중...</>
-          ) : (
-            <><BrainCircuit className="mr-2 h-4 w-4" /> 가디언 리포트 확인하기</>
-          )}
+          <BrainCircuit className="mr-2 h-4 w-4" /> 가디언 리포트 확인하기
         </Button>
       </Card>
     );
@@ -164,19 +162,12 @@ export function GuardianReport({ telegramId, userName }: { telegramId: string; u
         </p>
         <Button
           variant="mystical"
-          onClick={() => {
-            queryClient.setQueryData(['/api/guardian-report', telegramId], null);
-            generateReport.mutate(true);
-          }}
+          onClick={() => generateReport.mutate(true)}
           disabled={generateReport.isPending}
           className="min-w-[200px]"
           data-testid="button-regenerate-guardian"
         >
-          {generateReport.isPending ? (
-            <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> 새로운 리포트 생성 중...</>
-          ) : (
-            <><BrainCircuit className="mr-2 h-4 w-4" /> 리포트 다시 생성하기</>
-          )}
+          <BrainCircuit className="mr-2 h-4 w-4" /> 리포트 다시 생성하기
         </Button>
       </div>
     </motion.div>
