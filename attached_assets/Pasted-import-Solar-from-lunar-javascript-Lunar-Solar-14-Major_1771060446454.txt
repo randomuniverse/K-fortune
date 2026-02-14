@@ -1,7 +1,7 @@
-// @ts-ignore
-import { Solar } from 'lunar-javascript';
+import { Solar } from 'lunar-javascript'; // Lunar 대신 Solar를 먼저 불러옵니다
 
-const MAJOR_STARS: Record<string, { name: string; desc: string }> = {
+// 14주성 (Major Stars) 데이터
+const MAJOR_STARS = {
   "자미": { name: "자미성", desc: "제왕의 별. 리더십, 존엄, 주관이 뚜렷함." },
   "천기": { name: "천기성", desc: "지혜의 별. 두뇌회전, 기획, 참모 역할." },
   "태양": { name: "태양성", desc: "광명의 별. 공명정대, 봉사, 명예 추구." },
@@ -19,29 +19,34 @@ const MAJOR_STARS: Record<string, { name: string; desc: string }> = {
 };
 
 export interface ZiWeiResult {
-  lifePalace: string;
-  stars: { name: string; desc: string }[];
-  interpretation: string;
+  lifePalace: string; // 명궁 지지 (자~해)
+  stars: { name: string; description: string }[]; // 명궁에 있는 주성들
+  interpretation: string; // 간단 해석
 }
 
+// 명궁 위치 계산
 function getLifePalaceIndex(lunarMonth: number, birthHourBranchIdx: number): number {
+  // 공식: 인(寅)궁에서 시작, 월수만큼 순행, 시수만큼 역행
+  // 인궁은 인덱스 2
   let idx = 2 + (lunarMonth - 1) - (birthHourBranchIdx);
   return ((idx % 12) + 12) % 12;
 }
 
+// 오행국(수2, 목3, 금4, 토5, 화6) 계산 - 납음오행 약식 로직
 function getElementSubject(yearStemIdx: number, lifePalaceBranchIdx: number): number {
   const startStem = [2, 4, 6, 8, 0][yearStemIdx % 5]; 
   
+  // 인궁(2)부터 명궁까지의 거리
   const dist = ((lifePalaceBranchIdx - 2) + 12) % 12;
   const lifeStem = (startStem + dist) % 10;
   
   const pattern = [
-    [4, 3, 2, 5, 6],
-    [6, 5, 4, 3, 2],
-    [2, 6, 5, 4, 3],
-    [3, 2, 6, 5, 4],
-    [4, 3, 2, 5, 6],
-    [6, 5, 4, 3, 2]
+    [4, 3, 2, 5, 6], // 자축 (해중금, ...)
+    [6, 5, 4, 3, 2], // 인묘
+    [2, 6, 5, 4, 3], // 진사
+    [3, 2, 6, 5, 4], // 오미
+    [4, 3, 2, 5, 6], // 신유
+    [6, 5, 4, 3, 2]  // 술해
   ];
   
   const pairIdx = Math.floor(lifePalaceBranchIdx / 2);
@@ -51,50 +56,64 @@ function getElementSubject(yearStemIdx: number, lifePalaceBranchIdx: number): nu
 }
 
 export function calculateZiWei(birthYear: number, birthMonth: number, birthDay: number, birthHour: number, gender: "male" | "female"): ZiWeiResult {
+  // [수정된 부분] 1. 양력(Solar) -> 음력(Lunar) 변환 로직 수정
+  // 기존 코드: Lunar.fromSolar(...) -> 존재하지 않는 함수라 에러 발생
+  // 수정 코드: Solar.fromYmd(...).getLunar() -> 정석 방법
   const solarObj = Solar.fromYmd(birthYear, birthMonth, birthDay);
   const lunarObj = solarObj.getLunar();
   
-  const lunarMonth = Math.abs(lunarObj.getMonth());
+  const lunarMonth = Math.abs(lunarObj.getMonth()); // 윤달(음수)일 경우 절대값 처리
   const lunarDay = lunarObj.getDay();
   
+  // 2. 생시 지지 인덱스 (0:자 ~ 11:해)
   let hourIdx = 0;
   if (birthHour >= 23 || birthHour < 1) hourIdx = 0;
   else hourIdx = Math.floor((birthHour + 1) / 2);
 
+  // 3. 명궁 위치
   const lifeIdx = getLifePalaceIndex(lunarMonth, hourIdx);
   const branches = ["자", "축", "인", "묘", "진", "사", "오", "미", "신", "유", "술", "해"];
 
+  // 4. 자미성 위치 찾기 (국수와 음력일 기반)
   const yearStemIdx = (birthYear - 4) % 10;
-  const guk = getElementSubject(yearStemIdx, lifeIdx);
+  const guk = getElementSubject(yearStemIdx, lifeIdx); // 2~6
   
+  // 자미성 위치 공식 (일수 / 국수)
   let ziWeiPos = 0;
   if (lunarDay % guk === 0) {
-    ziWeiPos = (lunarDay / guk) + 1;
+    ziWeiPos = (lunarDay / guk) + 1; // 인궁 기준 오프셋
   } else {
     const remainder = lunarDay % guk;
     const quotient = Math.floor(lunarDay / guk);
     const adjust = (guk - remainder);
-    if (adjust % 2 === 1) {
-       ziWeiPos = quotient + 1 + adjust + 1;
+    if (adjust % 2 === 1) { // 홀수면
+       ziWeiPos = quotient + 1 + adjust + 1; // 변형 공식 적용
     } else {
        ziWeiPos = quotient + 1 - adjust + 1;
     }
-    ziWeiPos = ((Math.floor(lunarDay / guk) + 1) + 2) % 12;
+    // 약식 보정
+    ziWeiPos = ((Math.floor(lunarDay / guk) + 1) + 2) % 12; // 인궁(2) 기준 시작
   }
   
+  // 자미성 인덱스 (0~11)
   const ziWeiIdx = ((ziWeiPos - 1) % 12 + 12) % 12;
 
+  // 5. 천부성 위치 (인신궁 축으로 대칭)
+  // 인(2) <-> 신(8), 묘(3) <-> 유(9)...
   const tianFuIdx = (12 - ziWeiIdx + 4) % 12;
 
-  const starsInLifePalace: { name: string; desc: string }[] = [];
+  // 6. 14주성 배치 (자미계, 천부계)
+  const starsInLifePalace: { name: string; description: string }[] = [];
 
   const checkStar = (baseIdx: number, offset: number, name: string) => {
     const targetIdx = ((baseIdx + offset) % 12 + 12) % 12;
     if (targetIdx === lifeIdx) {
+       // @ts-ignore
        starsInLifePalace.push(MAJOR_STARS[name]);
     }
   };
 
+  // 자미계 배치
   checkStar(ziWeiIdx, 0, "자미");
   checkStar(ziWeiIdx, -1, "천기");
   checkStar(ziWeiIdx, -3, "태양");
@@ -102,6 +121,7 @@ export function calculateZiWei(birthYear: number, birthMonth: number, birthDay: 
   checkStar(ziWeiIdx, -5, "천동");
   checkStar(ziWeiIdx, -8, "염정");
 
+  // 천부계 배치
   checkStar(tianFuIdx, 0, "천부");
   checkStar(tianFuIdx, 1, "태음");
   checkStar(tianFuIdx, 2, "탐랑");
@@ -119,6 +139,7 @@ export function calculateZiWei(birthYear: number, birthMonth: number, birthDay: 
        interpretation += ` 또한 ${starsInLifePalace[1].name}의 영향으로 ${starsInLifePalace[1].desc.split('.')[1]}`;
     }
   } else {
+    // 명궁에 정성이 없는 경우 (명무정성)
     interpretation = "명궁에 주성이 없는 '명무정성' 격입니다. 주변 환경에 잘 맞추고 유연한 성품을 지녔으며, 대인관계가 운명을 좌우합니다.";
   }
 
