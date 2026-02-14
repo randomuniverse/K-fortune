@@ -1,5 +1,5 @@
 import { db } from "./db";
-import { users, fortunes, type User, type InsertUser, type Fortune, type InsertFortune } from "@shared/schema";
+import { users, fortunes, guardianReports, type User, type InsertUser, type Fortune, type InsertFortune, type GuardianReportType, type InsertGuardianReport } from "@shared/schema";
 import { eq, desc, and, gte } from "drizzle-orm";
 
 export interface IStorage {
@@ -11,6 +11,8 @@ export interface IStorage {
   getUser(id: number): Promise<User | undefined>;
   getTodayFortuneByUserId(userId: number): Promise<Fortune | undefined>;
   getAllUsers(): Promise<User[]>;
+  createGuardianReport(report: InsertGuardianReport): Promise<GuardianReportType>;
+  getGuardianReportByUserId(userId: number): Promise<GuardianReportType | undefined>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -72,6 +74,21 @@ export class DatabaseStorage implements IStorage {
       .orderBy(desc(fortunes.createdAt))
       .limit(1);
     return fortune;
+  }
+
+  async createGuardianReport(report: InsertGuardianReport): Promise<GuardianReportType> {
+    const [newReport] = await db.insert(guardianReports).values(report).returning();
+    return newReport;
+  }
+
+  async getGuardianReportByUserId(userId: number): Promise<GuardianReportType | undefined> {
+    const [report] = await db
+      .select()
+      .from(guardianReports)
+      .where(eq(guardianReports.userId, userId))
+      .orderBy(desc(guardianReports.createdAt))
+      .limit(1);
+    return report;
   }
 }
 
