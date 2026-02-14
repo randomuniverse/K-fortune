@@ -1,4 +1,4 @@
-import { pgTable, text, serial, timestamp, boolean } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, timestamp, boolean } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -128,3 +128,30 @@ export interface FortuneData {
   commonKeywords: string[];
   coreMessage: string;
 }
+
+export const guardianReports = pgTable("guardian_reports", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull(),
+  coreEnergy: text("core_energy").notNull(),
+  coherenceScore: integer("coherence_score").notNull(),
+  keywords: text("keywords").array(),
+  pastInference: text("past_inference"),
+  currentState: text("current_state").notNull(),
+  bottleneck: text("bottleneck").notNull(),
+  solution: text("solution").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const insertGuardianReportSchema = createInsertSchema(guardianReports).pick({
+  userId: true,
+  coreEnergy: true,
+  coherenceScore: true,
+  keywords: true,
+  pastInference: true,
+  currentState: true,
+  bottleneck: true,
+  solution: true,
+});
+
+export type GuardianReportType = typeof guardianReports.$inferSelect;
+export type InsertGuardianReport = z.infer<typeof insertGuardianReportSchema>;
