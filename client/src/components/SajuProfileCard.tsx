@@ -164,6 +164,12 @@ function ZiWeiCard({ birthDate, birthTime, gender = "male" }: { birthDate: strin
           <span className="text-sm font-bold text-purple-300">명궁(命宮)의 주인</span>
         </div>
         
+        <div className="bg-black/20 rounded-lg p-3 mb-4">
+          <p className="text-xs text-purple-300/70 font-medium mb-1">오행국 (멘탈 타입)</p>
+          <p className="text-sm font-bold text-white mb-1">{ziwei.bureau.name}</p>
+          <p className="text-xs text-white/70 leading-relaxed">{ziwei.bureau.desc}</p>
+        </div>
+
         {ziwei.stars.length > 0 ? (
           <div className="space-y-5">
             {ziwei.stars.map((star, i) => (
@@ -186,11 +192,16 @@ function ZiWeiCard({ birthDate, birthTime, gender = "male" }: { birthDate: strin
                   </div>
                   
                   <div className="pt-3 border-t border-white/5">
+                    <p className="text-xs text-purple-300/70 font-medium mb-1">재물 스타일</p>
+                    <p className="text-xs text-white/70 leading-relaxed">{star.wealthStyle}</p>
+                  </div>
+
+                  <div className="pt-3 border-t border-white/5">
                     <div className="flex items-start gap-2">
                       <Briefcase className="w-3.5 h-3.5 text-purple-400 mt-0.5 shrink-0" />
                       <div>
-                        <p className="text-xs text-purple-300/70 font-medium mb-0.5">추천 직업 & 분야</p>
-                        <p className="text-xs text-white/70 leading-relaxed">{star.job}</p>
+                        <p className="text-xs text-purple-300/70 font-medium mb-0.5">일하는 방식 & 추천 분야</p>
+                        <p className="text-xs text-white/70 leading-relaxed">{star.careerStyle}</p>
                       </div>
                     </div>
                   </div>
