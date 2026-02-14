@@ -9,6 +9,7 @@ import type { SajuPersonality, SpecialSal, StructurePattern, YongShinRemedy } fr
 import { SajuInfoCard } from "./SajuInfoCard";
 import { ZodiacInfoCard } from "./ZodiacInfoCard";
 
+// 공통 Props 정의
 interface Props {
   chart: SajuChart;
   zodiacInfo: ZodiacInfo;
@@ -18,6 +19,7 @@ interface Props {
   gender?: string;
 }
 
+// 아이콘 및 스타일 매핑 (사주용)
 const ELEMENT_ICONS: Record<string, typeof Flame> = {
   "화": Flame, "수": Droplets, "토": Mountain, "목": Wind, "금": Gem,
 };
@@ -32,6 +34,7 @@ const ELEMENT_BG: Record<string, string> = {
   "금": "bg-slate-400/10 border-slate-400/20",
 };
 
+// 공통 섹션 래퍼
 function Section({ icon: Icon, title, children, delay = 0 }: { icon: any; title: string; children: React.ReactNode; delay?: number }) {
   return (
     <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay, duration: 0.4 }}>
@@ -46,6 +49,9 @@ function Section({ icon: Icon, title, children, delay = 0 }: { icon: any; title:
   );
 }
 
+// ------------------------------------------------------------------
+// [Component 1] 사주 심층 분석 (SajuDeepAnalysis)
+// ------------------------------------------------------------------
 export function SajuDeepAnalysis({ chart, birthDate, birthTime, userName }: Props) {
   const personality = analyzeSajuPersonality(chart);
   const dayElement = ["목", "화", "토", "금", "수"][[0, 0, 1, 1, 2, 2, 3, 3, 4, 4][chart.dayPillar.stemIndex]];
@@ -55,8 +61,10 @@ export function SajuDeepAnalysis({ chart, birthDate, birthTime, userName }: Prop
 
   return (
     <div className="space-y-4">
+      {/* 1. 사주팔자 도표 (가장 위로 이동됨) */}
       <SajuInfoCard chart={chart} birthDate={birthDate} birthTime={birthTime} userName={userName} />
 
+      {/* 2. 일간 본성 */}
       <Section icon={User} title="일간(日干)으로 본 나의 본성" delay={0.1}>
         <div className={`rounded-xl p-4 border ${elBg}`}>
           <div className="flex items-center gap-3 mb-2">
@@ -71,6 +79,7 @@ export function SajuDeepAnalysis({ chart, birthDate, birthTime, userName }: Prop
         <p className="text-sm text-white/70 leading-relaxed">{personality.dayMasterDescription}</p>
       </Section>
 
+      {/* 3. 특수살 */}
       {personality.specialSals.length > 0 && (
         <Section icon={Zap} title="특수살(特殊煞) - 숨겨진 힘" delay={0.15}>
           <div className="space-y-3">
@@ -88,6 +97,7 @@ export function SajuDeepAnalysis({ chart, birthDate, birthTime, userName }: Prop
         </Section>
       )}
 
+      {/* 4. 재능과 구조 */}
       <Section icon={Sparkles} title="하늘이 부여한 재능 & 구조" delay={0.2}>
         <p className="text-sm text-white/80 leading-relaxed mb-3">{personality.heavenlyGift}</p>
         <div className="bg-white/[0.03] rounded-lg p-3 mb-4">
@@ -106,6 +116,7 @@ export function SajuDeepAnalysis({ chart, birthDate, birthTime, userName }: Prop
         ))}
       </Section>
 
+      {/* 5. 용신과 개운법 */}
       <Section icon={Shield} title="용신(用神)과 개운법" delay={0.25}>
         <div className="grid grid-cols-2 gap-3 mb-3">
           <div className={`rounded-lg p-3 border ${ELEMENT_BG[chart.yongShin.element] || "bg-white/5 border-white/10"}`}>
@@ -121,6 +132,7 @@ export function SajuDeepAnalysis({ chart, birthDate, birthTime, userName }: Prop
         </div>
         <p className="text-xs text-white/60 leading-relaxed mb-3">{chart.yongShin.reason}</p>
         
+        {/* 개운법 상세 정보 (아이콘 그리드) */}
         <div className="space-y-2">
           <div className="grid grid-cols-2 gap-2">
             <div className="bg-white/[0.03] rounded p-2 text-xs text-white/70"><span className="text-primary/70 mr-1">시간:</span> {personality.yongShinRemedy.luckyTime}</div>
@@ -140,6 +152,9 @@ export function SajuDeepAnalysis({ chart, birthDate, birthTime, userName }: Prop
   );
 }
 
+// ------------------------------------------------------------------
+// [Component 2] 자미두수 분석 (ZiweiDeepAnalysis)
+// ------------------------------------------------------------------
 export function ZiweiDeepAnalysis({ chart, birthDate, birthTime, gender = "male" }: Props) {
   const [year, month, day] = birthDate.split('-').map(Number);
   const hour = parseInt(birthTime.split(':')[0]);
@@ -148,6 +163,7 @@ export function ZiweiDeepAnalysis({ chart, birthDate, birthTime, gender = "male"
   const ziwei = calculateZiWei(year, month, day, hour, safeGender);
   const destinyInsight = generateDestinyInsight(ziwei, chart);
 
+  // 별 카드 렌더링 헬퍼 함수
   const renderStars = (stars: any[], title: string, icon: any, colorClass: string, context: "personality" | "loveStyle" | "wealthStyle" | "socialStyle") => (
     <div className={`bg-gradient-to-r ${colorClass} border border-white/5 rounded-xl p-5 mb-4`}>
       <div className="flex items-center gap-2 mb-3">
@@ -158,7 +174,7 @@ export function ZiweiDeepAnalysis({ chart, birthDate, birthTime, gender = "male"
         <div className="space-y-4">
           {stars.map((star: any, i: number) => (
             <div key={i} className="relative">
-              <div className="flex flex-wrap items-center gap-2 mb-2">
+              <div className="flex items-center gap-2 mb-2">
                 <span className="text-base font-bold text-white">{star.name.split('(')[0]}</span>
                 <span className="text-[10px] px-1.5 py-0.5 rounded bg-white/10 text-white/70">{star.keyword}</span>
               </div>
@@ -176,6 +192,7 @@ export function ZiweiDeepAnalysis({ chart, birthDate, birthTime, gender = "male"
 
   return (
     <div className="space-y-4">
+      {/* 1. 통합 인사이트 (사주 X 자미두수) */}
       <Section icon={Lightbulb} title="운명적 통찰 (Insight)" delay={0}>
         <div className="bg-gradient-to-br from-indigo-500/20 via-purple-500/20 to-pink-500/20 border border-white/10 rounded-xl p-5">
           <p className="text-sm text-white/90 leading-loose whitespace-pre-line font-medium">
@@ -184,6 +201,7 @@ export function ZiweiDeepAnalysis({ chart, birthDate, birthTime, gender = "male"
         </div>
       </Section>
 
+      {/* 2. 멘탈 그릇 (국) */}
       <div className="bg-white/[0.03] border border-white/10 rounded-xl p-4 flex items-start gap-3">
         <Compass className="w-5 h-5 text-indigo-400 mt-0.5 shrink-0" />
         <div>
@@ -192,6 +210,7 @@ export function ZiweiDeepAnalysis({ chart, birthDate, birthTime, gender = "male"
         </div>
       </div>
 
+      {/* 3. 4대 궁 분석 */}
       <Section icon={Star} title="자미두수 4대 핵심 궁(宮)" delay={0.1}>
         {renderStars(ziwei.stars.life, "명궁(命宮) - 나의 본질", <User className="w-4 h-4 text-purple-400"/>, "from-purple-900/30 to-indigo-900/30", "personality")}
         {renderStars(ziwei.stars.spouse, "부부궁(夫婦宮) - 연애와 배우자", <Heart className="w-4 h-4 text-pink-400"/>, "from-pink-900/30 to-rose-900/30", "loveStyle")}
@@ -202,11 +221,16 @@ export function ZiweiDeepAnalysis({ chart, birthDate, birthTime, gender = "male"
   );
 }
 
+// ------------------------------------------------------------------
+// [Component 3] 별자리 정보 (ZodiacDeepAnalysis)
+// ------------------------------------------------------------------
 export function ZodiacDeepAnalysis({ zodiacInfo }: Props) {
   return (
     <div className="space-y-4">
+      {/* 기존 ZodiacInfoCard를 그대로 활용하되 상단에 배치 */}
       <ZodiacInfoCard info={zodiacInfo} />
       
+      {/* 추가적인 별자리 관련 정보가 있다면 여기에 확장 가능 */}
       <div className="bg-white/[0.03] border border-white/10 rounded-xl p-5 text-center">
         <p className="text-xs text-muted-foreground">
           별자리는 당신이 태어난 순간 태양의 위치를 기준으로 합니다. <br/>
@@ -217,6 +241,11 @@ export function ZodiacDeepAnalysis({ zodiacInfo }: Props) {
   );
 }
 
+// ------------------------------------------------------------------
+// [Default Export] 하위 호환성 유지용 (Step 3 적용 전까지 에러 방지)
+// ------------------------------------------------------------------
 export function SajuProfileCard(props: Props) {
+  // Step 3가 완료되기 전까지는 임시로 '사주 심층 분석'만 보여주거나
+  // 혹은 3개를 모두 세로로 나열해서 보여줍니다. (여기선 사주만 보여줌)
   return <SajuDeepAnalysis {...props} />;
 }
