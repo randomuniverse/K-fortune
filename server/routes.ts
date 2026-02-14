@@ -3,9 +3,10 @@ import type { Server } from "http";
 import { storage } from "./storage";
 import { api, updateUserSchema } from "@shared/routes";
 import { z } from "zod";
-import { getZodiacInfo } from "@shared/schema";
+import { getZodiacInfo, getZodiacSign } from "@shared/schema";
 import { calculateFullSaju, analyzeSajuPersonality } from "@shared/saju";
-import { generateFortuneForUser, sendTelegramMessage } from "./fortune-engine";
+import { calculateZiWei } from "@shared/ziwei";
+import { generateFortuneForUser, sendTelegramMessage, generateGuardianReport } from "./fortune-engine";
 
 export async function registerRoutes(
   httpServer: Server,
@@ -161,6 +162,38 @@ export async function registerRoutes(
     } catch (err) {
       console.error("[TELEGRAM WEBHOOK] Error:", err);
       res.json({ ok: true });
+    }
+  });
+
+  app.post("/api/fortunes/guardian-report", async (req, res) => {
+    try {
+      const { telegramId } = req.body;
+      const user = await storage.getUserByTelegramId(telegramId);
+      if (!user) return res.status(404).json({ message: "User not found" });
+
+      const gender = user.gender === "male" ? "male" : "female" as "male" | "female";
+      const sajuChart = calculateFullSaju(user.birthDate, user.birthTime, gender);
+      const sajuPersonality = analyzeSajuPersonality(sajuChart);
+
+      const safeGender = (user.gender === "female" || user.gender === "여" || user.gender === "woman") ? "female" : "male";
+      const [year, month, day] = user.birthDate.split('-').map(Number);
+      const hour = parseInt(user.birthTime.split(':')[0]);
+      const ziweiResult = calculateZiWei(year, month, day, hour, safeGender);
+
+      const zodiacInfo = getZodiacInfo(user.birthDate);
+      const zodiacSign = getZodiacSign(user.birthDate);
+
+      const report = await generateGuardianReport({
+        name: user.name,
+        saju: sajuPersonality,
+        ziwei: ziweiResult,
+        zodiac: { sign: zodiacSign, info: zodiacInfo }
+      });
+
+      res.json(report);
+    } catch (error) {
+      console.error("Guardian report generation error:", error);
+      res.status(500).json({ message: "Failed to generate guardian report" });
     }
   });
 

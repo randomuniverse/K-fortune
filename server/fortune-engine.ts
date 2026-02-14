@@ -369,3 +369,103 @@ JSON 형식 응답:
 
   return { fortuneData, displayContent };
 }
+
+// ================================================================
+// 가디언 리포트 (운명 종합 분석) 생성
+// ================================================================
+import type { ZiWeiResult } from "@shared/ziwei";
+import type { SajuPersonality } from "@shared/saju";
+import type { ZodiacInfo } from "@shared/schema";
+
+interface GuardianReportInput {
+  name: string;
+  saju: SajuPersonality;
+  ziwei: ZiWeiResult;
+  zodiac: { sign: string; info: ZodiacInfo };
+}
+
+export interface GuardianReport {
+  archetype: string;
+  archetypeTitle: string;
+  coreMessage: string;
+  strengths: string[];
+  bottlenecks: string[];
+  advice: string[];
+  crossValidation: {
+    sajuKeywords: string[];
+    ziweiKeywords: string[];
+    zodiacKeywords: string[];
+    commonKeywords: string[];
+    coherenceScore: number;
+  };
+}
+
+export async function generateGuardianReport(input: GuardianReportInput): Promise<GuardianReport> {
+  const { name, saju, ziwei, zodiac } = input;
+
+  const lifeStars = ziwei.stars.life.map(s => s.name).join(", ") || "명무정성";
+  const spouseStars = ziwei.stars.spouse.map(s => s.name).join(", ") || "없음";
+  const wealthStars = ziwei.stars.wealth.map(s => s.name).join(", ") || "없음";
+  const travelStars = ziwei.stars.travel.map(s => s.name).join(", ") || "없음";
+  const specialSals = saju.specialSals.map(s => `${s.name}(${s.hanja})`).join(", ") || "없음";
+  const structures = saju.structurePatterns.map(p => `${p.name}(${p.hanja})`).join(", ") || "없음";
+
+  const prompt = `당신은 동양 명리학(사주팔자), 자미두수, 서양 점성술(별자리)을 통합 분석하는 최고 전문가입니다.
+아래 사용자의 운명 데이터를 보고 3가지 체계가 공통적으로 가리키는 핵심 패턴을 도출하세요.
+
+[사용자: ${name}]
+
+[사주팔자 데이터]
+- 일간 성향: ${saju.mainTrait}
+- 일간 성격: ${saju.elementPersonality}
+- 특수살: ${specialSals}
+- 구조 패턴: ${structures}
+- 재능: ${saju.talent}
+- 약점: ${saju.weakPoint}
+
+[자미두수 데이터]
+- 오행국: ${ziwei.bureau.name}
+- 명궁 주성: ${lifeStars}
+- 부부궁 주성: ${spouseStars}
+- 재백궁 주성: ${wealthStars}
+- 천이궁 주성: ${travelStars}
+
+[별자리 데이터]
+- 별자리: ${zodiac.sign}
+- 원소: ${zodiac.info.element}
+- 지배 행성: ${zodiac.info.rulingPlanet}
+- 특성: ${zodiac.info.traits.join(", ")}
+
+반드시 아래 JSON 형식으로만 응답하세요:
+{
+  "archetype": "운명 유형 이름 (영어, 예: The Revolutionary)",
+  "archetypeTitle": "운명 유형 한국어 이름 (예: 기존 틀을 깨는 혁명가)",
+  "coreMessage": "사주/자미두수/별자리 3자 교차 검증 결과, 이 사람의 핵심 운명 메시지 (3-4문장, 한국어)",
+  "strengths": ["강점1", "강점2", "강점3"],
+  "bottlenecks": ["병목1: 설명", "병목2: 설명", "병목3: 설명"],
+  "advice": ["조언1", "조언2", "조언3"],
+  "crossValidation": {
+    "sajuKeywords": ["사주에서 도출된 키워드1", "키워드2", "키워드3"],
+    "ziweiKeywords": ["자미두수에서 도출된 키워드1", "키워드2", "키워드3"],
+    "zodiacKeywords": ["별자리에서 도출된 키워드1", "키워드2", "키워드3"],
+    "commonKeywords": ["3개 체계에서 공통으로 발견된 키워드1", "키워드2"],
+    "coherenceScore": 85
+  }
+}`;
+
+  const result = await pRetry(async () => {
+    const response = await openai.chat.completions.create({
+      model: "gpt-4o",
+      messages: [{ role: "user", content: prompt }],
+      response_format: { type: "json_object" },
+      temperature: 0.7,
+      max_tokens: 1500,
+    });
+
+    const content = response.choices[0]?.message?.content;
+    if (!content) throw new Error("Empty GPT response for guardian report");
+    return JSON.parse(content) as GuardianReport;
+  }, { retries: 2 });
+
+  return result;
+}
