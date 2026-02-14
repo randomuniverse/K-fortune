@@ -1,7 +1,7 @@
-// @ts-ignore
 import { Solar } from 'lunar-javascript';
 
-const MAJOR_STARS: Record<string, { name: string; keyword: string; desc: string; personality: string; job: string }> = {
+// 14주성 상세 데이터 (Rich Content)
+const MAJOR_STARS = {
   "자미": {
     name: "자미성 (The Emperor)",
     keyword: "제왕, 리더십, 존엄",
@@ -104,9 +104,11 @@ const MAJOR_STARS: Record<string, { name: string; keyword: string; desc: string;
 
 export interface ZiWeiResult {
   lifePalace: string;
-  stars: { name: string; keyword: string; desc: string; personality: string; job: string }[];
+  stars: { name: string; keyword: string; desc: string; personality: string; job: string }[]; // 필드 추가됨
   interpretation: string;
 }
+
+// ... (아래 함수들은 이전과 동일하지만, calculateZiWei 반환값 구성이 바뀝니다)
 
 function getLifePalaceIndex(lunarMonth: number, birthHourBranchIdx: number): number {
   let idx = 2 + (lunarMonth - 1) - (birthHourBranchIdx);
@@ -128,6 +130,7 @@ function getElementSubject(yearStemIdx: number, lifePalaceBranchIdx: number): nu
 }
 
 export function calculateZiWei(birthYear: number, birthMonth: number, birthDay: number, birthHour: number, gender: "male" | "female"): ZiWeiResult {
+  // Solar -> Lunar 변환 (수정된 로직 유지)
   const solarObj = Solar.fromYmd(birthYear, birthMonth, birthDay);
   const lunarObj = solarObj.getLunar();
   const lunarMonth = Math.abs(lunarObj.getMonth());
@@ -157,11 +160,13 @@ export function calculateZiWei(birthYear: number, birthMonth: number, birthDay: 
   const ziWeiIdx = ((ziWeiPos - 1) % 12 + 12) % 12;
   const tianFuIdx = (12 - ziWeiIdx + 4) % 12;
 
+  // 타입 정의 확장
   const starsInLifePalace: { name: string; keyword: string; desc: string; personality: string; job: string }[] = [];
 
   const checkStar = (baseIdx: number, offset: number, name: string) => {
     const targetIdx = ((baseIdx + offset) % 12 + 12) % 12;
     if (targetIdx === lifeIdx) {
+       // @ts-ignore
        starsInLifePalace.push(MAJOR_STARS[name]);
     }
   };

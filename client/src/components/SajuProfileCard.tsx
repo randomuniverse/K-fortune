@@ -182,11 +182,16 @@ function ZiWeiCard({ birthDate, birthTime, gender = "male" }: { birthDate: strin
           )}
         </div>
 
-        <div className="space-y-2">
+        <div className="space-y-3">
           {ziwei.stars.map((star, i) => (
-            <div key={i} className="bg-black/20 rounded p-2">
-               <p className="text-xs font-bold text-purple-200 mb-1">{star.name}</p>
-               <p className="text-xs text-white/70">{star.desc}</p>
+            <div key={i} className="bg-black/20 rounded-lg p-3 space-y-2">
+               <p className="text-xs font-bold text-purple-200">{star.name}</p>
+               <p className="text-[10px] text-purple-300/70">{star.keyword}</p>
+               <p className="text-xs text-white/70 leading-relaxed">{star.desc}</p>
+               <p className="text-xs text-white/80 leading-relaxed">{star.personality}</p>
+               <div className="pt-1 border-t border-purple-500/10">
+                 <p className="text-[10px] text-purple-300/60">적합 직업: {star.job}</p>
+               </div>
             </div>
           ))}
           {ziwei.stars.length === 0 && (
