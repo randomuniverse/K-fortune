@@ -1,3 +1,4 @@
+// Imports 부분은 기존과 동일하지만, Wallet, Briefcase 아이콘 활용 확인
 import { motion } from "framer-motion";
 import { Card } from "@/components/ui/card";
 import { Flame, Droplets, Mountain, Wind, Gem, User, Sparkles, Brain, Shield, Target, Zap, Clock, MapPin, Palette, UtensilsCrossed, TrendingUp, AlertTriangle, Star, Moon, Briefcase, Wallet, Compass } from "lucide-react";
@@ -8,6 +9,13 @@ import { calculateZiWei } from "@shared/ziwei";
 import type { SajuPersonality, SpecialSal, StructurePattern, YongShinRemedy } from "@shared/saju";
 import { SajuInfoCard } from "./SajuInfoCard";
 import { ZodiacInfoCard } from "./ZodiacInfoCard";
+
+// ... (기존 Props, ELEMENT_ICONS, Section, SpecialSalCard, StructurePatternCard, RemedySection 등은 변동 없음. 그대로 유지)
+// ... (중략: 위 파일에서 이미 구현된 컴포넌트들) ...
+
+// SpecialSalCard, StructurePatternCard, RemedySection 등을 포함한 
+// 상단 컴포넌트 정의는 생략하지 말고 기존 코드를 유지해주세요. 
+// 여기서는 변경된 ZiWeiCard와 SajuProfileCard만 전체 코드로 드립니다.
 
 interface Props {
   chart: SajuChart;
@@ -149,6 +157,7 @@ function RemedySection({ remedy }: { remedy: YongShinRemedy }) {
   );
 }
 
+// [업그레이드된] 자미두수 카드 - 풍성한 콘텐츠 버전
 function ZiWeiCard({ birthDate, birthTime, gender = "male" }: { birthDate: string, birthTime: string, gender: string }) {
   const [year, month, day] = birthDate.split('-').map(Number);
   const hour = parseInt(birthTime.split(':')[0]);
@@ -159,6 +168,7 @@ function ZiWeiCard({ birthDate, birthTime, gender = "male" }: { birthDate: strin
   return (
     <Section icon={Star} title="자미두수: 내 영혼의 별" delay={0.25}>
       <div className="space-y-4">
+        {/* 국(局) 정보 섹션 (새로 추가됨) */}
         <div className="bg-indigo-500/10 border border-indigo-500/20 rounded-xl p-4">
           <div className="flex items-center gap-2 mb-2">
             <Compass className="w-4 h-4 text-indigo-400" />
@@ -169,6 +179,7 @@ function ZiWeiCard({ birthDate, birthTime, gender = "male" }: { birthDate: strin
           </p>
         </div>
 
+        {/* 메인 명궁 섹션 */}
         <div className="bg-gradient-to-r from-purple-500/10 to-indigo-500/10 border border-purple-500/20 rounded-xl p-5">
           <div className="flex items-center gap-2 mb-4">
             <Moon className="w-5 h-5 text-purple-400" />
@@ -179,9 +190,10 @@ function ZiWeiCard({ birthDate, birthTime, gender = "male" }: { birthDate: strin
             <div className="space-y-6">
               {ziwei.stars.map((star, i) => (
                 <div key={i} className="relative">
+                  {/* 별 이름과 키워드 */}
                   <div className="flex flex-col sm:flex-row sm:items-center gap-2 mb-3">
                     <h3 className="text-lg font-bold text-white tracking-wide">{star.name}</h3>
-                    <div className="flex flex-wrap gap-1.5">
+                    <div className="flex gap-1.5">
                       {star.keyword.split(',').map((kw, k) => (
                         <span key={k} className="px-2 py-0.5 bg-purple-500/20 border border-purple-500/30 rounded text-[10px] text-purple-200 font-medium">
                           {kw.trim()}
@@ -190,12 +202,14 @@ function ZiWeiCard({ birthDate, birthTime, gender = "male" }: { birthDate: strin
                     </div>
                   </div>
 
+                  {/* 상세 설명 (성격) */}
                   <div className="bg-black/20 rounded-lg p-4 space-y-4">
                     <div>
                       <p className="text-xs text-purple-300/70 font-medium mb-1.5">타고난 성격과 기질</p>
                       <p className="text-sm text-white/90 leading-relaxed">{star.personality}</p>
                     </div>
                     
+                    {/* 재물 스타일 (새로 추가) */}
                     <div className="pt-3 border-t border-white/5">
                       <div className="flex items-start gap-2">
                         <Wallet className="w-3.5 h-3.5 text-amber-400 mt-0.5 shrink-0" />
@@ -206,6 +220,7 @@ function ZiWeiCard({ birthDate, birthTime, gender = "male" }: { birthDate: strin
                       </div>
                     </div>
 
+                    {/* 직업 스타일 (새로 추가) */}
                     <div className="pt-3 border-t border-white/5">
                       <div className="flex items-start gap-2">
                         <Briefcase className="w-3.5 h-3.5 text-blue-400 mt-0.5 shrink-0" />
@@ -302,9 +317,10 @@ export function SajuProfileCard({ chart, zodiacInfo, birthDate, birthTime, userN
         )}
       </Section>
 
+      {/* 자미두수 섹션 */}
       <ZiWeiCard birthDate={birthDate} birthTime={birthTime} gender={gender} />
 
-      <Section icon={Shield} title="용신(用神)과 개운법" delay={0.2}>
+      <Section icon={Shield} title="용신(용신)과 개운법" delay={0.2}>
         <div className="grid grid-cols-2 gap-3 mb-3">
           <div className={`rounded-lg p-3 border ${ELEMENT_BG[chart.yongShin.element] || "bg-white/5 border-white/10"}`}>
             <p className="text-[10px] text-muted-foreground mb-1">용신 (보호 기운)</p>

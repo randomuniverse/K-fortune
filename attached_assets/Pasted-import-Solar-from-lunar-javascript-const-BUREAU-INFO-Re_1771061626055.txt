@@ -1,0 +1,206 @@
+import { Solar } from 'lunar-javascript';
+
+// 자미두수 오행국(局) 해석 데이터
+const BUREAU_INFO: Record<number, { name: string; desc: string }> = {
+  2: { name: "수2국 (Water Bureau)", desc: "흐르는 물처럼 유연하고 적응력이 뛰어납니다. 지혜롭고 처세술이 좋지만, 생각이 너무 많아 우유부단할 수 있습니다." },
+  3: { name: "목3국 (Wood Bureau)", desc: "나무처럼 곧게 자라려는 성장 욕구가 강합니다. 인자하고 부드러우나, 뿌리가 깊지 않으면 바람에 흔들리기 쉽습니다." },
+  4: { name: "금4국 (Metal Bureau)", desc: "단단한 쇠처럼 결단력이 있고 맺고 끊음이 확실합니다. 의리가 있고 강인하지만, 다소 냉정하고 독단적일 수 있습니다." },
+  5: { name: "토5국 (Earth Bureau)", desc: "넓은 대지처럼 포용력이 있고 묵직합니다. 신용을 중시하고 안정적이지만, 변화를 싫어하고 고집이 셌을 수 있습니다." },
+  6: { name: "화6국 (Fire Bureau)", desc: "타오르는 불처럼 열정적이고 급합니다. 예의가 바르고 화려함을 추구하지만, 감정 기복이 심해 금방 식을 수 있습니다." }
+};
+
+// 14주성 상세 데이터 (삼방사정 이론 적용)
+const MAJOR_STARS = {
+  "자미": {
+    name: "자미성 (The Emperor)",
+    keyword: "제왕, 존엄, 통솔",
+    personality: "당신은 타고난 '제왕'의 그릇입니다. 남의 밑에 있기보다는 직접 판을 짜고 주도해야 직성이 풀립니다. 자존심이 세고 귀티가 흐르며, 사람을 부리는 용인술이 탁월합니다.",
+    wealthStyle: "재물을 직접 쫓기보다 명예를 쫓으면 돈은 알아서 따라오는 형국입니다. 큰 규모의 자금을 운용하는 능력이 있습니다.",
+    careerStyle: "조직의 우두머리나 관리자가 적합합니다. 실무보다는 결정권을 가진 위치에서 능력을 발휘합니다."
+  },
+  "천기": {
+    name: "천기성 (The Strategist)",
+    keyword: "지혜, 참모, 두뇌",
+    personality: "당신은 비상한 두뇌를 가진 '전략가'입니다. 하나를 배우면 열을 알 정도로 습득력이 빠르고, 기획력과 임기응변이 타의 추종을 불허합니다.",
+    wealthStyle: "육체노동보다는 아이디어, 기술, 말솜씨로 돈을 멉니다. 재테크에서도 분석적인 투자를 선호합니다.",
+    careerStyle: "기획, 컨설팅, 연구, 프로그래밍 등 머리를 쓰는 전문직이나 참모 역할이 천직입니다."
+  },
+  "태양": {
+    name: "태양성 (The Sun)",
+    keyword: "광명, 박애, 명예",
+    personality: "당신은 하늘에 뜬 '태양'처럼 공명정대하고 열정적입니다. 숨기는 것 없이 솔직하며, 자신을 태워 남을 비추는 봉사 정신이 강해 주변에 사람이 많습니다.",
+    wealthStyle: "돈보다는 명예를 중시해야 재물이 따릅니다. 남에게 베푸는 지출이 많아 실속은 부족할 수 있으니 관리가 필요합니다.",
+    careerStyle: "공직, 교육, 언론, 방송처럼 대중을 상대로 하거나 공공의 이익을 위한 일이 맞습니다."
+  },
+  "무곡": {
+    name: "무곡성 (The General)",
+    keyword: "재물, 결단, 실행",
+    personality: "당신은 재물을 관장하는 '장군'입니다. 냉철한 판단력과 과감한 실행력이 특징이며, 한번 마음먹은 일은 끝까지 밀어붙이는 뚝심이 있습니다.",
+    wealthStyle: "정재(正財)의 별로, 요행보다는 본인의 노력과 실력으로 확실한 부를 축적합니다. 금융 감각이 탁월합니다.",
+    careerStyle: "금융, 군인/경찰, 엔지니어, 사업가처럼 결과가 확실하고 숫자를 다루는 분야가 좋습니다."
+  },
+  "천동": {
+    name: "천동성 (The Child)",
+    keyword: "복덕, 온화, 향유",
+    personality: "당신은 복을 타고난 '아이'와 같습니다. 성격이 모나지 않고 온순하여 적이 없으며, 힘든 일보다는 즐겁고 편안한 것을 추구하는 낭만가입니다.",
+    wealthStyle: "평생 먹고사는 데는 지장이 없는 복을 타고났습니다. 취미나 예술 활동이 수익으로 연결되기도 합니다.",
+    careerStyle: "예술, 요식업, 서비스, 아동 관련, 상담 등 감성을 활용하거나 남을 기쁘게 하는 일이 맞습니다."
+  },
+  "염정": {
+    name: "염정성 (The Diplomat)",
+    keyword: "관록, 집념, 매력",
+    personality: "당신은 불꽃같은 '정열'의 소유자입니다. 일처리가 빈틈없고 수완이 좋아 사회적 성공 확률이 높으며, 이성에게 어필하는 묘한 도화(매력)를 가졌습니다.",
+    wealthStyle: "교제비나 품위 유지비로 지출이 많지만, 인맥과 수완을 통해 큰돈을 벌어들이는 능력도 뛰어납니다.",
+    careerStyle: "외교, 영업, 정밀 공학, 패션/미용, 연예계 등 사람을 상대하거나 디테일이 필요한 분야입니다."
+  },
+  "천부": {
+    name: "천부성 (The Treasurer)",
+    keyword: "창고, 보수, 신중",
+    personality: "당신은 든든한 '재물 창고'입니다. 현실적이고 보수적이며, 위기 상황에서도 침착함을 잃지 않는 관리 능력이 탁월합니다. 리더의 자질도 충분합니다.",
+    wealthStyle: "돈을 버는 것보다 지키는 능력이 탁월합니다. 부동산이나 안전 자산 위주로 자산을 불려 나갑니다.",
+    careerStyle: "은행, 재무 관리, 공무원, 경영 지원, 건축 등 안정적이고 신용이 중요한 분야가 좋습니다."
+  },
+  "태음": {
+    name: "태음성 (The Moon)",
+    keyword: "달, 섬세, 부동산",
+    personality: "당신은 밤하늘의 '달'처럼 은은하고 섬세합니다. 감수성이 풍부하고 내면에 깊은 지혜가 있으며, 청결하고 정리 정돈된 환경을 좋아합니다.",
+    wealthStyle: "부동산 운이 매우 좋습니다. 차곡차곡 저축하여 티끌 모아 태산을 만드는 스타일입니다.",
+    careerStyle: "예술, 조경/인테리어, 간호, 복지, 문학 등 섬세함과 배려심이 필요한 분야가 적합합니다."
+  },
+  "탐랑": {
+    name: "탐랑성 (The Wolf)",
+    keyword: "욕망, 호기심, 사교",
+    personality: "당신은 매력이 넘치는 '팔방미인'입니다. 호기심이 왕성해 다방면에 재주가 많고, 언변과 유머 감각으로 어디서나 분위기를 주도합니다.",
+    wealthStyle: "돈을 버는 수완이 좋고 횡재수도 있으나, 유흥이나 기분파 소비로 나가는 돈도 많으니 주의해야 합니다.",
+    careerStyle: "엔터테인먼트, 영업, 뷰티, 이벤트 기획, 강사 등 끼를 발산하고 사람을 만나는 일이 천직입니다."
+  },
+  "거문": {
+    name: "거문성 (The Orator)",
+    keyword: "말(言), 분석, 비평",
+    personality: "당신은 '입(Mouth)'을 상징하는 별입니다. 남들이 못 보는 이면을 꿰뚫어 보는 통찰력이 있으며, 논리적으로 분석하고 따지는 것을 좋아합니다.",
+    wealthStyle: "말솜씨나 전문 지식을 통해 돈을 법니다. 남을 설득하거나 가르치는 일로 부를 창출합니다.",
+    careerStyle: "변호사, 교수, 연구원, 비평가, 의사 등 말이나 전문 지식으로 시비를 가리는 일이 맞습니다."
+  },
+  "천상": {
+    name: "천상성 (The Minister)",
+    keyword: "보좌, 신용, 품위",
+    personality: "당신은 왕을 보좌하는 '재상'입니다. 원칙을 지키며 책임감이 강하고, 외모와 체면을 중시하여 언제나 단정한 모습을 보입니다.",
+    wealthStyle: "신용을 자산으로 삼습니다. 투기적인 투자보다는 안정적인 급여나 명예를 통한 수입이 주를 이룹니다.",
+    careerStyle: "비서, 법조계, 의류/패션, 서비스, 공무원 등 보좌하거나 봉사하는 역할에서 빛을 발합니다."
+  },
+  "천량": {
+    name: "천량성 (The Sage)",
+    keyword: "감찰, 지혜, 해결",
+    personality: "당신은 지혜로운 '노인'의 별입니다. 곤란에 처한 사람을 잘 도와주고 문제를 해결해주며, 공과 사가 분명한 원칙주의자입니다.",
+    wealthStyle: "물려받은 유산이 있거나, 명예직/전문직을 통해 늦게라도 경제적 안정을 이룹니다.",
+    careerStyle: "감사, 감독, 의사/한의사, 종교, 복지 등 남을 지도하거나 돌보는 분야가 적합합니다."
+  },
+  "칠살": {
+    name: "칠살성 (The Warrior)",
+    keyword: "장군, 돌격, 독립",
+    personality: "당신은 위엄 있는 '장군'입니다. 난관이 닥쳐도 피하지 않고 정면으로 돌파하며, 타협하기보다는 자신의 힘으로 개척해 나가는 독립심이 강합니다.",
+    wealthStyle: "큰 위험을 감수하고 큰돈을 버는 스타일입니다. 벤처나 사업을 통해 일확천금을 노리기도 합니다.",
+    careerStyle: "군인/경찰, 외과 의사, 중장비, 벤처 사업 등 강한 리더십과 결단력이 필요한 분야입니다."
+  },
+  "파군": {
+    name: "파군성 (The Rebel)",
+    keyword: "파격, 창조, 개척",
+    personality: "당신은 시대를 앞서가는 '혁명가'입니다. 기존의 틀을 깨부수고 새로운 것을 창조할 때 희열을 느낍니다. 창의력이 뛰어나고 배짱이 두둑합니다.",
+    wealthStyle: "돈을 쫓기보다 일을 저지르다 보면 돈이 따라옵니다. 한 번에 크게 벌고 크게 쓰는 기복이 있습니다.",
+    careerStyle: "무역, 발명, 디자인, 스타트업, 프리랜서 등 변화가 많고 창의적인 일이 천직입니다."
+  }
+};
+
+export interface ZiWeiResult {
+  lifePalace: string;
+  bureau: { name: string; desc: string }; // 국(Bureau) 정보 추가
+  stars: { name: string; keyword: string; personality: string; wealthStyle: string; careerStyle: string }[];
+  interpretation: string;
+}
+
+// ... (getLifePalaceIndex, getElementSubject 함수는 기존과 동일 - 생략 없음)
+function getLifePalaceIndex(lunarMonth: number, birthHourBranchIdx: number): number {
+  let idx = 2 + (lunarMonth - 1) - (birthHourBranchIdx);
+  return ((idx % 12) + 12) % 12;
+}
+
+function getElementSubject(yearStemIdx: number, lifePalaceBranchIdx: number): number {
+  const startStem = [2, 4, 6, 8, 0][yearStemIdx % 5]; 
+  const dist = ((lifePalaceBranchIdx - 2) + 12) % 12;
+  const lifeStem = (startStem + dist) % 10;
+  
+  const pattern = [
+    [4, 3, 2, 5, 6], [6, 5, 4, 3, 2], [2, 6, 5, 4, 3],
+    [3, 2, 6, 5, 4], [4, 3, 2, 5, 6], [6, 5, 4, 3, 2]
+  ];
+  const pairIdx = Math.floor(lifePalaceBranchIdx / 2);
+  const stemPairIdx = Math.floor(lifeStem / 2);
+  return pattern[pairIdx][stemPairIdx];
+}
+
+export function calculateZiWei(birthYear: number, birthMonth: number, birthDay: number, birthHour: number, gender: "male" | "female"): ZiWeiResult {
+  // Solar -> Lunar 변환
+  const solarObj = Solar.fromYmd(birthYear, birthMonth, birthDay);
+  const lunarObj = solarObj.getLunar();
+  const lunarMonth = Math.abs(lunarObj.getMonth());
+  const lunarDay = lunarObj.getDay();
+  
+  let hourIdx = 0;
+  if (birthHour >= 23 || birthHour < 1) hourIdx = 0;
+  else hourIdx = Math.floor((birthHour + 1) / 2);
+
+  const lifeIdx = getLifePalaceIndex(lunarMonth, hourIdx);
+  const branches = ["자", "축", "인", "묘", "진", "사", "오", "미", "신", "유", "술", "해"];
+
+  const yearStemIdx = (birthYear - 4) % 10;
+  const guk = getElementSubject(yearStemIdx, lifeIdx); // 국수 계산
+  
+  let ziWeiPos = 0;
+  if (lunarDay % guk === 0) ziWeiPos = (lunarDay / guk) + 1;
+  else {
+    const remainder = lunarDay % guk;
+    const quotient = Math.floor(lunarDay / guk);
+    const adjust = (guk - remainder);
+    if (adjust % 2 === 1) ziWeiPos = quotient + 1 + adjust + 1;
+    else ziWeiPos = quotient + 1 - adjust + 1;
+    ziWeiPos = ((Math.floor(lunarDay / guk) + 1) + 2) % 12; 
+  }
+  
+  const ziWeiIdx = ((ziWeiPos - 1) % 12 + 12) % 12;
+  const tianFuIdx = (12 - ziWeiIdx + 4) % 12;
+
+  // 확장된 타입 정의
+  const starsInLifePalace: { name: string; keyword: string; personality: string; wealthStyle: string; careerStyle: string }[] = [];
+
+  const checkStar = (baseIdx: number, offset: number, name: string) => {
+    const targetIdx = ((baseIdx + offset) % 12 + 12) % 12;
+    if (targetIdx === lifeIdx) {
+       // @ts-ignore
+       starsInLifePalace.push(MAJOR_STARS[name]);
+    }
+  };
+
+  // 14주성 배치
+  checkStar(ziWeiIdx, 0, "자미"); checkStar(ziWeiIdx, -1, "천기");
+  checkStar(ziWeiIdx, -3, "태양"); checkStar(ziWeiIdx, -4, "무곡");
+  checkStar(ziWeiIdx, -5, "천동"); checkStar(ziWeiIdx, -8, "염정");
+
+  checkStar(tianFuIdx, 0, "천부"); checkStar(tianFuIdx, 1, "태음");
+  checkStar(tianFuIdx, 2, "탐랑"); checkStar(tianFuIdx, 3, "거문");
+  checkStar(tianFuIdx, 4, "천상"); checkStar(tianFuIdx, 5, "천량");
+  checkStar(tianFuIdx, 6, "칠살"); checkStar(tianFuIdx, 10, "파군");
+
+  let interpretation = "";
+  if (starsInLifePalace.length > 0) {
+    interpretation = starsInLifePalace[0].personality;
+  } else {
+    interpretation = "명궁에 주성(Major Star)이 없는 '명무정성' 격입니다. 이는 나쁜 것이 아니라 백지장과 같습니다. 주변 환경이나 만나는 사람에 따라 운명이 다채롭게 변하는 유연함을 지녔습니다. 대인관계가 당신의 운명을 결정짓는 열쇠입니다.";
+  }
+
+  return {
+    lifePalace: branches[lifeIdx],
+    bureau: BUREAU_INFO[guk] || { name: "국 정보 없음", desc: "" },
+    stars: starsInLifePalace,
+    interpretation
+  };
+}
