@@ -1,10 +1,9 @@
-import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Loader2, Sparkles, Lock, Unlock, Zap, AlertTriangle, ArrowRight, Activity, Search, BrainCircuit } from "lucide-react";
+import { Loader2, Sparkles, Lock, Unlock, AlertTriangle, Activity, Search, BrainCircuit } from "lucide-react";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { apiRequest } from "@/lib/queryClient";
+import { apiRequest, queryClient } from "@/lib/queryClient";
 
 export interface GuardianReportData {
   coreEnergy: string;
@@ -17,23 +16,16 @@ export interface GuardianReportData {
 }
 
 export function GuardianReport({ telegramId, userName }: { telegramId: string; userName: string }) {
-  const [report, setReport] = useState<GuardianReportData | null>(null);
-
-  const { data: existingReport, isLoading: isLoadingExisting } = useQuery<GuardianReportData>({
+  const { data: report, isLoading } = useQuery<GuardianReportData>({
     queryKey: ['/api/guardian-report', telegramId],
     queryFn: async () => {
       const res = await fetch(`/api/guardian-report/${telegramId}`);
-      if (!res.ok) throw new Error("No report");
+      if (!res.ok) return null;
       return res.json();
     },
     retry: false,
+    staleTime: Infinity,
   });
-
-  useEffect(() => {
-    if (existingReport && !report) {
-      setReport(existingReport);
-    }
-  }, [existingReport]);
 
   const generateReport = useMutation({
     mutationFn: async () => {
@@ -41,11 +33,11 @@ export function GuardianReport({ telegramId, userName }: { telegramId: string; u
       return res.json();
     },
     onSuccess: (data) => {
-      setReport(data);
+      queryClient.setQueryData(['/api/guardian-report', telegramId], data);
     },
   });
 
-  if (isLoadingExisting) {
+  if (isLoading) {
     return (
       <Card className="bg-white/[0.03] border-white/10 p-8 text-center space-y-6" data-testid="guardian-report-loading">
         <Loader2 className="w-8 h-8 text-indigo-400 animate-spin mx-auto" />
