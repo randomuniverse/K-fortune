@@ -12,6 +12,7 @@ import type { FortuneData } from "@shared/schema";
 import { FortuneScoreCard } from "@/components/FortuneScoreCard";
 import { YearlyFortuneCard } from "@/components/YearlyFortuneCard";
 import { SajuDeepAnalysis, ZiweiDeepAnalysis, ZodiacDeepAnalysis } from "@/components/SajuProfileCard";
+import { GuardianReport } from "@/components/GuardianReport";
 
 type MainTabId = "today" | "yearly" | "destiny";
 type DestinyTabId = "summary" | "saju" | "ziwei" | "zodiac";
@@ -298,14 +299,8 @@ export default function Dashboard() {
               ) : (
                 <div className="min-h-[300px]">
                   {destinySubTab === "summary" && (
-                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center py-12 border border-white/10 rounded-xl bg-white/[0.02]">
-                      <Sparkles className="w-10 h-10 text-indigo-400 mx-auto mb-4 opacity-50" />
-                      <h3 className="text-lg font-serif text-white mb-2">운명 종합 리포트 준비 중</h3>
-                      <p className="text-sm text-muted-foreground max-w-xs mx-auto leading-relaxed">
-                        사주, 자미두수, 별자리를 통합한<br/>
-                        궁극의 운명 리포트 기능을 준비하고 있습니다.<br/>
-                        <span className="text-indigo-400 text-xs mt-2 block">(추후 업데이트 예정)</span>
-                      </p>
+                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+                      <GuardianReport telegramId={telegramId} userName={user.name} />
                     </motion.div>
                   )}
 

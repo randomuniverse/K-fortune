@@ -1,0 +1,65 @@
+// ... (기존 import 및 generateFortuneForUser 등은 유지)
+
+// [통합 버전] 가디언 리포트 생성 함수 (Gemini Insight + Replit Analytics)
+export async function generateGuardianReport(data: {
+  name: string;
+  saju: any;
+  ziwei: any;
+  zodiac: any;
+}) {
+  const systemPrompt = `
+당신은 운명의 가디언이자 인생 컨설턴트입니다.
+사용자의 사주, 자미두수, 별자리 데이터를 교차 분석하여 **'심리적 병목(Bottleneck)'**을 찾아내고 해결책을 제시하세요.
+
+**분석 단계:**
+1. **데이터 융합 (Cross-Validation):** 3가지 운세에서 공통적으로 나타나는 키워드와 성향을 추출하세요.
+2. **모순 발견 (Conflict Detection):** (예: 사주는 리더인데, 별자리는 소심함) 서로 상충하는 에너지가 만드는 내면의 갈등을 포착하세요.
+3. **병목 진단 (Bottleneck Theory):** 현재 사용자의 잠재력을 가로막고 있는 '단 하나의 원인'을 지적하세요.
+4. **솔루션 (Fulfillment):** 구체적이고 실천 가능한 행동 지침을 내리세요.
+
+**출력 형식 (JSON):**
+{
+  "coreEnergy": "사용자를 정의하는 핵심 아키타입 (예: 상처 입은 치유자, 브레이크 고장 난 전차)",
+  "coherenceScore": 0~100 사이의 정수 (3가지 운세의 일치도/데이터 신뢰도),
+  "keywords": ["키워드1", "키워드2", "키워드3", "키워드4", "키워드5"],
+  "currentState": "현재 심리 상태와 딜레마 분석 (모순점 위주로 날카롭게)",
+  "bottleneck": "현재 인생의 결정적 병목 구간 (원인)",
+  "solution": "가디언의 해결 솔루션 (행동 지침)"
+}
+`;
+
+  const userPrompt = `
+사용자 이름: ${data.name}
+1. [사주] 본성: ${data.saju.mainTrait}, 특수살: ${data.saju.specialSals.map((s: any) => s.name).join(", ")}, 용신: ${data.saju.yongShin.element}
+2. [자미두수] 주성: ${data.ziwei.stars.life.map((s: any) => s.name).join(", ")}, 국: ${data.ziwei.bureau.name}
+3. [별자리] ${data.zodiac.sign}, 특징: ${data.zodiac.info.personality}
+
+위 데이터를 바탕으로 분석해주세요. 
+특히 서로 다른 운세가 충돌하는 지점(모순)을 찾아내어, 그로 인한 답답함을 '병목'으로 정의하고 풀어주세요.
+`;
+
+  const response = await openai.chat.completions.create({
+    model: "gpt-4o",
+    messages: [
+      { role: "system", content: systemPrompt },
+      { role: "user", content: userPrompt },
+    ],
+    response_format: { type: "json_object" },
+    temperature: 0.8, // 창의성과 통찰력을 위해 약간 높게 유지
+  });
+
+  const content = response.choices[0].message.content || "{}";
+  try {
+    return JSON.parse(content);
+  } catch (e) {
+    console.error("JSON Parsing Error:", e);
+    return {
+      coreEnergy: "데이터 분석 중",
+      coherenceScore: 50,
+      keywords: ["분석", "대기"],
+      currentState: "데이터를 불러오는 중입니다.",
+      bottleneck: "일시적인 연결 오류",
+      solution: "잠시 후 다시 시도해주세요."
+    };
+  }
+}
