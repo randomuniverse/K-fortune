@@ -12,7 +12,7 @@ import type { FortuneData } from "@shared/schema";
 import { FortuneScoreCard } from "@/components/FortuneScoreCard";
 import { YearlyFortuneCard } from "@/components/YearlyFortuneCard";
 import { SajuDeepAnalysis, ZiweiDeepAnalysis, ZodiacDeepAnalysis } from "@/components/SajuProfileCard";
-import { GuardianReport, type GuardianReportData } from "@/components/GuardianReport";
+import { GuardianReport } from "@/components/GuardianReport";
 
 type MainTabId = "today" | "yearly" | "destiny";
 type DestinyTabId = "summary" | "saju" | "ziwei" | "zodiac";
@@ -47,7 +47,6 @@ export default function Dashboard() {
   const [activeTab, setActiveTab] = useState<MainTabId>("today");
   const [destinySubTab, setDestinySubTab] = useState<DestinyTabId>("summary");
   const [fortunesShown, setFortunesShown] = useState(FORTUNES_PER_PAGE);
-  const [guardianReport, setGuardianReport] = useState<GuardianReportData | null>(null);
 
   if (isUserLoading) {
     return (
@@ -301,7 +300,7 @@ export default function Dashboard() {
                 <div className="min-h-[300px]">
                   {destinySubTab === "summary" && (
                     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-                      <GuardianReport telegramId={telegramId} userName={user.name} report={guardianReport} onReportGenerated={setGuardianReport} />
+                      <GuardianReport telegramId={telegramId} userName={user.name} />
                     </motion.div>
                   )}
 

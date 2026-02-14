@@ -179,13 +179,13 @@ export async function registerRoutes(
 
       console.log(`[Guardian] Generating NEW master report for user ${user.id}...`);
 
-      const sajuChart = calculateFullSaju(user.birthDate, user.birthTime, user.gender);
+      const gender = (user.gender === "female" || user.gender === "여" || user.gender === "woman") ? "female" : "male" as "male" | "female";
+      const sajuChart = calculateFullSaju(user.birthDate, user.birthTime, gender);
       const sajuPersonality = analyzeSajuPersonality(sajuChart);
 
-      const safeGender = (user.gender === "female" || user.gender === "여" || user.gender === "woman") ? "female" : "male";
       const [year, month, day] = user.birthDate.split('-').map(Number);
       const hour = parseInt(user.birthTime.split(':')[0]);
-      const ziweiResult = calculateZiWei(year, month, day, hour, safeGender);
+      const ziweiResult = calculateZiWei(year, month, day, hour, gender);
 
       const zodiacInfo = getZodiacInfo(user.birthDate);
       const zodiacSign = getZodiacSign(user.birthDate);
