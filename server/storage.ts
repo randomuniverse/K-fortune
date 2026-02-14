@@ -13,6 +13,7 @@ export interface IStorage {
   getAllUsers(): Promise<User[]>;
   createGuardianReport(report: InsertGuardianReport): Promise<GuardianReportType>;
   getGuardianReportByUserId(userId: number): Promise<GuardianReportType | undefined>;
+  deleteGuardianReportByUserId(userId: number): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -89,6 +90,10 @@ export class DatabaseStorage implements IStorage {
       .orderBy(desc(guardianReports.createdAt))
       .limit(1);
     return report;
+  }
+
+  async deleteGuardianReportByUserId(userId: number): Promise<void> {
+    await db.delete(guardianReports).where(eq(guardianReports.userId, userId));
   }
 }
 

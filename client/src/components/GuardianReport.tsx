@@ -28,8 +28,8 @@ export function GuardianReport({ telegramId, userName }: { telegramId: string; u
   });
 
   const generateReport = useMutation({
-    mutationFn: async () => {
-      const res = await apiRequest("POST", "/api/fortunes/guardian-report", { telegramId });
+    mutationFn: async (regenerate?: boolean) => {
+      const res = await apiRequest("POST", "/api/fortunes/guardian-report", { telegramId, regenerate: !!regenerate });
       return res.json();
     },
     onSuccess: (data) => {
@@ -166,7 +166,7 @@ export function GuardianReport({ telegramId, userName }: { telegramId: string; u
           variant="mystical"
           onClick={() => {
             queryClient.setQueryData(['/api/guardian-report', telegramId], null);
-            generateReport.mutate();
+            generateReport.mutate(true);
           }}
           disabled={generateReport.isPending}
           className="min-w-[200px]"

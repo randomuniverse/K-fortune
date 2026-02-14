@@ -167,14 +167,19 @@ export async function registerRoutes(
 
   app.post("/api/fortunes/guardian-report", async (req, res) => {
     try {
-      const { telegramId } = req.body;
+      const { telegramId, regenerate } = req.body;
       const user = await storage.getUserByTelegramId(telegramId);
       if (!user) return res.status(404).json({ message: "User not found" });
 
-      const existingReport = await storage.getGuardianReportByUserId(user.id);
-      if (existingReport) {
-        console.log(`[Guardian] Found existing master report for user ${user.id}`);
-        return res.json(existingReport);
+      if (!regenerate) {
+        const existingReport = await storage.getGuardianReportByUserId(user.id);
+        if (existingReport) {
+          console.log(`[Guardian] Found existing master report for user ${user.id}`);
+          return res.json(existingReport);
+        }
+      } else {
+        await storage.deleteGuardianReportByUserId(user.id);
+        console.log(`[Guardian] Deleted old report for user ${user.id}, regenerating...`);
       }
 
       console.log(`[Guardian] Generating NEW master report for user ${user.id}...`);
