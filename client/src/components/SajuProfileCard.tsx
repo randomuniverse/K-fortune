@@ -18,6 +18,24 @@ interface Props {
   gender?: string;
 }
 
+interface SajuProps {
+  chart: SajuChart;
+  birthDate: string;
+  birthTime: string;
+  userName: string;
+}
+
+interface ZiweiProps {
+  chart: SajuChart;
+  birthDate: string;
+  birthTime: string;
+  gender?: string;
+}
+
+interface ZodiacProps {
+  zodiacInfo: ZodiacInfo;
+}
+
 const ELEMENT_ICONS: Record<string, typeof Flame> = {
   "화": Flame, "수": Droplets, "토": Mountain, "목": Wind, "금": Gem,
 };
@@ -46,7 +64,7 @@ function Section({ icon: Icon, title, children, delay = 0 }: { icon: any; title:
   );
 }
 
-export function SajuDeepAnalysis({ chart, birthDate, birthTime, userName }: Props) {
+export function SajuDeepAnalysis({ chart, birthDate, birthTime, userName }: SajuProps) {
   const personality = analyzeSajuPersonality(chart);
   const dayElement = ["목", "화", "토", "금", "수"][[0, 0, 1, 1, 2, 2, 3, 3, 4, 4][chart.dayPillar.stemIndex]];
   const ElIcon = ELEMENT_ICONS[dayElement] || Sparkles;
@@ -140,7 +158,7 @@ export function SajuDeepAnalysis({ chart, birthDate, birthTime, userName }: Prop
   );
 }
 
-export function ZiweiDeepAnalysis({ chart, birthDate, birthTime, gender = "male" }: Props) {
+export function ZiweiDeepAnalysis({ chart, birthDate, birthTime, gender = "male" }: ZiweiProps) {
   const [year, month, day] = birthDate.split('-').map(Number);
   const hour = parseInt(birthTime.split(':')[0]);
   const safeGender = (gender === "female" || gender === "여" || gender === "woman") ? "female" : "male";
@@ -202,7 +220,7 @@ export function ZiweiDeepAnalysis({ chart, birthDate, birthTime, gender = "male"
   );
 }
 
-export function ZodiacDeepAnalysis({ zodiacInfo }: Props) {
+export function ZodiacDeepAnalysis({ zodiacInfo }: ZodiacProps) {
   return (
     <div className="space-y-4">
       <ZodiacInfoCard info={zodiacInfo} />
