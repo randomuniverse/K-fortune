@@ -389,37 +389,48 @@ export async function generateGuardianReport(data: {
   zodiac: any;
 }) {
   const systemPrompt = `
-당신은 운명의 가디언이자 인생 컨설턴트입니다.
-사용자의 사주, 자미두수, 별자리 데이터를 교차 분석하여 **'심리적 병목(Bottleneck)'**을 찾아내고 해결책을 제시하세요.
+당신은 '운명의 가디언'이자, 행동 심리학과 고대 운명학을 통달한 '인생 마스터 코치'입니다.
+단순한 위로가 아닌, **데이터에 기반한 날카로운 추리(Sherlock)**와 **과학적인 해결책(Science)**을 제시해야 합니다.
 
-**분석 단계:**
-1. **데이터 융합 (Cross-Validation):** 3가지 운세에서 공통적으로 나타나는 키워드와 성향을 추출하세요.
-2. **모순 발견 (Conflict Detection):** (예: 사주는 리더인데, 별자리는 소심함) 서로 상충하는 에너지가 만드는 내면의 갈등을 포착하세요.
-3. **병목 진단 (Bottleneck Theory):** 현재 사용자의 잠재력을 가로막고 있는 '단 하나의 원인'을 지적하세요.
-4. **솔루션 (Fulfillment):** 구체적이고 실천 가능한 행동 지침을 내리세요.
+**[분석 3단계 프로세스]**
 
-**출력 형식 (JSON):**
+1. **🕵️ 셜록 홈즈 추리 (Past Inference):**
+   - 사용자의 사주/자미두수/별자리에서 상충하는 에너지(예: 이상은 높은데 실행력이 약함)를 찾으세요.
+   - 이를 바탕으로 **과거에 겪었을 법한 구체적인 실패나 경험**을 역추적하여 맞추세요.
+   - 예시: "당신은 아이디어가 넘쳐 창업이나 프로젝트를 여러 번 시도했지만, 뒷심 부족으로 90%까지 만들어놓고 포기한 파일들이 폴더 구석에 쌓여 있을 확률이 높습니다."
+
+2. **🚧 병목 진단 (The Bottleneck):**
+   - 현재 사용자의 성장을 가로막고 있는 **단 하나의 결정적 원인**을 정의하세요.
+
+3. **🧪 행동과학 솔루션 (Scientific Solution):**
+   - 운명학적 개운법과 현대의 **생산성/심리학 법칙**을 결합하세요.
+   - 예시: (파레토 법칙 80:20, 에센셜리즘, 2분 규칙, 포모도로, 아주 작은 습관의 힘 등)
+   - "기도해라" 대신 "오늘 당장 상위 20%의 중요한 일 하나만 남기고 나머지는 거절해라"와 같이 구체적으로 지시하세요.
+
+**[출력 형식 (JSON)]**
 {
-  "coreEnergy": "사용자를 정의하는 핵심 아키타입 (예: 상처 입은 치유자, 브레이크 고장 난 전차)",
-  "coherenceScore": 0~100 사이의 정수 (3가지 운세의 일치도/데이터 신뢰도),
+  "coreEnergy": "핵심 아키타입 (예: 브레이크 고장 난 스포츠카, 상처 입은 완벽주의자)",
+  "coherenceScore": 0~100 사이 정수 (운세 간 일치도),
   "keywords": ["키워드1", "키워드2", "키워드3", "키워드4", "키워드5"],
-  "currentState": "현재 심리 상태와 딜레마 분석 (모순점 위주로 날카롭게)",
-  "bottleneck": "현재 인생의 결정적 병목 구간 (원인)",
-  "solution": "가디언의 해결 솔루션 (행동 지침)"
+  "pastInference": "셜록 홈즈식 과거 추론 (소름 돋는 콜드 리딩 멘트)",
+  "currentState": "현재 심리 상태와 딜레마 (Paradox)",
+  "bottleneck": "성장을 막는 결정적 병목 구간",
+  "solution": "행동과학 기반의 구체적 솔루션 (행동 지침)"
 }
 `;
 
   const userPrompt = `
-사용자 이름: ${data.name}
-1. [사주] 본성: ${data.saju.mainTrait}, 특수살: ${data.saju.specialSals.map((s: any) => s.name).join(", ")}, 용신: ${data.saju.yongShin.element} (${data.saju.yongShin.reason})
+[사용자 프로필: ${data.name}]
+
+1. [사주] 본성: ${data.saju.mainTrait}, 특수살: ${data.saju.specialSals.map((s: any) => s.name).join(", ")}, 용신: ${data.saju.yongShin.element}
 2. [자미두수] 주성: ${data.ziwei.stars.life.map((s: any) => s.name).join(", ")}, 국: ${data.ziwei.bureau.name}
 3. [별자리] ${data.zodiac.sign}, 특징: ${data.zodiac.info.traits?.join(", ") || data.zodiac.sign}
 
-위 데이터를 바탕으로 분석해주세요. 
-특히 서로 다른 운세가 충돌하는 지점(모순)을 찾아내어, 그로 인한 답답함을 '병목'으로 정의하고 풀어주세요.
+위 데이터를 종합 분석하여, 이 사람의 '과거 실패 패턴'을 추리하고, '과학적 행동 솔루션'을 내려주세요.
+말투는 확신에 차 있고 예언적이지만, 논리적인 설득력을 갖추세요.
 `;
 
-  const result = await pRetry(async () => {
+  try {
     const response = await openai.chat.completions.create({
       model: "gpt-4o",
       messages: [
@@ -427,13 +438,25 @@ export async function generateGuardianReport(data: {
         { role: "user", content: userPrompt },
       ],
       response_format: { type: "json_object" },
-      temperature: 0.8,
+      temperature: 0.85,
     });
 
-    const content = response.choices[0]?.message?.content;
-    if (!content) throw new Error("Empty GPT response for guardian report");
-    return JSON.parse(content) as GuardianReport;
-  }, { retries: 2 });
+    const content = response.choices[0].message.content || "{}";
+    const result = JSON.parse(content);
 
-  return result;
+    if (!result.pastInference) result.pastInference = "데이터 분석 중 과거 패턴을 특정할 수 없습니다.";
+
+    return result;
+  } catch (e) {
+    console.error("Guardian Report Generation Error:", e);
+    return {
+      coreEnergy: "운명의 탐구자",
+      coherenceScore: 50,
+      keywords: ["분석", "대기", "연결"],
+      pastInference: "현재 운명 데이터 서버와 연결이 불안정하여 과거 패턴을 불러오지 못했습니다.",
+      currentState: "일시적인 연결 오류가 발생했습니다.",
+      bottleneck: "시스템 연결 대기 중",
+      solution: "잠시 후 다시 시도해주세요."
+    };
+  }
 }

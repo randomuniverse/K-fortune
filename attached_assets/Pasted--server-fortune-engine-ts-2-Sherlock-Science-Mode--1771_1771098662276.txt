@@ -1,0 +1,83 @@
+// server/fortune-engine.ts (해당 함수 찾아 덮어쓰기)
+
+// [2단계 업그레이드] 가디언 리포트 생성 엔진 (Sherlock + Science Mode)
+export async function generateGuardianReport(data: {
+  name: string;
+  saju: any;
+  ziwei: any;
+  zodiac: any;
+}) {
+  const systemPrompt = `
+당신은 '운명의 가디언'이자, 행동 심리학과 고대 운명학을 통달한 '인생 마스터 코치'입니다.
+단순한 위로가 아닌, **데이터에 기반한 날카로운 추리(Sherlock)**와 **과학적인 해결책(Science)**을 제시해야 합니다.
+
+**[분석 3단계 프로세스]**
+
+1. **🕵️ 셜록 홈즈 추리 (Past Inference):**
+   - 사용자의 사주/자미두수/별자리에서 상충하는 에너지(예: 이상은 높은데 실행력이 약함)를 찾으세요.
+   - 이를 바탕으로 **과거에 겪었을 법한 구체적인 실패나 경험**을 역추적하여 맞추세요.
+   - 예시: "당신은 아이디어가 넘쳐 창업이나 프로젝트를 여러 번 시도했지만, 뒷심 부족으로 90%까지 만들어놓고 포기한 파일들이 폴더 구석에 쌓여 있을 확률이 높습니다."
+
+2. **🚧 병목 진단 (The Bottleneck):**
+   - 현재 사용자의 성장을 가로막고 있는 **단 하나의 결정적 원인**을 정의하세요.
+
+3. **🧪 행동과학 솔루션 (Scientific Solution):**
+   - 운명학적 개운법과 현대의 **생산성/심리학 법칙**을 결합하세요.
+   - 예시: (파레토 법칙 80:20, 에센셜리즘, 2분 규칙, 포모도로, 아주 작은 습관의 힘 등)
+   - "기도해라" 대신 "오늘 당장 상위 20%의 중요한 일 하나만 남기고 나머지는 거절해라"와 같이 구체적으로 지시하세요.
+
+**[출력 형식 (JSON)]**
+{
+  "coreEnergy": "핵심 아키타입 (예: 브레이크 고장 난 스포츠카, 상처 입은 완벽주의자)",
+  "coherenceScore": 0~100 사이 정수 (운세 간 일치도),
+  "keywords": ["키워드1", "키워드2", "키워드3", "키워드4", "키워드5"],
+  "pastInference": "셜록 홈즈식 과거 추론 (소름 돋는 콜드 리딩 멘트)",
+  "currentState": "현재 심리 상태와 딜레마 (Paradox)",
+  "bottleneck": "성장을 막는 결정적 병목 구간",
+  "solution": "행동과학 기반의 구체적 솔루션 (행동 지침)"
+}
+`;
+
+  const userPrompt = `
+[사용자 프로필: ${data.name}]
+
+1. [사주] 본성: ${data.saju.mainTrait}, 특수살: ${data.saju.specialSals.map((s: any) => s.name).join(", ")}, 용신: ${data.saju.yongShin.element}
+2. [자미두수] 주성: ${data.ziwei.stars.life.map((s: any) => s.name).join(", ")}, 국: ${data.ziwei.bureau.name}
+3. [별자리] ${data.zodiac.sign}, 특징: ${data.zodiac.info.personality}
+
+위 데이터를 종합 분석하여, 이 사람의 '과거 실패 패턴'을 추리하고, '과학적 행동 솔루션'을 내려주세요.
+말투는 확신에 차 있고 예언적이지만, 논리적인 설득력을 갖추세요.
+`;
+
+  try {
+    const response = await openai.chat.completions.create({
+      model: "gpt-4o",
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: userPrompt },
+      ],
+      response_format: { type: "json_object" },
+      temperature: 0.85, // 창의적 추론을 위해 온도를 약간 높임
+    });
+
+    const content = response.choices[0].message.content || "{}";
+    const result = JSON.parse(content);
+    
+    // 안전장치: 필수 필드가 없는 경우 기본값 채움
+    if (!result.pastInference) result.pastInference = "데이터 분석 중 과거 패턴을 특정할 수 없습니다.";
+    
+    return result;
+  } catch (e) {
+    console.error("Guardian Report Generation Error:", e);
+    // 에러 발생 시 Fallback 데이터 반환
+    return {
+      coreEnergy: "운명의 탐구자",
+      coherenceScore: 50,
+      keywords: ["분석", "대기", "연결"],
+      pastInference: "현재 운명 데이터 서버와 연결이 불안정하여 과거 패턴을 불러오지 못했습니다.",
+      currentState: "일시적인 연결 오류가 발생했습니다.",
+      bottleneck: "시스템 연결 대기 중",
+      solution: "잠시 후 다시 시도해주세요."
+    };
+  }
+}
