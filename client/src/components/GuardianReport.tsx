@@ -158,10 +158,26 @@ export function GuardianReport({ telegramId, userName }: { telegramId: string; u
         </div>
       </Card>
 
-      <div className="text-center pt-4">
-        <p className="text-xs text-white/30 mb-2">
+      <div className="text-center pt-4 space-y-3">
+        <p className="text-xs text-white/30">
           * 이 리포트는 당신의 고유한 운명(Master ID)으로 저장되었습니다.
         </p>
+        <Button
+          variant="mystical"
+          onClick={() => {
+            queryClient.setQueryData(['/api/guardian-report', telegramId], null);
+            generateReport.mutate();
+          }}
+          disabled={generateReport.isPending}
+          className="min-w-[200px]"
+          data-testid="button-regenerate-guardian"
+        >
+          {generateReport.isPending ? (
+            <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> 새로운 리포트 생성 중...</>
+          ) : (
+            <><BrainCircuit className="mr-2 h-4 w-4" /> 리포트 다시 생성하기</>
+          )}
+        </Button>
       </div>
     </motion.div>
   );
