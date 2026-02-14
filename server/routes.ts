@@ -171,8 +171,15 @@ export async function registerRoutes(
       const user = await storage.getUserByTelegramId(telegramId);
       if (!user) return res.status(404).json({ message: "User not found" });
 
-      const gender = user.gender === "male" ? "male" : "female" as "male" | "female";
-      const sajuChart = calculateFullSaju(user.birthDate, user.birthTime, gender);
+      const existingReport = await storage.getGuardianReportByUserId(user.id);
+      if (existingReport) {
+        console.log(`[Guardian] Found existing master report for user ${user.id}`);
+        return res.json(existingReport);
+      }
+
+      console.log(`[Guardian] Generating NEW master report for user ${user.id}...`);
+
+      const sajuChart = calculateFullSaju(user.birthDate, user.birthTime, user.gender);
       const sajuPersonality = analyzeSajuPersonality(sajuChart);
 
       const safeGender = (user.gender === "female" || user.gender === "여" || user.gender === "woman") ? "female" : "male";
@@ -183,14 +190,25 @@ export async function registerRoutes(
       const zodiacInfo = getZodiacInfo(user.birthDate);
       const zodiacSign = getZodiacSign(user.birthDate);
 
-      const report = await generateGuardianReport({
+      const reportData = await generateGuardianReport({
         name: user.name,
         saju: { ...sajuPersonality, yongShin: sajuChart.yongShin, dayMasterStrength: sajuChart.dayMasterStrength },
         ziwei: ziweiResult,
         zodiac: { sign: zodiacSign, info: zodiacInfo }
       });
 
-      res.json(report);
+      const savedReport = await storage.createGuardianReport({
+        userId: user.id,
+        coreEnergy: reportData.coreEnergy,
+        coherenceScore: reportData.coherenceScore,
+        keywords: reportData.keywords,
+        pastInference: reportData.pastInference,
+        currentState: reportData.currentState,
+        bottleneck: reportData.bottleneck,
+        solution: reportData.solution
+      });
+
+      res.json(savedReport);
     } catch (error) {
       console.error("Guardian report generation error:", error);
       res.status(500).json({ message: "Failed to generate guardian report" });

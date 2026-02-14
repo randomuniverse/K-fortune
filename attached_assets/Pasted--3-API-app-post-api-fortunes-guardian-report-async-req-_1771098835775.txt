@@ -1,0 +1,55 @@
+// [3단계 업그레이드] 가디언 리포트 API (조회 -> 생성 -> 저장)
+  app.post("/api/fortunes/guardian-report", async (req, res) => {
+    try {
+      const { telegramId } = req.body;
+      const user = await storage.getUserByTelegramId(telegramId);
+      if (!user) return res.status(404).json({ message: "User not found" });
+
+      // 1. [기억력 테스트] 이미 생성된 마스터 리포트가 있는지 확인
+      const existingReport = await storage.getGuardianReportByUserId(user.id);
+      if (existingReport) {
+        console.log(`[Guardian] Found existing master report for user ${user.id}`);
+        return res.json(existingReport); // 기존 리포트 즉시 반환
+      }
+
+      console.log(`[Guardian] Generating NEW master report for user ${user.id}...`);
+
+      // 2. [데이터 수집] 없으면 새로 생성 시작
+      const sajuChart = calculateFullSaju(user.birthDate, user.birthTime, user.gender);
+      const sajuPersonality = analyzeSajuPersonality(sajuChart);
+      
+      const safeGender = (user.gender === "female" || user.gender === "여" || user.gender === "woman") ? "female" : "male";
+      const [year, month, day] = user.birthDate.split('-').map(Number);
+      const hour = parseInt(user.birthTime.split(':')[0]);
+      const ziweiResult = calculateZiWei(year, month, day, hour, safeGender);
+      
+      const zodiacInfo = getZodiacInfo(user.birthDate);
+      const zodiacSign = getZodiacSign(user.birthDate);
+
+      // 3. [엔진 가동] 셜록 홈즈 + 행동과학 모드
+      const reportData = await generateGuardianReport({
+        name: user.name,
+        saju: sajuPersonality,
+        ziwei: ziweiResult,
+        zodiac: { sign: zodiacSign, info: zodiacInfo }
+      });
+
+      // 4. [기억 저장] 생성된 리포트를 DB에 영구 저장
+      const savedReport = await storage.createGuardianReport({
+        userId: user.id,
+        coreEnergy: reportData.coreEnergy,
+        coherenceScore: reportData.coherenceScore,
+        keywords: reportData.keywords,
+        pastInference: reportData.pastInference, // 셜록 홈즈 추리 저장
+        currentState: reportData.currentState,
+        bottleneck: reportData.bottleneck,
+        solution: reportData.solution
+      });
+
+      res.json(savedReport);
+
+    } catch (error) {
+      console.error("Guardian report generation error:", error);
+      res.status(500).json({ message: "Failed to generate guardian report" });
+    }
+  });
