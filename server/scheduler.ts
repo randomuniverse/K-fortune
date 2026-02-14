@@ -85,6 +85,12 @@ async function runDailyFortunes() {
   console.log(`[SCHEDULER] === Completed: ${success} success, ${failed} failed ===`);
 }
 
+function getKoreaTime() {
+  const now = new Date();
+  const koreaOffset = 9 * 60 * 60 * 1000;
+  return new Date(now.getTime() + koreaOffset);
+}
+
 function getNextRunTime(): number {
   const now = new Date();
   const koreaOffset = 9 * 60 * 60 * 1000;
@@ -108,6 +114,35 @@ function getNextRunTime(): number {
   return targetUTC.getTime() - now.getTime();
 }
 
+async function checkMissedRun() {
+  const koreaTime = getKoreaTime();
+  const currentHour = koreaTime.getHours();
+  const currentMinute = koreaTime.getMinutes();
+
+  if (currentHour >= 7) {
+    console.log(`[SCHEDULER] Server started after 07:00 KST (current: ${currentHour}:${String(currentMinute).padStart(2, '0')} KST), checking for missed fortunes...`);
+
+    const allUsers = await storage.getAllUsers();
+    let needsRun = false;
+
+    for (const user of allUsers) {
+      const existingToday = await storage.getTodayFortuneByUserId(user.id);
+      if (!existingToday) {
+        needsRun = true;
+        console.log(`[SCHEDULER] ${user.name} is missing today's fortune`);
+        break;
+      }
+    }
+
+    if (needsRun) {
+      console.log("[SCHEDULER] Missed run detected! Running fortune generation now...");
+      await runDailyFortunes();
+    } else {
+      console.log("[SCHEDULER] All users already have today's fortune, no missed run");
+    }
+  }
+}
+
 function scheduleNext() {
   const msUntilNext = getNextRunTime();
   const hours = Math.floor(msUntilNext / (1000 * 60 * 60));
@@ -122,6 +157,11 @@ function scheduleNext() {
 
 export function startScheduler() {
   console.log("[SCHEDULER] Fortune scheduler initialized (unified)");
+
+  checkMissedRun().catch((err) => {
+    console.error("[SCHEDULER] Error checking missed run:", err);
+  });
+
   scheduleNext();
 }
 
