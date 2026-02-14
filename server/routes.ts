@@ -215,6 +215,19 @@ export async function registerRoutes(
     }
   });
 
+  app.get("/api/guardian-report/:telegramId", async (req, res) => {
+    try {
+      const user = await storage.getUserByTelegramId(req.params.telegramId);
+      if (!user) return res.status(404).json({ message: "User not found" });
+      const report = await storage.getGuardianReportByUserId(user.id);
+      if (!report) return res.status(404).json({ message: "No report found" });
+      res.json(report);
+    } catch (error) {
+      console.error("Guardian report fetch error:", error);
+      res.status(500).json({ message: "Failed to fetch guardian report" });
+    }
+  });
+
   app.get("/api/saju/:telegramId", async (req, res) => {
     try {
       const user = await storage.getUserByTelegramId(req.params.telegramId);
