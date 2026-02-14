@@ -1,0 +1,64 @@
+// ... (기존 import 문들 아래에 추가)
+
+// [신규] 가디언 리포트 생성 함수
+export async function generateGuardianReport(data: {
+  name: string;
+  saju: any;  // SajuPersonality
+  ziwei: any; // ZiweiResult
+  zodiac: any;
+}) {
+  const systemPrompt = `
+당신은 '운명의 가디언'이자 날카로운 '인생 컨설턴트'입니다.
+단순한 운세 풀이가 아니라, 사용자의 사주, 자미두수, 별자리 데이터를 통합 분석하여
+현재 사용자가 겪고 있을 **'병목 현상(Bottleneck)'**과 **'심리적 모순'**을 찾아내고, 해결책을 제시해야 합니다.
+
+**분석 핵심 원칙:**
+1. **모순 찾기 (Conflict Detection):** - 예: 사주는 '강한 리더(괴강살)'인데, 수비학은 '섬세한 중재자'라면? -> "겉은 강해 보이지만 속은 끊임없이 눈치 보는 답답함"을 지적하세요.
+   - 예: 자미두수는 '혁명가(파군)'인데, 사주는 '신약'하다면? -> "치고 나가고 싶은데 체력이나 확신이 부족해 브레이크가 걸린 상태"를 지적하세요.
+2. **병목 이론 (Bottleneck):** 사용자의 잠재력이 100% 터지지 못하게 막고 있는 '단 하나'의 원인을 짚어주세요.
+3. **Fulfillment 솔루션:** 뜬구름 잡는 소리 말고, 당장 마음가짐을 어떻게 바꿔야 운명이 뚫리는지 구체적으로 조언하세요.
+
+**출력 형식 (JSON):**
+{
+  "coreEnergy": "당신을 정의하는 핵심 에너지 (예: 멈추지 않는 불도저, 유리 멘탈의 예술가)",
+  "currentState": "현재 심리 상태와 딜레마 분석 (소름 돋는 통찰)",
+  "bottleneck": "현재 인생의 병목 구간 (막혀있는 지점)",
+  "solution": "가디언의 해결 솔루션 (Fulfillment를 위한 조언)"
+}
+`;
+
+  const userPrompt = `
+사용자 이름: ${data.name}
+1. [사주 데이터]
+   - 본성(일간): ${data.saju.mainTrait} (${data.saju.dayMasterDescription})
+   - 특수살: ${data.saju.specialSals.map((s: any) => s.name).join(", ")}
+   - 강약: ${data.saju.dayMasterStrength}
+   - 용신: ${data.saju.yongShin.element} (${data.saju.yongShin.reason})
+
+2. [자미두수 데이터]
+   - 명궁 주성: ${data.ziwei.stars.life.map((s: any) => s.name).join(", ")}
+   - 성격 키워드: ${data.ziwei.stars.life.map((s: any) => s.keyword).join(", ")}
+   - 멘탈 그릇(국): ${data.ziwei.bureau.name} (${data.ziwei.bureau.desc})
+
+3. [별자리 데이터]
+   - 별자리: ${data.zodiac.sign}
+   - 특징: ${data.zodiac.info.personality}
+
+위 3가지 데이터를 융합하여, 이 사람이 현재 왜 답답함을 느낄지, 
+그리고 '혁명가의 본능'과 '완벽주의' 같은 상충되는 기운이 있다면 그게 어떻게 작용하고 있는지 날카롭게 분석해줘.
+말투는 예의 바르지만 핵심을 찌르는 통찰력 있는 어조로.
+`;
+
+  const response = await openai.chat.completions.create({
+    model: "gpt-4o",
+    messages: [
+      { role: "system", content: systemPrompt },
+      { role: "user", content: userPrompt },
+    ],
+    response_format: { type: "json_object" },
+    temperature: 0.8, // 창의적이고 통찰력 있는 답변을 위해 약간 높임
+  });
+
+  const content = response.choices[0].message.content || "{}";
+  return JSON.parse(content);
+}
