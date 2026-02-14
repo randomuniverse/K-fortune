@@ -413,7 +413,7 @@ export async function generateGuardianReport(data: {
 사용자 이름: ${data.name}
 1. [사주] 본성: ${data.saju.mainTrait}, 특수살: ${data.saju.specialSals.map((s: any) => s.name).join(", ")}, 용신: ${data.saju.yongShin.element} (${data.saju.yongShin.reason})
 2. [자미두수] 주성: ${data.ziwei.stars.life.map((s: any) => s.name).join(", ")}, 국: ${data.ziwei.bureau.name}
-3. [별자리] ${data.zodiac.sign}, 특징: ${data.zodiac.info.personality}
+3. [별자리] ${data.zodiac.sign}, 특징: ${data.zodiac.info.traits?.join(", ") || data.zodiac.sign}
 
 위 데이터를 바탕으로 분석해주세요. 
 특히 서로 다른 운세가 충돌하는 지점(모순)을 찾아내어, 그로 인한 답답함을 '병목'으로 정의하고 풀어주세요.

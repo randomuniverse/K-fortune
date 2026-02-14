@@ -185,7 +185,7 @@ export async function registerRoutes(
 
       const report = await generateGuardianReport({
         name: user.name,
-        saju: sajuPersonality,
+        saju: { ...sajuPersonality, yongShin: sajuChart.yongShin, dayMasterStrength: sajuChart.dayMasterStrength },
         ziwei: ziweiResult,
         zodiac: { sign: zodiacSign, info: zodiacInfo }
       });
