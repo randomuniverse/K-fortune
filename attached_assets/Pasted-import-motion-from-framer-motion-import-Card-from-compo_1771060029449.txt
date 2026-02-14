@@ -4,7 +4,7 @@ import { Flame, Droplets, Mountain, Wind, Gem, User, Sparkles, Brain, Shield, Ta
 import type { SajuChart } from "@shared/saju";
 import type { ZodiacInfo } from "@shared/schema";
 import { analyzeSajuPersonality } from "@shared/saju";
-import { calculateZiWei } from "@shared/ziwei";
+import { calculateZiWei } from "@shared/ziwei"; // 자미두수 추가
 import type { SajuPersonality, SpecialSal, StructurePattern, YongShinRemedy } from "@shared/saju";
 import { SajuInfoCard } from "./SajuInfoCard";
 import { ZodiacInfoCard } from "./ZodiacInfoCard";
@@ -15,7 +15,7 @@ interface Props {
   birthDate: string;
   birthTime: string;
   userName: string;
-  gender?: string;
+  gender?: string; // 성별 추가 (문자열로 받음)
 }
 
 const ELEMENT_ICONS: Record<string, typeof Flame> = {
@@ -152,10 +152,12 @@ function RemedySection({ remedy }: { remedy: YongShinRemedy }) {
   );
 }
 
+// 자미두수 카드 컴포넌트
 function ZiWeiCard({ birthDate, birthTime, gender = "male" }: { birthDate: string, birthTime: string, gender: string }) {
   const [year, month, day] = birthDate.split('-').map(Number);
   const hour = parseInt(birthTime.split(':')[0]);
   
+  // gender 문자열을 안전하게 변환
   const safeGender = (gender === "female" || gender === "여" || gender === "woman") ? "female" : "male";
   
   const ziwei = calculateZiWei(year, month, day, hour, safeGender);
@@ -196,7 +198,7 @@ function ZiWeiCard({ birthDate, birthTime, gender = "male" }: { birthDate: strin
         
         <div className="mt-3 pt-3 border-t border-purple-500/20">
           <p className="text-xs text-purple-200/80 leading-relaxed font-medium">
-             {ziwei.interpretation}
+             💡 {ziwei.interpretation}
           </p>
         </div>
       </div>
@@ -219,6 +221,7 @@ export function SajuProfileCard({ chart, zodiacInfo, birthDate, birthTime, userN
       animate={{ opacity: 1 }}
       className="space-y-4"
     >
+      {/* 핵심 성격 요약 */}
       <Section icon={User} title="일간(日干)으로 본 나의 본성" delay={0}>
         <div className={`rounded-xl p-4 border ${elBg}`}>
           <div className="flex items-center gap-3 mb-2">
@@ -235,6 +238,7 @@ export function SajuProfileCard({ chart, zodiacInfo, birthDate, birthTime, userN
         <p className="text-sm text-white/70 leading-relaxed">{personality.dayMasterDescription}</p>
       </Section>
 
+      {/* 특수살 (괴강살 등) */}
       {personality.specialSals.length > 0 && (
         <Section icon={Zap} title="특수살(特殊煞)" delay={0.05}>
           <div className="space-y-3">
@@ -245,6 +249,7 @@ export function SajuProfileCard({ chart, zodiacInfo, birthDate, birthTime, userN
         </Section>
       )}
 
+      {/* 하늘이 준 재능 */}
       <Section icon={Sparkles} title="하늘이 부여한 재능" delay={0.1}>
         <p className="text-sm text-white/80 leading-relaxed">{personality.heavenlyGift}</p>
         <div className="bg-white/[0.03] rounded-lg p-3 mt-2">
@@ -253,6 +258,7 @@ export function SajuProfileCard({ chart, zodiacInfo, birthDate, birthTime, userN
         </div>
       </Section>
 
+      {/* 십성 프로필 + 구조 패턴 */}
       <Section icon={Brain} title="십성(十星)으로 본 운명 구조" delay={0.15}>
         <p className="text-sm text-white/70 leading-relaxed">{personality.tenGodProfile}</p>
         {personality.subTraits.length > 0 && (
@@ -265,6 +271,7 @@ export function SajuProfileCard({ chart, zodiacInfo, birthDate, birthTime, userN
             ))}
           </div>
         )}
+        {/* 구조 패턴 (식상생재 등) */}
         {personality.structurePatterns.length > 0 && (
           <div className="space-y-3 mt-4 pt-3 border-t border-white/5">
             <p className="text-xs text-primary/70 font-medium">운명 구조 패턴</p>
@@ -275,8 +282,10 @@ export function SajuProfileCard({ chart, zodiacInfo, birthDate, birthTime, userN
         )}
       </Section>
 
+      {/* 자미두수 카드 추가 (성별 전달) */}
       <ZiWeiCard birthDate={birthDate} birthTime={birthTime} gender={gender} />
 
+      {/* 용신 개운법 (강화) */}
       <Section icon={Shield} title="용신(用神)과 개운법" delay={0.2}>
         <div className="grid grid-cols-2 gap-3 mb-3">
           <div className={`rounded-lg p-3 border ${ELEMENT_BG[chart.yongShin.element] || "bg-white/5 border-white/10"}`}>
@@ -300,6 +309,7 @@ export function SajuProfileCard({ chart, zodiacInfo, birthDate, birthTime, userN
         </div>
       </Section>
 
+      {/* 기존 사주/별자리 카드 */}
       <div className="grid gap-4 md:grid-cols-2">
         <SajuInfoCard chart={chart} birthDate={birthDate} birthTime={birthTime} userName={userName} />
         <ZodiacInfoCard info={zodiacInfo} />

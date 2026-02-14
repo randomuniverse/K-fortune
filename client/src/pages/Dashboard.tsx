@@ -323,6 +323,7 @@ export default function Dashboard() {
                   birthDate={user.birthDate}
                   birthTime={user.birthTime}
                   userName={user.name}
+                  gender={user.gender}
                 />
               ) : (
                 <div className="flex justify-center py-12">
