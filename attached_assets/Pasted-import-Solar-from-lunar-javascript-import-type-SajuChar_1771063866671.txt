@@ -1,7 +1,7 @@
-// @ts-ignore
 import { Solar } from 'lunar-javascript';
-import type { SajuChart } from './saju';
+import type { SajuChart } from './saju'; // 사주 타입 가져오기
 
+// 1. 국(Bureau) 해석 데이터
 const BUREAU_INFO: Record<number, { name: string; desc: string }> = {
   2: { name: "수2국 (Water)", desc: "물처럼 유연하고 지혜롭습니다. 환경 적응력이 뛰어나지만 생각이 많아 우유부단할 수 있습니다." },
   3: { name: "목3국 (Wood)", desc: "나무처럼 곧게 뻗어나가는 성장 욕구가 강합니다. 인자하지만 고집이 있고 뿌리가 흔들릴 수 있습니다." },
@@ -10,7 +10,8 @@ const BUREAU_INFO: Record<number, { name: string; desc: string }> = {
   6: { name: "화6국 (Fire)", desc: "불처럼 열정적이고 예의가 바릅니다. 화려함을 추구하지만 감정 기복이 심해 빨리 식을 수 있습니다." }
 };
 
-const MAJOR_STARS: Record<string, { name: string; keyword: string; personality: string; loveStyle: string; wealthStyle: string; socialStyle: string }> = {
+// 2. 14주성 상세 데이터 (4대 궁 해석 포함)
+const MAJOR_STARS = {
   "자미": {
     name: "자미성 (The Emperor)",
     keyword: "제왕, 통솔, 자존심",
@@ -135,22 +136,24 @@ export interface ZiWeiStar {
 }
 
 export interface ZiWeiResult {
-  lifePalace: string;
+  lifePalace: string; // 명궁 지지
   bureau: { name: string; desc: string };
   stars: {
-    life: ZiWeiStar[];
-    spouse: ZiWeiStar[];
-    wealth: ZiWeiStar[];
-    travel: ZiWeiStar[];
+    life: ZiWeiStar[];   // 명궁 (나)
+    spouse: ZiWeiStar[]; // 부부궁 (배우자/연애)
+    wealth: ZiWeiStar[]; // 재백궁 (재물)
+    travel: ZiWeiStar[]; // 천이궁 (대외/이동)
   };
-  interpretation: string;
+  interpretation: string; // 기본 해석
 }
 
+// 명궁 위치 계산
 function getLifePalaceIndex(lunarMonth: number, birthHourBranchIdx: number): number {
   let idx = 2 + (lunarMonth - 1) - (birthHourBranchIdx);
   return ((idx % 12) + 12) % 12;
 }
 
+// 오행국 계산
 function getElementSubject(yearStemIdx: number, lifePalaceBranchIdx: number): number {
   const startStem = [2, 4, 6, 8, 0][yearStemIdx % 5];
   const dist = ((lifePalaceBranchIdx - 2) + 12) % 12;
@@ -165,35 +168,44 @@ function getElementSubject(yearStemIdx: number, lifePalaceBranchIdx: number): nu
   return pattern[pairIdx][stemPairIdx];
 }
 
+// ★ 사주-자미두수 통합 인사이트 생성 함수 (핵심 로직)
 export function generateDestinyInsight(ziwei: ZiWeiResult, saju: SajuChart): string {
-  const mainStars = ziwei.stars.life.map(s => s.name.split(' ')[0]);
-  const specialSals: string[] = [];
+  const mainStars = ziwei.stars.life.map(s => s.name.split(' ')[0]); // "자미성"
+  const specialSals = []; 
   
+  // 사주에서 특수살 추출 (로직 재구현 대신 키워드 매칭)
   const dayPillar = saju.dayPillar.stemHanja + saju.dayPillar.branchHanja;
   if (["庚辰", "庚戌", "壬辰", "壬戌", "戊戌"].includes(dayPillar)) specialSals.push("괴강");
-
+  // 도화/화개/역마 체크 로직은 saju.ts에 있지만 여기선 간단히 일지/년지 기준으로 추정하거나
+  // dashboard에서 넘어온 personality 데이터를 쓰는게 좋지만, 
+  // 여기선 독립적인 계산을 위해 간단한 패턴 매칭을 사용합니다.
+  
   let insight = "당신의 사주와 자미두수는 서로 보완하며 독특한 운명을 만들어냅니다.";
 
+  // 1. 혁명가 패턴 (파군/칠살 + 괴강/백호)
   if ((mainStars.includes("파군성") || mainStars.includes("칠살성")) && specialSals.includes("괴강")) {
-    insight = "기존의 틀을 깨는 혁명가 (The Revolutionary)\n" +
+    insight = "⚡ **기존의 틀을 깨는 혁명가 (The Revolutionary)**\n" +
       "자미두수의 파격적인 '파군/칠살' 기운과 사주의 강력한 '괴강살'이 만났습니다. " +
       "당신은 평범한 삶을 거부하고, 낡은 것을 부수어 새로운 세상을 여는 개척자입니다. " +
       "남들이 두려워하는 위기 상황에서 당신의 리더십은 더욱 빛을 발합니다.";
   }
+  // 2. 예술가 패턴 (태음/천동/탐랑 + 화개/도화) -> *화개살 여부는 여기서 알기 어려우므로 별 성격 위주로*
   else if (mainStars.includes("태음성") || mainStars.includes("천동성") || mainStars.includes("탐랑성")) {
-    insight = "영감을 빚어내는 예술가 (The Artist)\n" +
+    insight = "🎨 **영감을 빚어내는 예술가 (The Artist)**\n" +
       "자미두수의 풍부한 감수성이 당신의 영혼을 채우고 있습니다. " +
       "섬세한 감각과 사람을 끄는 매력으로, 딱딱한 논리보다는 감성과 직관으로 세상을 움직이는 힘이 있습니다. " +
       "예술, 디자인, 혹은 사람의 마음을 다루는 일에서 큰 성취를 이룰 운명입니다.";
   }
+  // 3. 리더 패턴 (자미/태양/천부)
   else if (mainStars.includes("자미성") || mainStars.includes("태양성") || mainStars.includes("천부성")) {
-    insight = "세상을 이끄는 진정한 리더 (The Leader)\n" +
+    insight = "👑 **세상을 이끄는 진정한 리더 (The Leader)**\n" +
       "하늘의 제왕과 같은 별들이 당신을 비추고 있습니다. " +
       "사사로운 이익보다는 대의와 명분을 중시하며, 조직을 이끌고 관리하는 탁월한 능력을 타고났습니다. " +
       "당신의 말과 행동은 주변 사람들에게 깊은 신뢰와 영향력을 줍니다.";
   }
+  // 4. 전략가 패턴 (천기/거문/무곡)
   else if (mainStars.includes("천기성") || mainStars.includes("거문성") || mainStars.includes("무곡성")) {
-    insight = "핵심을 꿰뚫는 전략가 (The Strategist)\n" +
+    insight = "🧠 **핵심을 꿰뚫는 전략가 (The Strategist)**\n" +
       "날카로운 이성과 분석력이 당신의 무기입니다. " +
       "남들이 보지 못하는 문제의 본질을 파악하고, 실질적인 해결책을 제시하는 능력이 탁월합니다. " +
       "감정에 휘둘리지 않고 냉철하게 목표를 달성하는 승부사 기질이 있습니다.";
@@ -212,12 +224,15 @@ export function calculateZiWei(birthYear: number, birthMonth: number, birthDay: 
   if (birthHour >= 23 || birthHour < 1) hourIdx = 0;
   else hourIdx = Math.floor((birthHour + 1) / 2);
 
-  const lifeIdx = getLifePalaceIndex(lunarMonth, hourIdx);
+  const lifeIdx = getLifePalaceIndex(lunarMonth, hourIdx); // 명궁 Index
   const branches = ["자", "축", "인", "묘", "진", "사", "오", "미", "신", "유", "술", "해"];
 
-  const spouseIdx = (lifeIdx - 2 + 12) % 12;
-  const wealthIdx = (lifeIdx - 4 + 12) % 12;
-  const travelIdx = (lifeIdx - 6 + 12) % 12;
+  // 주요 궁 위치 계산 (명궁 기준 역행/순행)
+  // 자미두수 배치도상: 명궁 -> 형제 -> 부부 -> 자녀 -> 재백 -> 질액 -> 천이 ... (반시계)
+  // 인덱스는 시계방향(0..11)이므로, 반시계는 -1
+  const spouseIdx = (lifeIdx - 2 + 12) % 12; // 부부궁 (명궁 -2)
+  const wealthIdx = (lifeIdx - 4 + 12) % 12; // 재백궁 (명궁 -4)
+  const travelIdx = (lifeIdx - 6 + 12) % 12; // 천이궁 (명궁 -6, 충)
 
   const yearStemIdx = (birthYear - 4) % 10;
   const guk = getElementSubject(yearStemIdx, lifeIdx);
@@ -236,6 +251,7 @@ export function calculateZiWei(birthYear: number, birthMonth: number, birthDay: 
   const ziWeiIdx = ((ziWeiPos - 1) % 12 + 12) % 12;
   const tianFuIdx = (12 - ziWeiIdx + 4) % 12;
 
+  // 별 담을 그릇
   const stars = {
     life: [] as ZiWeiStar[],
     spouse: [] as ZiWeiStar[],
@@ -245,6 +261,7 @@ export function calculateZiWei(birthYear: number, birthMonth: number, birthDay: 
 
   const checkStar = (baseIdx: number, offset: number, name: string) => {
     const targetIdx = ((baseIdx + offset) % 12 + 12) % 12;
+    // @ts-ignore
     const starData = MAJOR_STARS[name];
 
     if (targetIdx === lifeIdx) stars.life.push(starData);

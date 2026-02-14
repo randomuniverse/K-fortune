@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import { Card } from "@/components/ui/card";
-import { Flame, Droplets, Mountain, Wind, Gem, User, Sparkles, Brain, Shield, Target, Zap, Clock, MapPin, Palette, UtensilsCrossed, TrendingUp, AlertTriangle, Star, Moon, Briefcase, Wallet, Compass } from "lucide-react";
+import { Flame, Droplets, Mountain, Wind, Gem, User, Sparkles, Brain, Shield, Target, Zap, Clock, MapPin, Palette, UtensilsCrossed, TrendingUp, AlertTriangle, Star, Moon, Briefcase, Wallet, Compass, Heart, Users, Plane } from "lucide-react";
 import type { SajuChart } from "@shared/saju";
 import type { ZodiacInfo } from "@shared/schema";
 import { analyzeSajuPersonality } from "@shared/saju";
@@ -149,6 +149,40 @@ function RemedySection({ remedy }: { remedy: YongShinRemedy }) {
   );
 }
 
+function ZiWeiPalaceSection({ title, icon: Icon, iconColor, stars, fieldKey, bgClass }: {
+  title: string;
+  icon: typeof Moon;
+  iconColor: string;
+  stars: { name: string; keyword: string; [key: string]: string }[];
+  fieldKey: string;
+  bgClass: string;
+}) {
+  if (stars.length === 0) return null;
+  return (
+    <div className={`${bgClass} rounded-xl p-4`}>
+      <div className="flex items-center gap-2 mb-3">
+        <Icon className={`w-4 h-4 ${iconColor}`} />
+        <span className={`text-sm font-bold ${iconColor}`}>{title}</span>
+      </div>
+      <div className="space-y-3">
+        {stars.map((star, i) => (
+          <div key={i} className="bg-black/20 rounded-lg p-3">
+            <div className="flex flex-wrap items-center gap-1.5 mb-2">
+              <span className="text-xs font-bold text-white">{star.name}</span>
+              {star.keyword.split(',').map((kw, k) => (
+                <span key={k} className="px-1.5 py-0.5 bg-white/5 border border-white/10 rounded text-[10px] text-white/60">
+                  {kw.trim()}
+                </span>
+              ))}
+            </div>
+            <p className="text-xs text-white/70 leading-relaxed">{star[fieldKey]}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function ZiWeiCard({ birthDate, birthTime, gender = "male" }: { birthDate: string, birthTime: string, gender: string }) {
   const [year, month, day] = birthDate.split('-').map(Number);
   const hour = parseInt(birthTime.split(':')[0]);
@@ -164,20 +198,18 @@ function ZiWeiCard({ birthDate, birthTime, gender = "male" }: { birthDate: strin
             <Compass className="w-4 h-4 text-indigo-400" />
             <span className="text-sm font-bold text-indigo-300">{ziwei.bureau.name}</span>
           </div>
-          <p className="text-xs text-white/70 leading-relaxed">
-            {ziwei.bureau.desc}
-          </p>
+          <p className="text-xs text-white/70 leading-relaxed">{ziwei.bureau.desc}</p>
         </div>
 
         <div className="bg-gradient-to-r from-purple-500/10 to-indigo-500/10 border border-purple-500/20 rounded-xl p-5">
           <div className="flex items-center gap-2 mb-4">
             <Moon className="w-5 h-5 text-purple-400" />
-            <span className="text-sm font-bold text-purple-300">명궁(命宮)의 주인</span>
+            <span className="text-sm font-bold text-purple-300">명궁(命宮) - 나의 본질</span>
           </div>
           
-          {ziwei.stars.length > 0 ? (
+          {ziwei.stars.life.length > 0 ? (
             <div className="space-y-6">
-              {ziwei.stars.map((star, i) => (
+              {ziwei.stars.life.map((star, i) => (
                 <div key={i} className="relative">
                   <div className="flex flex-col sm:flex-row sm:items-center gap-2 mb-3">
                     <h3 className="text-lg font-bold text-white tracking-wide">{star.name}</h3>
@@ -208,10 +240,10 @@ function ZiWeiCard({ birthDate, birthTime, gender = "male" }: { birthDate: strin
 
                     <div className="pt-3 border-t border-white/5">
                       <div className="flex items-start gap-2">
-                        <Briefcase className="w-3.5 h-3.5 text-blue-400 mt-0.5 shrink-0" />
+                        <Users className="w-3.5 h-3.5 text-cyan-400 mt-0.5 shrink-0" />
                         <div>
-                          <p className="text-xs text-blue-300/70 font-medium mb-0.5">최적의 직업 환경</p>
-                          <p className="text-xs text-white/70 leading-relaxed">{star.careerStyle}</p>
+                          <p className="text-xs text-cyan-300/70 font-medium mb-0.5">대인관계 스타일</p>
+                          <p className="text-xs text-white/70 leading-relaxed">{star.socialStyle}</p>
                         </div>
                       </div>
                     </div>
@@ -226,6 +258,33 @@ function ZiWeiCard({ birthDate, birthTime, gender = "male" }: { birthDate: strin
             </div>
           )}
         </div>
+
+        <ZiWeiPalaceSection
+          title="부부궁(夫妻宮) - 연애와 결혼"
+          icon={Heart}
+          iconColor="text-pink-400"
+          stars={ziwei.stars.spouse}
+          fieldKey="loveStyle"
+          bgClass="bg-pink-500/10 border border-pink-500/20"
+        />
+
+        <ZiWeiPalaceSection
+          title="재백궁(財帛宮) - 재물과 돈"
+          icon={Wallet}
+          iconColor="text-amber-400"
+          stars={ziwei.stars.wealth}
+          fieldKey="wealthStyle"
+          bgClass="bg-amber-500/10 border border-amber-500/20"
+        />
+
+        <ZiWeiPalaceSection
+          title="천이궁(遷移宮) - 대외활동과 이동"
+          icon={Plane}
+          iconColor="text-sky-400"
+          stars={ziwei.stars.travel}
+          fieldKey="socialStyle"
+          bgClass="bg-sky-500/10 border border-sky-500/20"
+        />
       </div>
     </Section>
   );
