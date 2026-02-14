@@ -1,12 +1,11 @@
-import { useState } from "react";
 import { motion } from "framer-motion";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Loader2, Sparkles, Lock, Unlock, Zap, AlertTriangle, ArrowRight, Activity } from "lucide-react";
+import { Loader2, Sparkles, Lock, Unlock, Zap, AlertTriangle, Activity } from "lucide-react";
 import { useMutation } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 
-interface GuardianReportData {
+export interface GuardianReportData {
   coreEnergy: string;
   coherenceScore: number;
   keywords: string[];
@@ -15,16 +14,21 @@ interface GuardianReportData {
   solution: string;
 }
 
-export function GuardianReport({ telegramId, userName }: { telegramId: string; userName: string }) {
-  const [report, setReport] = useState<GuardianReportData | null>(null);
+interface GuardianReportProps {
+  telegramId: string;
+  userName: string;
+  report: GuardianReportData | null;
+  onReportGenerated: (data: GuardianReportData) => void;
+}
 
+export function GuardianReport({ telegramId, userName, report, onReportGenerated }: GuardianReportProps) {
   const generateReport = useMutation({
     mutationFn: async () => {
       const res = await apiRequest("POST", "/api/fortunes/guardian-report", { telegramId });
       return res.json();
     },
     onSuccess: (data) => {
-      setReport(data);
+      onReportGenerated(data);
     },
   });
 
@@ -124,12 +128,6 @@ export function GuardianReport({ telegramId, userName }: { telegramId: string; u
           </div>
         </div>
       </Card>
-
-      <div className="text-center pt-4">
-        <Button variant="ghost" className="text-white/40" onClick={() => setReport(null)} data-testid="button-retry-guardian">
-          <ArrowRight className="mr-2 h-4 w-4" /> 다시 분석하기
-        </Button>
-      </div>
     </motion.div>
   );
 }
