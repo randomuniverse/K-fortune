@@ -11,8 +11,9 @@ import { getZodiacSign, getZodiacInfo } from "@shared/schema";
 import type { FortuneData } from "@shared/schema";
 import { FortuneScoreCard } from "@/components/FortuneScoreCard";
 import { YearlyFortuneCard } from "@/components/YearlyFortuneCard";
+// 컴포넌트 임포트
 import { SajuDeepAnalysis, ZiweiDeepAnalysis, ZodiacDeepAnalysis } from "@/components/SajuProfileCard";
-import { GuardianReport } from "@/components/GuardianReport";
+import { GuardianReport } from "@/components/GuardianReport"; // 가디언 리포트 추가
 
 type MainTabId = "today" | "yearly" | "destiny";
 type DestinyTabId = "summary" | "saju" | "ziwei" | "zodiac";
@@ -24,7 +25,7 @@ const MAIN_TABS: { id: MainTabId; label: string; icon: any }[] = [
 ];
 
 const DESTINY_TABS: { id: DestinyTabId; label: string; icon: any }[] = [
-  { id: "summary", label: "가디언 리포트", icon: LayoutDashboard },
+  { id: "summary", label: "가디언 리포트", icon: LayoutDashboard }, // 이름 변경: 종합 총평 -> 가디언 리포트
   { id: "saju", label: "사주 심층", icon: Compass },
   { id: "ziwei", label: "자미두수", icon: Star },
   { id: "zodiac", label: "별자리 정보", icon: Moon },
@@ -133,6 +134,7 @@ export default function Dashboard() {
   return (
     <Layout telegramId={telegramId}>
       <div className="space-y-6">
+        {/* 헤더 섹션 */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div>
             <h2 className="text-3xl md:text-4xl font-serif text-white mb-1">
@@ -148,7 +150,6 @@ export default function Dashboard() {
               onClick={handleGenerate}
               disabled={generateFortune.isPending || hasTodayFortune}
               className="w-full md:w-auto min-w-[200px]"
-              data-testid="button-generate-fortune"
             >
               {generateFortune.isPending ? (
                 <><Loader2 className="mr-2 h-5 w-5 animate-spin" /> 교차 검증 중... (9회 분석)</>
@@ -177,7 +178,6 @@ export default function Dashboard() {
                 }}
                 disabled={isSendingTelegram}
                 className="w-full md:w-auto"
-                data-testid="button-send-telegram"
               >
                 {isSendingTelegram ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> 전송 중...</> : <><Send className="mr-2 h-4 w-4" /> 텔레그램 전송</>}
               </Button>
@@ -185,6 +185,7 @@ export default function Dashboard() {
           </div>
         </div>
 
+        {/* 메인 탭 네비게이션 */}
         <div className="flex gap-1 p-1 bg-white/[0.03] rounded-xl border border-white/5">
           {MAIN_TABS.map((tab) => {
             const Icon = tab.icon;
@@ -193,7 +194,6 @@ export default function Dashboard() {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                data-testid={`tab-${tab.id}`}
                 className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-lg text-sm font-medium transition-all duration-200 ${
                   isActive
                     ? "bg-primary/20 text-primary border border-primary/30 shadow-lg shadow-primary/10"
@@ -209,6 +209,7 @@ export default function Dashboard() {
         </div>
 
         <div className="min-h-[400px]">
+          {/* 1. 오늘의 운세 탭 */}
           {activeTab === "today" && (
             <motion.div
               key="today"
@@ -222,7 +223,7 @@ export default function Dashboard() {
                 <div className="py-16 text-center glass-panel rounded-xl">
                   <Sparkles className="w-12 h-12 text-primary/30 mx-auto mb-4" />
                   <p className="text-muted-foreground text-lg mb-4">아직 오늘의 운세가 없습니다.</p>
-                  <Button variant="mystical" onClick={handleGenerate} disabled={generateFortune.isPending} data-testid="button-generate-fortune-empty">
+                  <Button variant="mystical" onClick={handleGenerate} disabled={generateFortune.isPending}>
                     <Sparkles className="mr-2 h-4 w-4" /> 오늘의 운세 보기
                   </Button>
                 </div>
@@ -239,7 +240,7 @@ export default function Dashboard() {
                   </div>
                   {hasMoreFortunes && (
                     <div className="text-center pt-2">
-                      <Button variant="outline" size="sm" onClick={() => setFortunesShown(prev => prev + FORTUNES_PER_PAGE)} className="text-muted-foreground" data-testid="button-load-more">
+                      <Button variant="outline" size="sm" onClick={() => setFortunesShown(prev => prev + FORTUNES_PER_PAGE)} className="text-muted-foreground">
                         이전 운세 더 보기 ({pastFortunes.length - fortunesShown}개 남음)
                       </Button>
                     </div>
@@ -249,6 +250,7 @@ export default function Dashboard() {
             </motion.div>
           )}
 
+          {/* 2. 2026년 총평 탭 */}
           {activeTab === "yearly" && (
             <motion.div
               key="yearly"
@@ -264,6 +266,7 @@ export default function Dashboard() {
             </motion.div>
           )}
 
+          {/* 3. 운명 종합 분석 탭 (서브 탭 포함) */}
           {activeTab === "destiny" && (
             <motion.div
               key="destiny"
@@ -272,6 +275,7 @@ export default function Dashboard() {
               transition={{ duration: 0.3 }}
               className="space-y-6"
             >
+              {/* 서브 탭 네비게이션 */}
               <div className="flex overflow-x-auto gap-2 pb-2 scrollbar-hide">
                 {DESTINY_TABS.map((tab) => {
                   const Icon = tab.icon;
@@ -280,7 +284,6 @@ export default function Dashboard() {
                     <button
                       key={tab.id}
                       onClick={() => setDestinySubTab(tab.id)}
-                      data-testid={`subtab-${tab.id}`}
                       className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs font-medium whitespace-nowrap transition-all border ${
                         isActive
                           ? "bg-indigo-500/20 text-indigo-300 border-indigo-500/30"
@@ -294,16 +297,17 @@ export default function Dashboard() {
                 })}
               </div>
 
+              {/* 데이터 로딩 체크 */}
               {!sajuData?.sajuChart ? (
                 <div className="flex justify-center py-12"><Loader2 className="w-8 h-8 text-primary/50 animate-spin" /></div>
               ) : (
                 <div className="min-h-[300px]">
+                  {/* [1] 가디언 리포트 (통합 분석) */}
                   {destinySubTab === "summary" && (
-                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-                      <GuardianReport telegramId={telegramId} userName={user.name} />
-                    </motion.div>
+                    <GuardianReport telegramId={telegramId} userName={user.name} />
                   )}
 
+                  {/* [2] 사주 심층 */}
                   {destinySubTab === "saju" && (
                     <SajuDeepAnalysis 
                       chart={sajuData.sajuChart} 
@@ -313,6 +317,7 @@ export default function Dashboard() {
                     />
                   )}
 
+                  {/* [3] 자미두수 */}
                   {destinySubTab === "ziwei" && (
                     <ZiweiDeepAnalysis 
                       chart={sajuData.sajuChart} 
@@ -322,6 +327,7 @@ export default function Dashboard() {
                     />
                   )}
 
+                  {/* [4] 별자리 정보 */}
                   {destinySubTab === "zodiac" && (
                     <ZodiacDeepAnalysis zodiacInfo={zodiacInfo} />
                   )}
