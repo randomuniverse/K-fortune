@@ -188,7 +188,7 @@ export const insertYearlyFortuneSchema = createInsertSchema(yearlyFortunes).pick
   keywords: true,
 });
 
-export type YearlyFortuneType = typeof yearlyFortunes.$inferSelect;
+export type YearlyFortune = typeof yearlyFortunes.$inferSelect;
 export type InsertYearlyFortune = z.infer<typeof insertYearlyFortuneSchema>;
 
 export interface MonthlyFlowItem {

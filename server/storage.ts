@@ -1,5 +1,5 @@
 import { db } from "./db";
-import { users, fortunes, guardianReports, yearlyFortunes, type User, type InsertUser, type Fortune, type InsertFortune, type GuardianReportType, type InsertGuardianReport, type YearlyFortuneType, type InsertYearlyFortune } from "@shared/schema";
+import { users, fortunes, guardianReports, yearlyFortunes, type User, type InsertUser, type Fortune, type InsertFortune, type GuardianReportType, type InsertGuardianReport, type YearlyFortune, type InsertYearlyFortune } from "@shared/schema";
 import { eq, desc, and, gte } from "drizzle-orm";
 
 export interface IStorage {
@@ -14,8 +14,8 @@ export interface IStorage {
   createGuardianReport(report: InsertGuardianReport): Promise<GuardianReportType>;
   getGuardianReportByUserId(userId: number): Promise<GuardianReportType | undefined>;
   deleteGuardianReportByUserId(userId: number): Promise<void>;
-  createYearlyFortune(fortune: InsertYearlyFortune): Promise<YearlyFortuneType>;
-  getYearlyFortuneByUserId(userId: number, year: number): Promise<YearlyFortuneType | undefined>;
+  createYearlyFortune(fortune: InsertYearlyFortune): Promise<YearlyFortune>;
+  getYearlyFortuneByUserId(userId: number, year: number): Promise<YearlyFortune | undefined>;
   deleteYearlyFortuneByUserId(userId: number, year: number): Promise<void>;
 }
 
@@ -99,12 +99,12 @@ export class DatabaseStorage implements IStorage {
     await db.delete(guardianReports).where(eq(guardianReports.userId, userId));
   }
 
-  async createYearlyFortune(fortune: InsertYearlyFortune): Promise<YearlyFortuneType> {
+  async createYearlyFortune(fortune: InsertYearlyFortune): Promise<YearlyFortune> {
     const [newFortune] = await db.insert(yearlyFortunes).values(fortune).returning();
     return newFortune;
   }
 
-  async getYearlyFortuneByUserId(userId: number, year: number): Promise<YearlyFortuneType | undefined> {
+  async getYearlyFortuneByUserId(userId: number, year: number): Promise<YearlyFortune | undefined> {
     const [fortune] = await db
       .select()
       .from(yearlyFortunes)
