@@ -478,7 +478,7 @@ export async function generateGuardianReport(data: {
 `;
 
   const userPrompt = `
-[사용자 프로필: ${data.name}]
+[사용자 운명 데이터 - 이름 절대 사용 금지, 반드시 "당신"으로만 지칭]
 
 1. [사주] 본성: ${data.saju.mainTrait}, 특수살: ${data.saju.specialSals.map((s: any) => s.name).join(", ")}, 용신: ${data.saju.yongShin.element}
 2. [자미두수] 주성: ${data.ziwei.stars.life.map((s: any) => s.name).join(", ")}, 국: ${data.ziwei.bureau.name}
@@ -486,6 +486,7 @@ export async function generateGuardianReport(data: {
 
 위 데이터를 종합 분석하여, 이 사람의 '과거 실패 패턴'을 추리하고, '과학적 행동 솔루션'을 내려주세요.
 말투는 확신에 차 있고 예언적이지만, 논리적인 설득력을 갖추세요.
+절대로 사용자의 이름을 사용하지 말고, 반드시 "당신"이라고만 지칭하세요.
 `;
 
   try {
@@ -569,7 +570,7 @@ ${JSON.stringify(report3, null, 2)}
     const synthesisResponse = await openai.chat.completions.create({
       model: "gpt-4o",
       messages: [
-        { role: "system", content: "당신은 3개의 독립 분석 리포트를 교차 검증하여 최종 종합 리포트를 작성하는 검증관입니다. 2개 이상 일치하는 내용만 채택하세요." },
+        { role: "system", content: "당신은 3개의 독립 분석 리포트를 교차 검증하여 최종 종합 리포트를 작성하는 검증관입니다. 2개 이상 일치하는 내용만 채택하세요. [치명적 금지] 사용자의 이름(예: Ricky)을 절대 사용하지 마세요. 모든 텍스트에서 반드시 '당신'이라고만 지칭하세요. 원본 리포트에 이름이 있더라도 '당신'으로 교체하세요. 각 섹션은 최소 3~5문장으로 길게 서술하세요." },
         { role: "user", content: synthesisPrompt },
       ],
       response_format: { type: "json_object" },
