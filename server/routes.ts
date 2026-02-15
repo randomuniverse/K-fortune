@@ -6,7 +6,7 @@ import { z } from "zod";
 import { getZodiacInfo, getZodiacSign } from "@shared/schema";
 import { calculateFullSaju, analyzeSajuPersonality } from "@shared/saju";
 import { calculateZiWei } from "@shared/ziwei";
-import { generateFortuneForUser, sendTelegramMessage, generateGuardianReport } from "./fortune-engine";
+import { generateFortuneForUser, sendTelegramMessage, generateGuardianReport, generateYearlyFortune } from "./fortune-engine";
 
 export async function registerRoutes(
   httpServer: Server,
@@ -233,6 +233,84 @@ export async function registerRoutes(
     } catch (error) {
       console.error("Guardian report fetch error:", error);
       res.status(500).json({ message: "Failed to fetch guardian report" });
+    }
+  });
+
+  app.post("/api/fortunes/yearly", async (req, res) => {
+    try {
+      const bodySchema = z.object({
+        telegramId: z.string().min(1, "telegramId is required"),
+        year: z.number().int().min(2020).max(2030).optional().default(2026),
+        regenerate: z.boolean().optional().default(false),
+      });
+      const parsed = bodySchema.safeParse(req.body);
+      if (!parsed.success) {
+        return res.status(400).json({ message: "Invalid request", errors: parsed.error.flatten() });
+      }
+      const { telegramId, year: targetYear, regenerate } = parsed.data;
+      const user = await storage.getUserByTelegramId(telegramId);
+      if (!user) return res.status(404).json({ message: "User not found" });
+
+      if (!regenerate) {
+        const existing = await storage.getYearlyFortuneByUserId(user.id, targetYear);
+        if (existing) {
+          console.log(`[Yearly] Found existing ${targetYear} fortune for user ${user.id}`);
+          return res.json(existing);
+        }
+      } else {
+        await storage.deleteYearlyFortuneByUserId(user.id, targetYear);
+      }
+
+      console.log(`[Yearly] Generating ${targetYear} fortune for user ${user.id}...`);
+
+      const gender = (user.gender === "female" || user.gender === "여" || user.gender === "woman") ? "female" : "male" as "male" | "female";
+      const sajuChart = calculateFullSaju(user.birthDate, user.birthTime, gender);
+      const sajuPersonality = analyzeSajuPersonality(sajuChart);
+
+      const [yearVal, monthVal, dayVal] = user.birthDate.split('-').map(Number);
+      const hourVal = parseInt(user.birthTime.split(':')[0]);
+      const ziweiResult = calculateZiWei(yearVal, monthVal, dayVal, hourVal, gender);
+
+      const zodiacInfo = getZodiacInfo(user.birthDate);
+      const zodiacSign = getZodiacSign(user.birthDate);
+
+      const fortuneData = await generateYearlyFortune({
+        name: user.name,
+        year: targetYear,
+        saju: { ...sajuPersonality, yongShin: sajuChart.yongShin, dayMasterStrength: sajuChart.dayMasterStrength },
+        ziwei: ziweiResult,
+        zodiac: { sign: zodiacSign, info: zodiacInfo }
+      });
+
+      const saved = await storage.createYearlyFortune({
+        userId: user.id,
+        year: targetYear,
+        overallSummary: fortuneData.overallSummary,
+        coherenceScore: fortuneData.coherenceScore || 75,
+        businessFortune: fortuneData.businessFortune || null,
+        loveFortune: fortuneData.loveFortune || null,
+        healthFortune: fortuneData.healthFortune || null,
+        monthlyFlow: fortuneData.monthlyFlow || null,
+        keywords: fortuneData.keywords || [],
+      });
+
+      res.json(saved);
+    } catch (error) {
+      console.error("Yearly fortune generation error:", error);
+      res.status(500).json({ message: "Failed to generate yearly fortune" });
+    }
+  });
+
+  app.get("/api/yearly-fortune/:telegramId/:year", async (req, res) => {
+    try {
+      const user = await storage.getUserByTelegramId(req.params.telegramId);
+      if (!user) return res.status(404).json({ message: "User not found" });
+      const fortune = await storage.getYearlyFortuneByUserId(user.id, parseInt(req.params.year));
+      if (!fortune) return res.status(404).json({ message: "No yearly fortune found" });
+      res.json(fortune);
+    } catch (error) {
+      console.error("Yearly fortune fetch error:", error);
+      res.status(500).json({ message: "Failed to fetch yearly fortune" });
     }
   });
 

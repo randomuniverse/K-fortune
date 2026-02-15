@@ -1,13 +1,29 @@
 import { motion } from "framer-motion";
 import { Card } from "@/components/ui/card";
-import { TrendingUp, TrendingDown, AlertTriangle, Star, Calendar, Compass } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { TrendingUp, TrendingDown, AlertTriangle, Star, Calendar, Compass, Loader2, Briefcase, Heart, HeartPulse, Activity, BrainCircuit, ChevronDown, ChevronUp } from "lucide-react";
 import type { SajuChart } from "@shared/saju";
 import { calculateYearlyFortune, calculateMonthlyFortunes } from "@shared/saju";
 import type { YearlyFortune, MonthlyFortune } from "@shared/saju";
+import type { MonthlyFlowItem } from "@shared/schema";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import { useState } from "react";
 
 interface Props {
   chart: SajuChart;
   userName: string;
+  telegramId: string;
+}
+
+interface YearlyFortuneData {
+  overallSummary: string;
+  coherenceScore: number;
+  businessFortune: string | null;
+  loveFortune: string | null;
+  healthFortune: string | null;
+  monthlyFlow: MonthlyFlowItem[] | null;
+  keywords: string[] | null;
 }
 
 function ScoreBar({ score, label }: { score: number; label?: string }) {
@@ -97,10 +113,74 @@ function MonthCard({ fortune, index }: { fortune: MonthlyFortune; index: number 
   );
 }
 
-export function YearlyFortuneCard({ chart, userName }: Props) {
+function AIMonthlyFlowCard({ item, index }: { item: MonthlyFlowItem; index: number }) {
+  const isGood = item.score >= 70;
+  const isBad = item.score < 45;
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: index * 0.04, duration: 0.3 }}
+      className={`rounded-xl p-4 border ${
+        isGood ? "border-emerald-500/20 bg-emerald-500/5" :
+        isBad ? "border-red-500/20 bg-red-500/5" :
+        "border-white/5 bg-white/[0.02]"
+      }`}
+      data-testid={`card-ai-month-${item.month}`}
+    >
+      <div className="flex items-center justify-between mb-2 flex-wrap gap-1">
+        <div className="flex items-center gap-2">
+          <span className="text-lg font-bold text-white">{item.month}월</span>
+          <span className={`text-[10px] px-2 py-0.5 rounded-full ${
+            isGood ? "bg-emerald-500/20 text-emerald-400" :
+            isBad ? "bg-red-500/20 text-red-400" :
+            "bg-primary/20 text-primary"
+          }`}>
+            {item.keyword}
+          </span>
+        </div>
+        <span className={`text-sm font-bold ${
+          item.score >= 75 ? "text-emerald-400" :
+          item.score >= 60 ? "text-primary" :
+          item.score >= 45 ? "text-amber-400" :
+          "text-red-400"
+        }`}>
+          {item.score}점
+        </span>
+      </div>
+      <ScoreBar score={item.score} />
+      <p className="text-xs text-white/70 leading-relaxed mt-2">{item.summary}</p>
+    </motion.div>
+  );
+}
+
+export function YearlyFortuneCard({ chart, userName, telegramId }: Props) {
   const year = 2026;
   const yearlyFortune = calculateYearlyFortune(chart, year);
   const monthlyFortunes = calculateMonthlyFortunes(chart, year);
+  const [showSajuMonthly, setShowSajuMonthly] = useState(false);
+
+  const { data: aiYearly, isLoading: isAiLoading } = useQuery<YearlyFortuneData | null>({
+    queryKey: ['/api/yearly-fortune', telegramId, year],
+    queryFn: async () => {
+      const res = await fetch(`/api/yearly-fortune/${telegramId}/${year}`);
+      if (!res.ok) return null;
+      return res.json();
+    },
+    retry: false,
+    staleTime: Infinity,
+  });
+
+  const generateYearly = useMutation({
+    mutationFn: async (regenerate: boolean) => {
+      const res = await apiRequest("POST", "/api/fortunes/yearly", { telegramId, year, regenerate });
+      return res.json();
+    },
+    onSuccess: (data: YearlyFortuneData) => {
+      queryClient.setQueryData(['/api/yearly-fortune', telegramId, year], data);
+    },
+  });
 
   const scoreColor =
     yearlyFortune.overallScore >= 75 ? "text-emerald-400" :
@@ -110,6 +190,10 @@ export function YearlyFortuneCard({ chart, userName }: Props) {
 
   const bestMonth = [...monthlyFortunes].sort((a, b) => b.score - a.score)[0];
   const worstMonth = [...monthlyFortunes].sort((a, b) => a.score - b.score)[0];
+
+  const aiMonthlyFlow = (aiYearly?.monthlyFlow || []) as MonthlyFlowItem[];
+  const aiBestMonth = aiMonthlyFlow.length > 0 ? [...aiMonthlyFlow].sort((a, b) => b.score - a.score)[0] : null;
+  const aiWorstMonth = aiMonthlyFlow.length > 0 ? [...aiMonthlyFlow].sort((a, b) => a.score - b.score)[0] : null;
 
   return (
     <motion.div
@@ -174,16 +258,147 @@ export function YearlyFortuneCard({ chart, userName }: Props) {
         </div>
       </Card>
 
+      {generateYearly.isPending && (
+        <Card className="bg-white/[0.03] border-white/10 p-8 text-center space-y-4" data-testid="yearly-ai-loading">
+          <Loader2 className="w-8 h-8 text-indigo-400 animate-spin mx-auto" />
+          <p className="text-sm text-white/60">AI가 3회 교차 검증으로 {year}년을 분석 중...</p>
+        </Card>
+      )}
+
+      {!aiYearly && !generateYearly.isPending && !isAiLoading && (
+        <Card className="bg-gradient-to-br from-indigo-500/10 to-transparent border-indigo-500/20 p-6 text-center space-y-4" data-testid="yearly-ai-empty">
+          <div className="mx-auto w-12 h-12 bg-indigo-500/20 rounded-full flex items-center justify-center">
+            <BrainCircuit className="w-6 h-6 text-indigo-400" />
+          </div>
+          <div className="space-y-1">
+            <h4 className="text-lg font-serif text-white">AI {year}년 심층 분석</h4>
+            <p className="text-xs text-white/50 max-w-md mx-auto">
+              사주 + 자미두수 + 별자리를 3회 교차 검증하여 사업운, 연애운, 건강운, 월별 흐름을 분석합니다.
+            </p>
+          </div>
+          <Button
+            variant="mystical"
+            onClick={() => generateYearly.mutate(false)}
+            disabled={generateYearly.isPending}
+            data-testid="button-generate-yearly"
+          >
+            <BrainCircuit className="mr-2 h-4 w-4" /> AI 심층 분석 시작
+          </Button>
+        </Card>
+      )}
+
+      {aiYearly && (
+        <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
+          <div className="flex flex-wrap items-center gap-2 mb-2">
+            <h3 className="text-sm font-bold text-white/40 uppercase tracking-widest ml-1">AI 심층 분석</h3>
+            <span className="px-2 py-0.5 rounded-full bg-white/5 border border-white/10 text-white/50 text-[10px] font-bold flex items-center gap-1">
+              <Activity className="w-3 h-3" /> 일치도 {aiYearly.coherenceScore}%
+            </span>
+          </div>
+
+          <Card className="bg-white/[0.03] border-white/10 p-5" data-testid="card-ai-overall">
+            <p className="text-sm text-white/80 leading-relaxed">{aiYearly.overallSummary}</p>
+            {aiYearly.keywords && aiYearly.keywords.length > 0 && (
+              <div className="flex flex-wrap gap-1.5 mt-3">
+                {aiYearly.keywords.map((kw, i) => (
+                  <span key={i} className="text-[10px] text-white/50 bg-white/5 px-2 py-0.5 rounded-md border border-white/5">
+                    #{kw}
+                  </span>
+                ))}
+              </div>
+            )}
+          </Card>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4" data-testid="yearly-category-grid">
+            <Card className="bg-gradient-to-b from-amber-500/10 to-transparent border-amber-500/20 p-5" data-testid="card-yearly-business">
+              <div className="flex items-center gap-2 mb-3">
+                <Briefcase className="w-4 h-4 text-amber-400" />
+                <span className="text-amber-200 font-bold text-sm">사업/재물운</span>
+              </div>
+              <p className="text-xs text-white/80 leading-relaxed whitespace-pre-line">
+                {aiYearly.businessFortune || "분석 대기 중"}
+              </p>
+            </Card>
+
+            <Card className="bg-gradient-to-b from-pink-500/10 to-transparent border-pink-500/20 p-5" data-testid="card-yearly-love">
+              <div className="flex items-center gap-2 mb-3">
+                <Heart className="w-4 h-4 text-pink-400" />
+                <span className="text-pink-200 font-bold text-sm">연애/인간관계운</span>
+              </div>
+              <p className="text-xs text-white/80 leading-relaxed whitespace-pre-line">
+                {aiYearly.loveFortune || "분석 대기 중"}
+              </p>
+            </Card>
+
+            <Card className="bg-gradient-to-b from-cyan-500/10 to-transparent border-cyan-500/20 p-5" data-testid="card-yearly-health">
+              <div className="flex items-center gap-2 mb-3">
+                <HeartPulse className="w-4 h-4 text-cyan-400" />
+                <span className="text-cyan-200 font-bold text-sm">건강/웰니스운</span>
+              </div>
+              <p className="text-xs text-white/80 leading-relaxed whitespace-pre-line">
+                {aiYearly.healthFortune || "분석 대기 중"}
+              </p>
+            </Card>
+          </div>
+
+          {aiMonthlyFlow.length > 0 && (
+            <div>
+              <div className="flex items-center gap-3 mb-4">
+                <Calendar className="w-4 h-4 text-indigo-400" />
+                <h4 className="text-sm font-serif text-white">AI 월별 흐름 (교차 검증)</h4>
+                {aiBestMonth && aiWorstMonth && (
+                  <div className="flex gap-2 ml-auto">
+                    <span className="text-[10px] text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full">
+                      <TrendingUp className="w-3 h-3 inline mr-0.5" /> {aiBestMonth.month}월
+                    </span>
+                    <span className="text-[10px] text-red-400 bg-red-500/10 px-2 py-0.5 rounded-full">
+                      <TrendingDown className="w-3 h-3 inline mr-0.5" /> {aiWorstMonth.month}월
+                    </span>
+                  </div>
+                )}
+              </div>
+              <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
+                {aiMonthlyFlow.map((item, i) => (
+                  <AIMonthlyFlowCard key={item.month} item={item} index={i} />
+                ))}
+              </div>
+            </div>
+          )}
+
+          <div className="text-center pt-2">
+            <Button
+              variant="mystical"
+              onClick={() => generateYearly.mutate(true)}
+              disabled={generateYearly.isPending}
+              data-testid="button-regenerate-yearly"
+            >
+              <BrainCircuit className="mr-2 h-4 w-4" /> AI 분석 다시 생성
+            </Button>
+          </div>
+        </motion.div>
+      )}
+
       <div>
-        <div className="flex items-center gap-3 mb-4">
+        <button
+          onClick={() => setShowSajuMonthly(!showSajuMonthly)}
+          className="flex items-center gap-2 mb-4 text-sm text-white/50 hover:text-white/70 transition-colors"
+          data-testid="button-toggle-saju-monthly"
+        >
           <Calendar className="w-4 h-4 text-primary" />
-          <h4 className="text-sm font-serif text-white">월별 상세 운세</h4>
-        </div>
-        <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
-          {monthlyFortunes.map((mf, i) => (
-            <MonthCard key={mf.month} fortune={mf} index={i} />
-          ))}
-        </div>
+          <span className="font-serif">사주 기반 월별 상세 운세</span>
+          {showSajuMonthly ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+        </button>
+        {showSajuMonthly && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            className="grid gap-3 md:grid-cols-2 lg:grid-cols-3"
+          >
+            {monthlyFortunes.map((mf, i) => (
+              <MonthCard key={mf.month} fortune={mf} index={i} />
+            ))}
+          </motion.div>
+        )}
       </div>
     </motion.div>
   );

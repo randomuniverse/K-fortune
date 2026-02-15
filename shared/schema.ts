@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, timestamp, boolean } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, timestamp, boolean, jsonb } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -161,3 +161,39 @@ export const insertGuardianReportSchema = createInsertSchema(guardianReports).pi
 
 export type GuardianReportType = typeof guardianReports.$inferSelect;
 export type InsertGuardianReport = z.infer<typeof insertGuardianReportSchema>;
+
+export const yearlyFortunes = pgTable("yearly_fortunes", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull(),
+  year: integer("year").notNull(),
+  overallSummary: text("overall_summary").notNull(),
+  coherenceScore: integer("coherence_score").notNull(),
+  businessFortune: text("business_fortune"),
+  loveFortune: text("love_fortune"),
+  healthFortune: text("health_fortune"),
+  monthlyFlow: jsonb("monthly_flow"),
+  keywords: text("keywords").array(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const insertYearlyFortuneSchema = createInsertSchema(yearlyFortunes).pick({
+  userId: true,
+  year: true,
+  overallSummary: true,
+  coherenceScore: true,
+  businessFortune: true,
+  loveFortune: true,
+  healthFortune: true,
+  monthlyFlow: true,
+  keywords: true,
+});
+
+export type YearlyFortuneType = typeof yearlyFortunes.$inferSelect;
+export type InsertYearlyFortune = z.infer<typeof insertYearlyFortuneSchema>;
+
+export interface MonthlyFlowItem {
+  month: number;
+  score: number;
+  keyword: string;
+  summary: string;
+}

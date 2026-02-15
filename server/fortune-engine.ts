@@ -417,10 +417,11 @@ export async function generateGuardianReport(data: {
    - **비즈니스 프레임워크**나 **검증된 생산성 법칙** 적용. (80:20 법칙, 에센셜리즘 등)
    - 예: "오늘 당장 '파레토 법칙'을 적용하세요. 상위 20% 업무 하나만 남기고 나머지는 위임하세요."
 
-6. **businessAdvice (Guardian's Compass - 비즈니스/재물 전략) [NEW]**:
-   - 사주의 **용신(부족한 기운)**과 **십성(재성/관성)**, 자미두수의 **직업별(관록궁)** 특성을 분석하여 **"돈이 되는 구체적 방향"**을 제시하세요.
+6. **businessAdvice (Guardian's Compass - 평생 비즈니스 모델)**:
+   - 사주의 **용신(부족한 기운)**과 **십성(재성/관성/식상)**, 자미두수의 **관록궁/재백궁** 특성을 분석하여 **"평생 먹고살 비즈니스 모델"**을 설계하세요.
    - **추천 업종/방식:** (예: "당신은 '토(土)' 기운이 필요하므로 부동산이나 중개업이 유리합니다.", "직접 제조하기보다 브랜드 권리(IP)를 파는 것이 이득입니다.")
-   - **올해의 전략:** (예: "올해는 '동업' 운이 강하니 파트너를 찾으세요.", "확장보다는 내실을 다질 때입니다.")
+   - **수익 구조:** (예: "초기에는 프리랜서로 시작하되, 3년 내 구독형 모델로 전환하세요.", "B2B가 B2C보다 유리한 체질입니다.")
+   - **절대 금지:** 올해/내년 등 특정 연도 언급 금지. 이것은 '평생 전략'입니다.
 
 7. **keywords**: 핵심 키워드 5개
 
@@ -432,7 +433,7 @@ export async function generateGuardianReport(data: {
   "currentState": "상충하는 데이터로 인한 딜레마 분석",
   "bottleneck": "성장을 저해하는 현실적 원인",
   "solution": "비즈니스/생산성 프레임워크 기반의 구체적 조언",
-  "businessAdvice": "재물/직업 운에 기반한 구체적 업종 추천 및 올해의 사업 전략",
+  "businessAdvice": "평생 먹고살 비즈니스 모델 설계 (업종 추천 + 수익 구조)",
   "loveAdvice": null,
   "healthAdvice": null
 }
@@ -521,7 +522,7 @@ ${JSON.stringify(report3, null, 2)}
   "currentState": "2개 이상 일치하는 딜레마 분석만 종합",
   "bottleneck": "2개 이상 일치하는 병목 진단만 종합",
   "solution": "2개 이상 일치하는 솔루션만 종합 (비즈니스/생산성 프레임워크 기반)",
-  "businessAdvice": "2개 이상 일치하는 재물/비즈니스 전략만 종합 (구체적 업종 추천 및 올해의 사업 전략)",
+  "businessAdvice": "2개 이상 일치하는 평생 비즈니스 모델만 종합 (업종 추천 + 수익 구조, 특정 연도 언급 금지)",
   "loveAdvice": null,
   "healthAdvice": null
 }
@@ -556,6 +557,229 @@ ${JSON.stringify(report3, null, 2)}
       currentState: "일시적인 연결 오류가 발생했습니다.",
       bottleneck: "시스템 연결 대기 중",
       solution: "잠시 후 다시 시도해주세요."
+    };
+  }
+}
+
+export async function generateYearlyFortune(data: {
+  name: string;
+  year: number;
+  saju: any;
+  ziwei: any;
+  zodiac: any;
+}) {
+  const individualPrompt = `
+당신은 동양 운세 전문가이자 데이터 분석가입니다.
+사용자의 사주, 자미두수, 별자리 데이터를 기반으로 **${data.year}년 한 해의 운세**를 카테고리별로 분석하세요.
+
+**[절대 금지 사항]**
+1. 소설/감성적 묘사 금지. 데이터 기반 논리적 분석만.
+2. "절망", "파멸" 같은 부정적 단어 금지.
+3. 추상적 조언 금지.
+
+**[분석 가이드라인]**
+
+1. **overallSummary (${data.year}년 총평)**:
+   - ${data.year}년의 전체적인 운세 흐름을 3~4문장으로 요약.
+   - 올해의 핵심 테마와 기회/주의사항을 명확히.
+
+2. **businessFortune (사업/재물운)**:
+   - ${data.year}년의 재물 흐름, 투자 시기, 사업 확장/수성 전략.
+   - 상반기/하반기 구분하여 구체적으로.
+
+3. **loveFortune (연애/인간관계운)**:
+   - ${data.year}년의 대인관계와 연애 흐름.
+   - 좋은 인연을 만날 시기, 주의할 시기.
+
+4. **healthFortune (건강운)**:
+   - ${data.year}년에 특히 조심할 건강 이슈.
+   - 오행 균형에 기반한 구체적 건강 관리법.
+
+5. **monthlyFlow (월별 흐름)**: 1~12월 각각에 대해:
+   - score: 1~100점
+   - keyword: 핵심 키워드 하나
+   - summary: 1~2문장 요약
+
+6. **keywords**: 올해를 관통하는 핵심 키워드 5개
+
+**[출력 형식 (JSON)]**
+{
+  "overallSummary": "${data.year}년 총평 (3~4문장)",
+  "businessFortune": "사업/재물운 상세 분석",
+  "loveFortune": "연애/인간관계운 상세 분석",
+  "healthFortune": "건강운 상세 분석",
+  "keywords": ["키워드1", "키워드2", "키워드3", "키워드4", "키워드5"],
+  "monthlyFlow": [
+    {"month": 1, "score": 65, "keyword": "준비", "summary": "새해 계획을 세우기 좋은 시기"},
+    {"month": 2, "score": 70, "keyword": "실행", "summary": "..."},
+    ...
+    {"month": 12, "score": 75, "keyword": "결실", "summary": "..."}
+  ]
+}
+`;
+
+  const userPrompt = `
+[사용자: ${data.name}] - ${data.year}년 운세 분석
+
+1. [사주] 본성: ${data.saju.mainTrait}, 특수살: ${data.saju.specialSals.map((s: any) => s.name).join(", ")}, 용신: ${data.saju.yongShin.element}, 일주 강약: ${data.saju.dayMasterStrength}
+2. [자미두수] 주성: ${data.ziwei.stars.life.map((s: any) => s.name).join(", ")}, 국: ${data.ziwei.bureau.name}
+3. [별자리] ${data.zodiac.sign}, 특징: ${data.zodiac.info.traits?.join(", ") || data.zodiac.sign}
+
+위 데이터를 종합하여 ${data.year}년 운세를 카테고리별로 분석하세요.
+`;
+
+  try {
+    console.log(`[Yearly] ${data.year}년 운세 3회 교차 검증 시작...`);
+
+    const generateOne = async (runIndex: number) => {
+      const response = await openai.chat.completions.create({
+        model: "gpt-4o",
+        messages: [
+          { role: "system", content: individualPrompt },
+          { role: "user", content: userPrompt },
+        ],
+        response_format: { type: "json_object" },
+        temperature: 0.85,
+      });
+      const content = response.choices[0].message.content || "{}";
+      console.log(`[Yearly] 독립 분석 #${runIndex + 1} 완료`);
+      return JSON.parse(content);
+    };
+
+    const [report1, report2, report3] = await Promise.all([
+      generateOne(0),
+      generateOne(1),
+      generateOne(2),
+    ]);
+
+    console.log("[Yearly] 3개 독립 분석 완료. 교차 검증 종합 시작...");
+
+    const allKeywords = [
+      ...(report1.keywords || []),
+      ...(report2.keywords || []),
+      ...(report3.keywords || []),
+    ];
+    const keywordCount: Record<string, number> = {};
+    allKeywords.forEach((kw: string) => {
+      keywordCount[kw] = (keywordCount[kw] || 0) + 1;
+    });
+    const commonKeywords = Object.entries(keywordCount)
+      .filter(([_, count]) => count >= 2)
+      .sort((a, b) => b[1] - a[1])
+      .map(([kw]) => kw)
+      .slice(0, 5);
+
+    const monthlyScores: Record<number, number[]> = {};
+    [report1, report2, report3].forEach((r) => {
+      (r.monthlyFlow || []).forEach((m: any) => {
+        if (!monthlyScores[m.month]) monthlyScores[m.month] = [];
+        monthlyScores[m.month].push(m.score);
+      });
+    });
+
+    const avgMonthlyScores = Object.entries(monthlyScores).map(([month, scores]) => ({
+      month: Number(month),
+      avgScore: Math.round(scores.reduce((a, b) => a + b, 0) / scores.length),
+    }));
+
+    const synthesisPrompt = `
+당신은 ${data.year}년 운세의 최종 검증관입니다.
+동일 사용자의 ${data.year}년 운세를 3명의 독립 분석가가 각각 분석한 결과입니다.
+
+**[당신의 임무]**
+1. 3개 분석에서 **2개 이상이 공통적으로 언급한 내용만** 최종 리포트에 포함.
+2. 1개에서만 언급된 독자적 주장은 제거.
+3. 공통 키워드: [${commonKeywords.join(", ")}]
+4. 월별 점수는 3개 평균을 사용: ${avgMonthlyScores.map(m => `${m.month}월=${m.avgScore}점`).join(", ")}
+5. coherenceScore: 3개 분석 간 실제 일치도 반영.
+
+**[분석가 A]**
+${JSON.stringify(report1, null, 2)}
+
+**[분석가 B]**
+${JSON.stringify(report2, null, 2)}
+
+**[분석가 C]**
+${JSON.stringify(report3, null, 2)}
+
+**[출력 형식 (JSON)]**
+{
+  "overallSummary": "2개 이상 일치하는 내용으로 종합한 ${data.year}년 총평",
+  "coherenceScore": 70~95,
+  "businessFortune": "2개 이상 일치하는 사업/재물운만 종합",
+  "loveFortune": "2개 이상 일치하는 연애/인간관계운만 종합",
+  "healthFortune": "2개 이상 일치하는 건강운만 종합",
+  "keywords": ["공통키워드1", "공통키워드2", ...],
+  "monthlyFlow": [
+    {"month": 1, "score": 평균점수, "keyword": "공통키워드", "summary": "2개 이상 일치하는 내용"},
+    ... (1~12월 전체)
+  ]
+}
+`;
+
+    const synthesisResponse = await openai.chat.completions.create({
+      model: "gpt-4o",
+      messages: [
+        { role: "system", content: `당신은 3개의 독립 ${data.year}년 운세 분석을 교차 검증하여 최종 종합 리포트를 작성하는 검증관입니다. 2개 이상 일치하는 내용만 채택하세요.` },
+        { role: "user", content: synthesisPrompt },
+      ],
+      response_format: { type: "json_object" },
+      temperature: 0.3,
+    });
+
+    const yearlyFortuneResponseSchema = z.object({
+      overallSummary: z.string().min(1),
+      coherenceScore: z.number().min(0).max(100).default(75),
+      businessFortune: z.string().nullable().default(null),
+      loveFortune: z.string().nullable().default(null),
+      healthFortune: z.string().nullable().default(null),
+      keywords: z.array(z.string()).default([]),
+      monthlyFlow: z.array(z.object({
+        month: z.number().int().min(1).max(12),
+        score: z.number().min(0).max(100),
+        keyword: z.string(),
+        summary: z.string(),
+      })).default([]),
+    });
+
+    const finalContent = synthesisResponse.choices[0].message.content || "{}";
+    const rawResult = JSON.parse(finalContent);
+    const parsed = yearlyFortuneResponseSchema.safeParse(rawResult);
+    const finalResult = parsed.success ? parsed.data : {
+      overallSummary: rawResult.overallSummary || "분석 결과를 정리하는 중입니다.",
+      coherenceScore: rawResult.coherenceScore || 70,
+      businessFortune: rawResult.businessFortune || null,
+      loveFortune: rawResult.loveFortune || null,
+      healthFortune: rawResult.healthFortune || null,
+      keywords: commonKeywords,
+      monthlyFlow: avgMonthlyScores.map(m => ({ month: m.month, score: m.avgScore, keyword: "분석", summary: "데이터 종합 중" })),
+    };
+
+    if (!finalResult.keywords || finalResult.keywords.length === 0) finalResult.keywords = commonKeywords;
+    if (!finalResult.monthlyFlow) {
+      finalResult.monthlyFlow = avgMonthlyScores.map(m => ({
+        month: m.month,
+        score: m.avgScore,
+        keyword: "분석",
+        summary: "데이터 종합 중"
+      }));
+    }
+
+    console.log(`[Yearly] ${data.year}년 운세 3회 교차 검증 완료. 일치도: ${finalResult.coherenceScore}%`);
+
+    return finalResult;
+  } catch (e) {
+    console.error("Yearly Fortune Generation Error:", e);
+    return {
+      overallSummary: "운세 데이터 서버 연결이 불안정합니다. 잠시 후 다시 시도해주세요.",
+      coherenceScore: 50,
+      businessFortune: "분석 대기 중",
+      loveFortune: "분석 대기 중",
+      healthFortune: "분석 대기 중",
+      keywords: ["대기", "연결"],
+      monthlyFlow: Array.from({ length: 12 }, (_, i) => ({
+        month: i + 1, score: 50, keyword: "대기", summary: "분석 대기 중"
+      })),
     };
   }
 }

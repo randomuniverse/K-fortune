@@ -257,7 +257,7 @@ export default function Dashboard() {
               transition={{ duration: 0.3 }}
             >
               {sajuData?.sajuChart ? (
-                <YearlyFortuneCard chart={sajuData.sajuChart} userName={user.name} />
+                <YearlyFortuneCard chart={sajuData.sajuChart} userName={user.name} telegramId={telegramId} />
               ) : (
                 <div className="flex justify-center py-12"><Loader2 className="w-8 h-8 text-primary/50 animate-spin" /></div>
               )}
