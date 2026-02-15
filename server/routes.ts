@@ -210,7 +210,10 @@ export async function registerRoutes(
         pastInference: reportData.pastInference,
         currentState: reportData.currentState,
         bottleneck: reportData.bottleneck,
-        solution: reportData.solution
+        solution: reportData.solution,
+        businessAdvice: reportData.businessAdvice || null,
+        loveAdvice: reportData.loveAdvice || null,
+        healthAdvice: reportData.healthAdvice || null,
       });
 
       res.json(savedReport);
