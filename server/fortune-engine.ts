@@ -420,7 +420,8 @@ export interface GuardianReport {
 
 export async function generateGuardianReport(data: {
   name: string;
-  saju: any;
+  sajuChart: any;
+  sajuPersonality: any;
   ziwei: any;
   zodiac: any;
 }) {
@@ -487,15 +488,65 @@ export async function generateGuardianReport(data: {
 }
 `;
 
+  const sp = data.sajuPersonality;
+  const sc = data.sajuChart;
+  const zw = data.ziwei;
+
   const userPrompt = `
 [사용자 운명 데이터 - 이름 절대 사용 금지, 반드시 "당신"으로만 지칭]
 
-1. [사주] 본성: ${data.saju.mainTrait}, 특수살: ${data.saju.specialSals.map((s: any) => s.name).join(", ")}, 용신: ${data.saju.yongShin.element}
-2. [자미두수] 주성: ${data.ziwei.stars.life.map((s: any) => s.name).join(", ")}, 국: ${data.ziwei.bureau.name}
-3. [별자리] ${data.zodiac.sign}, 특징: ${data.zodiac.info.traits?.join(", ") || data.zodiac.sign}
+━━━━ 1. 사주팔자 (四柱八字) 원본 데이터 ━━━━
+■ 사주 원국:
+  - 년주: ${sc.yearPillar?.stem}${sc.yearPillar?.branch} (${sc.yearPillar?.stemHanja}${sc.yearPillar?.branchHanja})
+  - 월주: ${sc.monthPillar?.stem}${sc.monthPillar?.branch} (${sc.monthPillar?.stemHanja}${sc.monthPillar?.branchHanja})
+  - 일주: ${sc.dayPillar?.stem}${sc.dayPillar?.branch} (${sc.dayPillar?.stemHanja}${sc.dayPillar?.branchHanja}) ← 일간(나)
+  - 시주: ${sc.hourPillar?.stem}${sc.hourPillar?.branch} (${sc.hourPillar?.stemHanja}${sc.hourPillar?.branchHanja})
 
-위 데이터를 종합 분석하여, 이 사람의 '과거 실패 패턴'을 추리하고, '과학적 행동 솔루션'을 내려주세요.
-말투는 확신에 차 있고 예언적이지만, 논리적인 설득력을 갖추세요.
+■ 일간 성격: ${sp.mainTrait}
+■ 일간 상세: ${sp.elementPersonality}
+■ 일주 강약: ${sc.dayMasterStrength} (${sp.dayMasterDescription})
+
+■ 오행 분포:
+${sc.fiveElementRatios?.map((r: any) => `  - ${r.element}(${r.elementHanja}): ${r.ratio}% (가중치 ${r.weight})`).join("\n") || "  데이터 없음"}
+■ 지배 오행: ${sc.dominantElement}
+
+■ 용신(用神): ${sc.yongShin?.element}(${sc.yongShin?.elementHanja}) — ${sc.yongShin?.reason}
+
+■ 십성(十星) 배치: ${sp.tenGodProfile}
+■ 부특성: ${sp.subTraits?.join(", ") || "없음"}
+
+■ 천부적 재능: ${sp.talent}
+■ 하늘이 준 선물: ${sp.heavenlyGift}
+■ 약점: ${sp.weakPoint}
+
+■ 특수살: ${sp.specialSals?.map((s: any) => `${s.name}(${s.hanja}) — ${s.description}`).join("\n  ") || "없음"}
+
+■ 구조 패턴: ${sp.structurePatterns?.map((p: any) => `${p.name}(${p.hanja}) — ${p.description}`).join("\n  ") || "없음"}
+
+■ 용신 보완법: ${sp.yongShinRemedy ? `방향: ${sp.yongShinRemedy.luckyDirection}, 색상: ${sp.yongShinRemedy.luckyColor}, 활동: ${sp.yongShinRemedy.luckyActivity}` : "없음"}
+
+■ 대운 흐름 (10년 단위):
+${sc.daeun?.slice(0, 6).map((d: any) => `  - ${d.age}세(${d.year}년): ${d.stem}${d.branch}(${d.stemHanja}${d.branchHanja})`).join("\n") || "  데이터 없음"}
+
+━━━━ 2. 자미두수 (紫微斗數) 원본 데이터 ━━━━
+■ 명궁(命宮): ${zw.lifePalace}궁
+■ 국(局): ${zw.bureau?.name} — ${zw.bureau?.desc}
+■ 명궁 주성: ${zw.stars?.life?.map((s: any) => `${s.name}(${s.nature})`).join(", ") || "없음"}
+■ 부처궁(配偶宮) 성진: ${zw.stars?.spouse?.map((s: any) => `${s.name}(${s.nature})`).join(", ") || "없음"}
+■ 재백궁(財帛宮) 성진: ${zw.stars?.wealth?.map((s: any) => `${s.name}(${s.nature})`).join(", ") || "없음"}
+■ 천이궁(遷移宮) 성진: ${zw.stars?.travel?.map((s: any) => `${s.name}(${s.nature})`).join(", ") || "없음"}
+■ 해석: ${zw.interpretation}
+
+━━━━ 3. 서양 별자리 데이터 ━━━━
+■ 별자리: ${data.zodiac.sign}
+■ 원소: ${data.zodiac.info.element || ""}
+■ 수호성: ${data.zodiac.info.ruling || ""}
+■ 특징: ${data.zodiac.info.traits?.join(", ") || data.zodiac.sign}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+위의 사주 원국, 십성 배치, 오행 분포, 특수살, 구조 패턴, 자미두수 각 궁의 성진, 별자리 데이터를 근거로
+이 사람의 '사고 메커니즘'과 '반복 실패 패턴'을 추론하고, '과학적 행동 솔루션'을 처방하세요.
+각 분석에서 반드시 위 데이터의 구체적 요소(간지, 십성, 오행, 성진 이름 등)를 인용하며 논증하세요.
 절대로 사용자의 이름을 사용하지 말고, 반드시 "당신"이라고만 지칭하세요.
 `;
 
