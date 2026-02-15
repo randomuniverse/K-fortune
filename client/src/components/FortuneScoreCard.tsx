@@ -165,8 +165,8 @@ export function FortuneScoreCard({ data, zodiacSign }: Props) {
       </div>
 
       <Card className="bg-white/[0.03] border-white/10 p-5">
-        <h4 className="text-sm font-serif text-primary mb-2">수비학 메시지</h4>
-        <p className="text-sm text-white/80 leading-relaxed">{data.numerologyMessage}</p>
+        <h4 className="text-sm font-serif text-primary mb-2" data-testid="text-ziwei-title">자미두수 메시지</h4>
+        <p className="text-sm text-white/80 leading-relaxed" data-testid="text-ziwei-message">{data.ziweiMessage}</p>
       </Card>
     </motion.div>
   );

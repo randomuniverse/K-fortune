@@ -1,6 +1,7 @@
 import { storage } from "./storage";
-import { getZodiacSign, getZodiacInfo, getLifePathNumber, type FortuneData } from "@shared/schema";
+import { getZodiacSign, getZodiacInfo, type FortuneData } from "@shared/schema";
 import { calculateFullSaju } from "@shared/saju";
+import { calculateZiWei } from "@shared/ziwei";
 import OpenAI from "openai";
 import { z } from "zod";
 import pRetry from "p-retry";
@@ -51,7 +52,7 @@ export function formatFortuneForTelegram(data: FortuneData, userName: string, da
 
 <b>${coherenceEmoji} 운세 일치도: ${data.coherenceScore}%</b>
 (${coherenceText})
-"사주, 별자리, 수비학이 공통적으로 가리키는 메시지입니다."
+"사주, 별자리, 자미두수가 공통적으로 가리키는 메시지입니다."
 
 <b>💎 오늘의 핵심 메시지:</b>
 ${data.coreMessage}
@@ -72,8 +73,8 @@ ${data.sajuSummary}
 ${data.zodiacSummary}
 <b>💡 팁:</b> ${data.zodiacWork}
 
-<b>-- 🔢 수비학 (Order)</b>
-${data.numerologyMessage}`;
+<b>-- 🔮 자미두수 (Stars)</b>
+${data.ziweiMessage}`;
 }
 
 function getKoreaTime() {
@@ -122,16 +123,17 @@ const zodiacSchema = z.object({
   summary: z.string().min(1),
 });
 
-const numSchema = z.object({
-  luckyNumbers: z.array(z.number()).min(1),
-  message: z.string().min(1),
+const ziweiDailySchema = z.object({
+  score: z.number().min(0).max(100),
+  summary: z.string().min(1),
+  advice: z.string().min(1),
 });
 
-// [업그레이드] 3자 교차 검증 결과 스키마
 const synthesisSchema = z.object({
-  coherenceScore: z.number().min(0).max(100).describe("3가지 운세(사주, 별자리, 수비학)의 일치도 점수"),
+  coherenceScore: z.number().min(0).max(100).describe("3가지 운세(사주, 별자리, 자미두수)의 일치도 점수"),
   commonKeywords: z.array(z.string()).describe("3가지 운세에서 공통적으로 발견된 키워드 3~5개"),
   coreMessage: z.string().describe("3가지 운세가 만장일치로 가리키는 오늘의 핵심 메시지"),
+  luckyNumbers: z.array(z.number()).min(1).max(5).describe("오늘의 행운의 숫자 3개"),
   sajuCaution: z.string(),
   sajuSpecial: z.string(),
   sajuSummary: z.string(),
@@ -140,7 +142,7 @@ const synthesisSchema = z.object({
   zodiacHealth: z.string(),
   zodiacWork: z.string(),
   zodiacSummary: z.string(),
-  numerologyMessage: z.string(),
+  ziweiMessage: z.string(),
 });
 
 export interface FortuneGenerationResult {
@@ -190,10 +192,13 @@ export async function generateFortuneForUser(user: {
 
   const zodiacSign = getZodiacSign(user.birthDate);
   const zodiacInfo = getZodiacInfo(user.birthDate);
-  const lifePathNumber = getLifePathNumber(user.birthDate);
 
-  const gender = user.gender === "male" ? "male" : "female" as "male" | "female";
-  const sajuChart = calculateFullSaju(user.birthDate, user.birthTime, gender);
+  const genderVal = (user.gender === "female" || user.gender === "여" || user.gender === "woman") ? "female" : "male" as "male" | "female";
+  const sajuChart = calculateFullSaju(user.birthDate, user.birthTime, genderVal);
+
+  const [yearVal, monthVal, dayVal] = user.birthDate.split('-').map(Number);
+  const hourVal = parseInt(user.birthTime.split(':')[0]);
+  const ziweiResult = calculateZiWei(yearVal, monthVal, dayVal, hourVal, genderVal);
 
   const todayJDN = getTodayJDN(koreaTime);
   const todayStemIdx = ((todayJDN + 2) % 10 + 10) % 10;
@@ -253,68 +258,99 @@ JSON 형식 응답:
   const zodiacUserPrompt = `오늘 날짜: ${dateStr}, 별자리: ${zodiacSign}.
 오늘 행성들이 내 별자리에 어떤 영향을 주는지 분석해줘.`;
 
-  // 3. 수비학 프롬프트
-  const numerologySystemPrompt = `수비학 전문가로서 생명수(${lifePathNumber})와 오늘 날짜의 진동수를 분석하여 행운의 숫자(3개)와 메시지를 JSON으로 주세요.
+  // 3. 자미두수 프롬프트 (수비학 → 자미두수로 교체)
+  const lifeStars = ziweiResult.stars.life.map(s => `${s.name}(${s.keyword})`).join(", ") || "명무정성(유연한 운명)";
+  const wealthStars = ziweiResult.stars.wealth.map(s => `${s.name}(${s.keyword})`).join(", ") || "없음";
+  const spouseStars = ziweiResult.stars.spouse.map(s => `${s.name}(${s.keyword})`).join(", ") || "없음";
+
+  const ziweiSystemPrompt = `당신은 자미두수(紫微斗數) 전문가입니다.
+사용자의 명궁 주성과 오늘의 일진 기운을 대조하여 일일 운세를 분석하세요.
+
+[자미두수 원국 정보]
+명궁(命宮): ${ziweiResult.lifePalace} 궁
+국(局): ${ziweiResult.bureau.name} - ${ziweiResult.bureau.desc}
+명궁 주성: ${lifeStars}
+재백궁 주성: ${wealthStars}
+부처궁 주성: ${spouseStars}
+
+[오늘의 일진]
+${todayStem}${todayBranch} (천간:${STEMS_H[todayStemIdx]}/지지:${BRANCHES_H[todayBranchIdx]})
+
+[분석 지침]
+1. 오늘의 일진(${todayStem}${todayBranch})이 명궁(${ziweiResult.lifePalace})의 주성(${lifeStars})에 어떤 영향을 주는지 분석하세요.
+2. 재백궁과 부처궁의 별도 오늘의 기운과 어떻게 상호작용하는지 판단하세요.
+3. 명궁 주성의 특성(성격, 재물 스타일)이 오늘 강화되는지, 약화되는지 설명하세요.
+4. 따뜻하고 격려하는 톤을 유지하세요.
+
 이모지를 사용하지 말고, 반드시 아래 정확한 JSON 형식으로만 응답하세요:
 {
-  "luckyNumbers": [숫자1, 숫자2, 숫자3],
-  "message": "수비학 메시지 (2~3문장)"
+  "score": 0~100,
+  "summary": "명궁 주성과 오늘 일진의 상호작용 분석 (2~3문장)",
+  "advice": "자미두수 관점에서 오늘의 구체적 조언 (1~2문장)"
 }`;
-  const numerologyUserPrompt = `오늘 날짜: ${dateStr}, 생명수: ${lifePathNumber}. 행운의 숫자와 메시지 알려줘. JSON으로만 응답해.`;
 
-  // 병렬 API 호출
-  const [sajuRes, zodiacRes, numRes] = await Promise.all([
+  const ziweiUserPrompt = `오늘 날짜: ${dateStr}, 이름: ${user.name}
+내 명궁(${ziweiResult.lifePalace})의 ${lifeStars}과 오늘 일진(${todayStem}${todayBranch})의 관계를 분석해줘.`;
+
+  // 병렬 API 호출 (사주 + 별자리 + 자미두수)
+  const [sajuRes, zodiacRes, ziweiRes] = await Promise.all([
     generateWithRetry(sajuSystemPrompt, sajuUserPrompt, "사주"),
     generateWithRetry(zodiacSystemPrompt, zodiacUserPrompt, "별자리"),
-    generateWithRetry(numerologySystemPrompt, numerologyUserPrompt, "수비학"),
+    generateWithRetry(ziweiSystemPrompt, ziweiUserPrompt, "자미두수"),
   ]);
 
   const sajuData = parseJson(sajuRes, sajuSchema);
   const zodiacData = parseJson(zodiacRes, zodiacSchema);
-  const numData = parseJson(numRes, numSchema);
+  const ziweiData = parseJson(ziweiRes, ziweiDailySchema);
 
-  if (!sajuData || !zodiacData || !numData) {
+  if (!sajuData || !zodiacData || !ziweiData) {
     const failures = [];
     if (!sajuData) failures.push(`사주(raw: ${sajuRes.substring(0, 200)})`);
     if (!zodiacData) failures.push(`별자리(raw: ${zodiacRes.substring(0, 200)})`);
-    if (!numData) failures.push(`수비학(raw: ${numRes.substring(0, 200)})`);
+    if (!ziweiData) failures.push(`자미두수(raw: ${ziweiRes.substring(0, 200)})`);
     console.error("[FORTUNE] 파싱 실패 항목:", failures.join(" | "));
     throw new Error("운세 데이터 파싱 실패: " + failures.map(f => f.split("(")[0]).join(", "));
   }
 
-  // 4. [핵심] 3자 교차 검증 및 종합 분석 (Synthesizer)
-  const synthesizePrompt = `당신은 '운명 데이터 융합 전문가'입니다.
-동양의 명리학(사주), 서양의 점성술(별자리), 그리고 수의 파동(수비학) 결과를 **교차 검증(Cross-Validation)**하여, 이 3가지 시스템이 **공통적으로 가리키는 진실**을 찾아내세요.
+  // 4. [핵심] 3자 교차 검증 및 종합 분석 (사주 + 별자리 + 자미두수)
+  const synthesizePrompt = `당신은 '운명 데이터 융합 전문가'이자 '따뜻한 인생 멘토'입니다.
+동양의 명리학(사주), 서양의 점성술(별자리), 동양의 자미두수(紫微斗數) 결과를 **교차 검증(Cross-Validation)**하여, 이 3가지 시스템이 **공통적으로 가리키는 진실**을 찾아내세요.
 
-[사주 분석 결과 (동양 - 시간)]
+[사주 분석 결과 (명리학 - 일진/일주 관계)]
 - 점수: ${sajuData.score}
 - 요약: ${sajuData.summary}
 - 주의: ${sajuData.caution}
+- 특이사항: ${sajuData.special}
 
-[별자리 분석 결과 (서양 - 공간)]
+[별자리 분석 결과 (서양 점성술 - 행성 트랜짓)]
 - 점수: ${zodiacData.score}
 - 요약: ${zodiacData.summary}
-- 직장/재물: ${zodiacData.work} / ${zodiacData.money}
+- 연애: ${zodiacData.love} | 재물: ${zodiacData.money}
+- 건강: ${zodiacData.health} | 직장: ${zodiacData.work}
 
-[수비학 분석 결과 (수리 - 질서)]
-- 메시지: ${numData.message}
-- 행운의 숫자: ${numData.luckyNumbers.join(", ")}
+[자미두수 분석 결과 (명궁 주성 - 별의 기운)]
+- 점수: ${ziweiData.score}
+- 요약: ${ziweiData.summary}
+- 조언: ${ziweiData.advice}
 
 [융합 분석 지침]
-1. **일치도 판단(Coherence Score):** 사주, 별자리, 수비학 이 3가지 흐름이 얼마나 유사한지 0~100점으로 평가하세요.
+1. **일치도 판단(Coherence Score):** 사주, 별자리, 자미두수 이 3가지 흐름이 얼마나 유사한지 0~100점으로 평가하세요.
    - 3가지가 모두 길(吉)하거나 흉(凶)하면 90점 이상.
-   - 서로 엇갈리면(예: 사주는 좋은데 수비학은 나쁨) 점수를 낮추세요.
-2. **공통 키워드 추출:** 3가지 분석에서 공통으로 발견되는 주제(예: "이동", "사람 조심", "계약 성사")를 찾아내세요. 수비학 메시지도 반드시 포함해서 비교하세요.
-3. **핵심 메시지:** 3가지 운세가 만장일치로 합의한 '오늘의 가장 확실한 운명'을 한 문장으로 정의하세요.
-4. 만약 운세가 상충한다면, "사주와 별자리의 기운은 좋으나 수비학적으로는 신중함이 필요합니다" 처럼 구체적으로 서술하세요.
+   - 서로 엇갈리면 점수를 낮추세요.
+2. **공통 키워드 추출:** 3가지 분석에서 공통으로 발견되는 주제(예: "이동", "사람 조심", "계약 성사")를 찾아내세요.
+3. **핵심 메시지:** 3가지 운세가 만장일치로 합의한 '오늘의 가장 확실한 운명'을 한 문장으로 정의하세요. 따뜻하고 격려하는 톤을 유지하세요.
+4. 만약 운세가 상충한다면, "사주와 별자리의 기운은 좋으나 자미두수의 명궁은 신중함을 권합니다" 처럼 구체적으로 서술하세요.
+5. **행운의 숫자:** 사주의 오행(五行)과 자미두수의 국(局)을 참조하여 오늘에 어울리는 행운의 숫자 3개를 제시하세요.
+6. **자미두수 메시지:** 자미두수의 분석 결과를 자연스럽게 다듬어서 "명궁의 [별이름]이 오늘..." 형태로 작성하세요.
 
-중요: 각 원본 필드(sajuSummary, zodiacLove, numerologyMessage 등)는 위의 원본 내용을 그대로 가져와서 자연스럽게 다듬어 주세요. 특히 numerologyMessage는 위의 수비학 메시지 원본을 반드시 그대로 사용하세요.
+중요: 각 원본 필드(sajuSummary, zodiacLove 등)는 위의 원본 내용을 그대로 가져와서 자연스럽게 다듬어 주세요.
 
 이모지를 사용하지 말고, 반드시 아래 JSON 형식으로 응답하세요:
 {
   "coherenceScore": 0~100 숫자,
   "commonKeywords": ["키워드1", "키워드2", "키워드3"],
-  "coreMessage": "3가지 운세가 공통으로 가리키는 오늘의 핵심 메시지 (1문장)",
+  "coreMessage": "3가지 운세가 공통으로 가리키는 오늘의 핵심 메시지 (1문장, 따뜻한 톤)",
+  "luckyNumbers": [숫자1, 숫자2, 숫자3],
   "sajuCaution": "사주 원본의 주의사항 유지하되 다듬기",
   "sajuSpecial": "사주 원본 특이사항 유지",
   "sajuSummary": "사주 원본 요약 유지",
@@ -323,11 +359,11 @@ JSON 형식 응답:
   "zodiacHealth": "별자리 원본 유지",
   "zodiacWork": "별자리 원본 유지",
   "zodiacSummary": "별자리 원본 요약 유지",
-  "numerologyMessage": "수비학 원본 메시지를 그대로 사용"
+  "ziweiMessage": "자미두수 원본 분석을 자연스럽게 다듬은 메시지"
 }`;
 
   const synthesisRaw = await generateWithRetry(
-    "당신은 운명 데이터 융합 분석가입니다. JSON으로만 응답하세요.",
+    "당신은 사주, 별자리, 자미두수를 교차 검증하여 종합하는 운명 데이터 융합 분석가입니다. JSON으로만 응답하세요.",
     synthesizePrompt,
     "교차검증"
   );
@@ -337,10 +373,10 @@ JSON 형식 응답:
     throw new Error("교차 검증 데이터 파싱 실패");
   }
 
-  // 최종 점수 계산 (일치도가 높으면 가중치 부여)
-  const baseScore = Math.round((sajuData.score + zodiacData.score) / 2);
+  // 최종 점수 계산 (3자 평균 + 일치도 가중치)
+  const baseScore = Math.round((sajuData.score + zodiacData.score + ziweiData.score) / 3);
   const finalCombinedScore = synthesis.coherenceScore >= 80 
-    ? Math.min(100, baseScore + 5) // 확신이 높으면 점수 상향
+    ? Math.min(100, baseScore + 5)
     : baseScore;
 
   const fortuneData: FortuneData = {
@@ -355,10 +391,10 @@ JSON 형식 응답:
     zodiacHealth: synthesis.zodiacHealth,
     zodiacWork: synthesis.zodiacWork,
     zodiacSummary: synthesis.zodiacSummary,
-    luckyNumbers: numData.luckyNumbers,
-    numerologyMessage: (synthesis.numerologyMessage && synthesis.numerologyMessage.length > 10 && !synthesis.numerologyMessage.includes("원본 유지"))
-      ? synthesis.numerologyMessage 
-      : numData.message,
+    luckyNumbers: synthesis.luckyNumbers || [3, 7, 9],
+    ziweiMessage: (synthesis.ziweiMessage && synthesis.ziweiMessage.length > 10 && !synthesis.ziweiMessage.includes("원본 유지"))
+      ? synthesis.ziweiMessage 
+      : `${ziweiData.summary} ${ziweiData.advice}`,
     combinedScore: finalCombinedScore,
     coherenceScore: synthesis.coherenceScore,
     commonKeywords: synthesis.commonKeywords,

@@ -122,7 +122,7 @@ export interface FortuneData {
   zodiacWork: string;
   zodiacSummary: string;
   luckyNumbers: number[];
-  numerologyMessage: string;
+  ziweiMessage: string;
   combinedScore: number;
   coherenceScore: number;
   commonKeywords: string[];
