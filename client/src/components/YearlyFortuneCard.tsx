@@ -216,7 +216,11 @@ export function YearlyFortuneCard({ chart, userName, telegramId }: Props) {
           </div>
 
           <div className="flex-1 space-y-3">
-            <p className="text-sm text-white/80 leading-relaxed">{yearlyFortune.summary}</p>
+            <p className="text-sm text-white/80 leading-relaxed">
+              {aiYearly?.overallSummary
+                ? aiYearly.overallSummary.slice(0, 200) + (aiYearly.overallSummary.length > 200 ? "..." : "")
+                : yearlyFortune.summary}
+            </p>
             <div className="bg-white/[0.03] rounded-lg p-3">
               <p className="text-xs text-primary/80 font-medium mb-1">
                 <Compass className="w-3 h-3 inline mr-1" />
@@ -237,7 +241,7 @@ export function YearlyFortuneCard({ chart, userName, telegramId }: Props) {
               <TrendingUp className="w-3 h-3 inline mr-0.5" /> 최고의 달
             </p>
             <p className="text-xs font-bold text-emerald-400">
-              {bestMonth.month}월 ({bestMonth.score}점)
+              {aiBestMonth ? `${aiBestMonth.month}월 (${aiBestMonth.score}점)` : `${bestMonth.month}월 (${bestMonth.score}점)`}
             </p>
           </div>
           <div className="bg-red-500/10 rounded-lg p-3 text-center">
@@ -245,7 +249,7 @@ export function YearlyFortuneCard({ chart, userName, telegramId }: Props) {
               <TrendingDown className="w-3 h-3 inline mr-0.5" /> 주의할 달
             </p>
             <p className="text-xs font-bold text-red-400">
-              {worstMonth.month}월 ({worstMonth.score}점)
+              {aiWorstMonth ? `${aiWorstMonth.month}월 (${aiWorstMonth.score}점)` : `${worstMonth.month}월 (${worstMonth.score}점)`}
             </p>
           </div>
           <div className="bg-white/[0.03] rounded-lg p-3 text-center">
@@ -318,7 +322,7 @@ export function YearlyFortuneCard({ chart, userName, telegramId }: Props) {
                 <Briefcase className="w-4 h-4 text-amber-400" />
                 <span className="text-amber-200 font-bold text-sm">사업/재물운</span>
               </div>
-              <p className="text-xs text-white/80 leading-relaxed whitespace-pre-line">
+              <p className="text-sm text-white/80 leading-7 whitespace-pre-line">
                 {aiYearly.businessFortune || "분석 대기 중"}
               </p>
             </Card>
@@ -328,7 +332,7 @@ export function YearlyFortuneCard({ chart, userName, telegramId }: Props) {
                 <Heart className="w-4 h-4 text-pink-400" />
                 <span className="text-pink-200 font-bold text-sm">연애/인간관계운</span>
               </div>
-              <p className="text-xs text-white/80 leading-relaxed whitespace-pre-line">
+              <p className="text-sm text-white/80 leading-7 whitespace-pre-line">
                 {aiYearly.loveFortune || "분석 대기 중"}
               </p>
             </Card>
@@ -338,7 +342,7 @@ export function YearlyFortuneCard({ chart, userName, telegramId }: Props) {
                 <HeartPulse className="w-4 h-4 text-cyan-400" />
                 <span className="text-cyan-200 font-bold text-sm">건강/웰니스운</span>
               </div>
-              <p className="text-xs text-white/80 leading-relaxed whitespace-pre-line">
+              <p className="text-sm text-white/80 leading-7 whitespace-pre-line">
                 {aiYearly.healthFortune || "분석 대기 중"}
               </p>
             </Card>
