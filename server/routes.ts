@@ -200,7 +200,8 @@ export async function registerRoutes(
         sajuChart,
         sajuPersonality,
         ziwei: ziweiResult,
-        zodiac: { sign: zodiacSign, info: zodiacInfo }
+        zodiac: { sign: zodiacSign, info: zodiacInfo },
+        gender,
       });
 
       const savedReport = await storage.createGuardianReport({

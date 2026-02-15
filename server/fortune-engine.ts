@@ -1,6 +1,6 @@
 import { storage } from "./storage";
 import { getZodiacSign, getZodiacInfo, type FortuneData } from "@shared/schema";
-import { calculateFullSaju } from "@shared/saju";
+import { calculateFullSaju, checkGanYeoJiDong } from "@shared/saju";
 import { calculateZiWei } from "@shared/ziwei";
 import OpenAI from "openai";
 import { z } from "zod";
@@ -447,6 +447,7 @@ export async function generateGuardianReport(data: {
   sajuPersonality: any;
   ziwei: any;
   zodiac: any;
+  gender: string;
 }) {
   const individualPrompt = `
 당신은 '운명의 가디언'이자, 냉철한 데이터 프로파일러입니다.
@@ -496,12 +497,16 @@ export async function generateGuardianReport(data: {
 - 구체적 비즈니스 모델/업종 추천 (B2B vs B2C, 중개 vs 직접 등).
 - 2026년 올해의 전략적 태도 제안.
 
-**loveAdvice** (250자 이상, 5~7문장):
-- 자미두수 부처궁(夫妻宮) 주성의 연애/인간관계 성향을 근거로 분석.
-- 사주 십성 중 편재/정재(남성 기준) 또는 편관/정관(여성 기준)의 배치를 참조.
-- 도화살 유무에 따른 매력 스타일 언급.
-- 2026년 올해 연애/인간관계에서 주의할 점과 기회를 구체적으로 서술.
-- 이상적 파트너 유형을 사주/자미두수 기반으로 제시.
+**loveAdvice** (이성운/결혼운 정밀 분석, 250자 이상, 5~7문장):
+- **[분석 공식]**: 반드시 섹션 4의 '이성운/결혼운 전용 분석 데이터'를 참조하여 사용자의 성별과 사주 구성에 맞춰 동적으로 판단하세요.
+  - **남자:** 재성(편재/정재)의 유무와 힘을 보세요. 재성이 약하거나 없으면 "늦은 결혼"이나 "친구 같은 배우자"를 추천하세요. 재성이 과다하면 이성 관계 분산 주의.
+  - **여자:** 관성(편관/정관)의 유무를 보세요. 무관 사주라면 "자신의 능력을 먼저 키우는 것"이 연애운을 여는 열쇠입니다. 관성 혼잡이면 이성 관계 복잡성 언급.
+  - **신살 적용:**
+    - **괴강/백호살:** 본인의 기운이 세므로, 차라리 늦게 결혼하거나, 본인의 일을 존중해주는 쿨한 상대를 만나라고 조언하세요.
+    - **도화/홍염살:** 이성에게 인기가 많으나 구설수를 조심하라고 조언하세요.
+  - **간여지동:** 해당 시 배우자와의 마찰/경쟁 주의, 서로 존중하는 관계 전략 제시.
+- **[결론 도출]:** "당신은 ~한 기운이 있으므로, [일찍 결혼하는 것보다 늦게 하는 것이 유리합니다 / 지금 들어오는 인연을 잡아야 합니다 / 결혼보다는 화려한 싱글이 어울립니다]" 등으로 명확한 스탠스를 취하세요.
+- 부처궁 주성(자미두수)의 연애 스타일도 반영하세요.
 
 **healthAdvice** (250자 이상, 5~7문장):
 - 자미두수 질액궁(疾厄宮) 배치를 근거로 타고난 건강 취약점 분석.
@@ -520,7 +525,7 @@ export async function generateGuardianReport(data: {
   "bottleneck": "여기에 250자 이상 작성. 당신의 병목은 능력이 아닙니다. 구체적 습관/회피 반응 지적... (4~6문장 이상)",
   "solution": "여기에 250자 이상 작성. 오늘부터 규칙은 하나입니다... (5~7문장 이상)",
   "businessAdvice": "여기에 250자 이상 작성. 당신의 사주에서 [용신]은... (5~7문장 이상)",
-  "loveAdvice": "여기에 250자 이상 작성. 부처궁의 [주성]은... 연애/인간관계 분석 (5~7문장 이상)",
+  "loveAdvice": "여기에 250자 이상 작성. 섹션4의 재성/관성/신살 데이터를 기반으로 구체적 이성운 및 결혼 시기 조언. 반드시 명확한 스탠스(만혼/조혼/싱글 추천 등)를 취할 것 (5~7문장 이상)",
   "healthAdvice": "여기에 250자 이상 작성. 질액궁과 오행 분포 기반 건강 분석 (5~7문장 이상)"
 }
 `;
@@ -528,6 +533,49 @@ export async function generateGuardianReport(data: {
   const sp = data.sajuPersonality;
   const sc = data.sajuChart;
   const zw = data.ziwei;
+  const isMale = data.gender === "male";
+
+  const allTenGods = [
+    sc.yearTenGod?.name, sc.monthTenGod?.name, sc.hourTenGod?.name,
+    sc.yearBranchTenGod?.name, sc.monthBranchTenGod?.name,
+    sc.dayBranchTenGod?.name, sc.hourBranchTenGod?.name,
+  ].filter(Boolean);
+
+  const hasJeongJae = allTenGods.includes("정재");
+  const hasPyeonJae = allTenGods.includes("편재");
+  const hasJaeSung = hasJeongJae || hasPyeonJae;
+  const jaeCount = allTenGods.filter(g => g === "정재" || g === "편재").length;
+
+  const hasJeongGwan = allTenGods.includes("정관");
+  const hasPyeonGwan = allTenGods.includes("편관");
+  const hasGwanSung = hasJeongGwan || hasPyeonGwan;
+  const gwanCount = allTenGods.filter(g => g === "정관" || g === "편관").length;
+
+  const salNames = sp.specialSals?.map((s: any) => s.name) || [];
+  const hasDohwa = salNames.includes("도화살");
+  const hasHongyeom = salNames.includes("홍염살");
+  const hasGwegang = salNames.includes("괴강살");
+  const hasBaekho = salNames.includes("백호살");
+
+  let isGanYeoJiDong = false;
+  try { isGanYeoJiDong = checkGanYeoJiDong(sc); } catch {}
+
+  const loveAnalysisBlock = `
+━━━━ 4. 이성운/결혼운 전용 분석 데이터 ━━━━
+■ 성별: ${isMale ? "남성" : "여성"}
+■ 이성운 핵심 십성 (${isMale ? "재성=배우자" : "관성=배우자"}):
+  - ${isMale ? `재성(편재/정재) 보유: ${hasJaeSung ? "있음" : "없음 (무재 사주)"} / 편재 ${hasPyeonJae ? "있음" : "없음"} / 정재 ${hasJeongJae ? "있음" : "없음"} / 재성 개수: ${jaeCount}개` : `관성(편관/정관) 보유: ${hasGwanSung ? "있음" : "없음 (무관 사주)"} / 편관 ${hasPyeonGwan ? "있음" : "없음"} / 정관 ${hasJeongGwan ? "있음" : "없음"} / 관성 개수: ${gwanCount}개`}
+  - ${isMale && jaeCount >= 3 ? "⚠️ 재성 과다 (재다): 여러 이성에게 관심이 분산될 수 있음" : ""}${!isMale && gwanCount >= 3 ? "⚠️ 관성 혼잡 (관다): 이성 관계가 복잡해질 수 있음" : ""}
+  - ${isMale && !hasJaeSung ? "⚠️ 무재 사주: 배우자궁 에너지 약함 → 만혼 추천" : ""}${!isMale && !hasGwanSung ? "⚠️ 무관 사주: 자신의 능력을 키우는 것이 연애운의 열쇠" : ""}
+■ 연애 관련 신살:
+  - 도화살: ${hasDohwa ? "있음 (이성 매력 강함, 구설수 주의)" : "없음"}
+  - 홍염살: ${hasHongyeom ? "있음 (강렬한 이성 매력, 감정 파도 주의)" : "없음"}
+  - 괴강살: ${hasGwegang ? "있음 (본인 기운이 매우 세므로 만혼/쿨한 상대 추천)" : "없음"}
+  - 백호살: ${hasBaekho ? "있음 (강인한 기운, 배우자와 주도권 충돌 가능)" : "없음"}
+■ 간여지동(干與支同): ${isGanYeoJiDong ? "해당 (일간과 일지가 같은 오행 → 배우자와 마찰/경쟁 주의)" : "해당 없음"}
+■ 일간 강약: ${sc.dayMasterStrength} → ${sc.dayMasterStrength === "극왕" || sc.dayMasterStrength === "왕" ? "신강 사주 (본인 주도형, 상대방 배려 필요)" : sc.dayMasterStrength === "극약" || sc.dayMasterStrength === "약" ? "신약 사주 (의지할 배우자 필요, 결혼 후 운 상승 가능)" : "중화 사주 (균형 잡힌 관계 가능)"}
+■ 부처궁 성진: ${zw.stars?.spouse?.map((s: any) => `${s.name}(${s.nature})`).join(", ") || "없음"}
+`;
 
   const userPrompt = `
 [사용자 운명 데이터 - 이름 절대 사용 금지, 반드시 "당신"으로만 지칭]
@@ -580,11 +628,16 @@ ${sc.daeun?.slice(0, 6).map((d: any) => `  - ${d.age}세(${d.year}년): ${d.stem
 ■ 수호성: ${data.zodiac.info.ruling || ""}
 ■ 특징: ${data.zodiac.info.traits?.join(", ") || data.zodiac.sign}
 
+
+${loveAnalysisBlock}
+
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 위의 사주 원국, 십성 배치, 오행 분포, 특수살, 구조 패턴, 자미두수 각 궁의 성진, 별자리 데이터를 근거로
 이 사람의 '사고 메커니즘'과 '반복 실패 패턴'을 추론하고, '과학적 행동 솔루션'을 처방하세요.
 각 분석에서 반드시 위 데이터의 구체적 요소(간지, 십성, 오행, 성진 이름 등)를 인용하며 논증하세요.
 절대로 사용자의 이름을 사용하지 말고, 반드시 "당신"이라고만 지칭하세요.
+
+**[중요] loveAdvice 작성 시 반드시 섹션 4의 '이성운/결혼운 전용 분석 데이터'를 참조하여 동적으로 분석하세요.**
 `;
 
   try {
@@ -691,7 +744,7 @@ ${JSON.stringify(report3, null, 2)}
   "bottleneck": "250자 이상. 당신의 병목은 능력이 아닙니다. 구체적 습관/회피 반응 지적... (4~6문장)",
   "solution": "250자 이상. 오늘부터 규칙은 하나입니다... (5~7문장)",
   "businessAdvice": "250자 이상. 용신과 십성 기반 적성 분석 + 비즈니스 모델 + 올해 전략 (5~7문장)",
-  "loveAdvice": "250자 이상. 부처궁 주성 기반 연애/인간관계 분석 + 도화살 + 올해 연애 전략 (5~7문장)",
+  "loveAdvice": "250자 이상. 재성/관성 상태 + 신살(도화/홍염/괴강/백호) + 간여지동 기반 이성운 분석. 반드시 결혼 시기/스타일에 대한 명확한 스탠스 제시 (5~7문장)",
   "healthAdvice": "250자 이상. 질액궁 + 오행 과다/부족 기반 건강 분석 + 올해 주의 사항 + 개운법 (5~7문장)"
 }
 `;

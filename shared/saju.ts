@@ -862,7 +862,66 @@ function detectSpecialSal(chart: SajuChart): SpecialSal[] {
     });
   }
 
+  // 5. 홍염살 (紅艶殺) - 강렬한 이성 매력, 색정/구설수
+  const HONGYEOM_MAP: Record<number, number> = {
+    0: 6,  // 갑 -> 오(午)
+    1: 8,  // 을 -> 신(申)
+    2: 2,  // 병 -> 인(寅)
+    3: 7,  // 정 -> 미(未)
+    4: 6,  // 무 -> 오(午)
+    5: 6,  // 기 -> 오(午)
+    6: 10, // 경 -> 술(戌)
+    7: 9,  // 신 -> 유(酉)
+    8: 0,  // 임 -> 자(子)
+    9: 8,  // 계 -> 신(申)
+  };
+  const yearStemIdx = chart.yearPillar.stemIndex;
+  const hongyeomTarget = HONGYEOM_MAP[yearStemIdx];
+  const hasHongyeom = branches.some(b => b === hongyeomTarget);
+  if (hasHongyeom) {
+    sals.push({
+      name: "홍염살",
+      hanja: "紅艶殺",
+      description: "이성에게 강렬한 매력을 발산하는 별입니다. 뛰어난 외모나 분위기로 이목을 끌며, 연애나 사교 방면에서 활발합니다. 다만 이성 관계에서 구설수나 감정적 파도에 휘말릴 수 있으니, 스스로 감정 관리를 잘하는 것이 열쇠입니다.",
+      personality: "불꽃 같은 매력 — 이성을 끌어당기는 자석",
+    });
+  }
+
+  // 6. 백호살 (白虎殺) - 강한 기운, 사고/수술/유혈 주의
+  const BAEKHO_MAP: Record<number, number> = {
+    0: 4,  // 갑 -> 진(辰)
+    1: 5,  // 을 -> 사(巳)
+    2: 6,  // 병 -> 오(午)
+    3: 7,  // 정 -> 미(未)
+    4: 8,  // 무 -> 신(申)
+    5: 9,  // 기 -> 유(酉)
+    6: 10, // 경 -> 술(戌)
+    7: 11, // 신 -> 해(亥)
+    8: 0,  // 임 -> 자(子)
+    9: 1,  // 계 -> 축(丑)
+  };
+  const baekhoTarget = BAEKHO_MAP[yearStemIdx];
+  const hasBaekho = branches.some(b => b === baekhoTarget);
+  if (hasBaekho) {
+    sals.push({
+      name: "백호살",
+      hanja: "白虎殺",
+      description: "백호(흰 호랑이)의 강인하고 날카로운 기운을 품고 있습니다. 결단력과 추진력이 뛰어나지만, 너무 강한 에너지가 대인관계에서 충돌을 일으킬 수 있습니다. 배우자 관계에서 주도권 싸움이 생기기 쉬우며, 본인의 기운이 센 만큼 부드러운 커뮤니케이션이 중요합니다.",
+      personality: "흰 호랑이의 카리스마 — 강인하지만 날카로운 기운",
+    });
+  }
+
   return sals;
+}
+
+// ---- 간여지동 (干與支同) 판단 ----
+const BRANCH_MAIN_ELEMENTS = [4, 2, 0, 0, 2, 1, 1, 2, 3, 3, 2, 4];
+// 자=水, 축=土, 인=木, 묘=木, 진=土, 사=火, 오=火, 미=土, 신=金, 유=金, 술=土, 해=水
+
+export function checkGanYeoJiDong(chart: SajuChart): boolean {
+  const dayStemElement = STEM_ELEMENTS[chart.dayPillar.stemIndex].element;
+  const dayBranchElement = BRANCH_MAIN_ELEMENTS[chart.dayPillar.branchIndex];
+  return dayStemElement === dayBranchElement;
 }
 
 // ---- 식상생재 등 구조 패턴 감지 ----

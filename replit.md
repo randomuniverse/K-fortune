@@ -34,11 +34,11 @@
 ### Fortune Engine Logic
 - **Graceful Degradation**: Fortune generation uses `Promise.allSettled`; if one or two systems fail, partial results are still provided.
 - **Daily Fortune**: Generates a daily reading by combining Saju, Zodiac, and Ziwei Doushu analyses, then synthesizes them with a Guardian AI.
-- **Guardian Report**: Provides a deep destiny analysis, synthesizing insights from the three systems to identify core archetypes, past influences, current states, and solutions.
+- **Guardian Report**: Provides a deep destiny analysis with businessAdvice, loveAdvice (gender-aware: 재성/관성 + 신살 + 간여지동 기반 동적 분석), and healthAdvice (질액궁 + 오행 장부 mapping). Uses gender parameter for sex-specific saju love analysis.
 - **Yearly Fortune**: Offers annual forecasts from each system, cross-validated and synthesized by the Guardian AI, including monthly flow predictions.
 
 ### Core Calculation Engines
-- **Saju Engine**: Pure TypeScript implementation for Four Pillars astrology, calculating pillars, Ten Gods, five element ratios, Day Master strength, Yongshin, Daeun cycles, and special characteristics (e.g., 괴강살, 도화살).
+- **Saju Engine**: Pure TypeScript implementation for Four Pillars astrology, calculating pillars, Ten Gods, five element ratios, Day Master strength, Yongshin, Daeun cycles, and special characteristics (괴강살, 도화살, 화개살, 역마살, 홍염살, 백호살). Also detects 간여지동 (干與支同) and structure patterns (식상생재, 관인상생, 상관견관, 재다신약).
 - **Ziwei Doushu Engine**: Implements Purple Star Astrology, calculating Bureau, Life Palaces, and the distribution/interpretation of 14 major stars across various palaces.
 
 ## External Dependencies
