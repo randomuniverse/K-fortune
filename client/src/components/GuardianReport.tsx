@@ -162,36 +162,24 @@ export function GuardianReport({ telegramId, userName }: { telegramId: string; u
             </p>
           </Card>
 
-          <Card className="bg-white/[0.02] border-white/5 p-5 relative overflow-hidden" data-testid="card-love-advice">
-            <div className="absolute inset-0 bg-black/40 backdrop-blur-[1px] flex flex-col items-center justify-center z-10">
-              <Lock className="w-5 h-5 text-white/20 mb-2" />
-              <span className="text-[10px] text-white/30 font-medium uppercase tracking-wider">Coming Soon</span>
+          <Card className={`p-5 ${report.loveAdvice ? "bg-gradient-to-b from-pink-500/10 to-transparent border-pink-500/20" : "bg-white/[0.02] border-white/5"}`} data-testid="card-love-advice">
+            <div className="flex items-center gap-2 mb-3">
+              <Heart className="w-4 h-4 text-pink-400" />
+              <span className="text-pink-200 font-bold text-sm">연애/인간관계</span>
             </div>
-            <div className="opacity-30 blur-sm select-none">
-              <div className="flex items-center gap-2 mb-3">
-                <Heart className="w-4 h-4 text-pink-400" />
-                <span className="text-pink-200 font-bold text-sm">연애/인간관계</span>
-              </div>
-              <p className="text-xs text-white/80">
-                당신의 애정운은 올해 도화살의 영향으로...
-              </p>
-            </div>
+            <p className="text-xs text-white/80 leading-relaxed whitespace-pre-line">
+              {report.loveAdvice || "리포트를 다시 생성하면 연애/인간관계 분석이 활성화됩니다."}
+            </p>
           </Card>
 
-          <Card className="bg-white/[0.02] border-white/5 p-5 relative overflow-hidden" data-testid="card-health-advice">
-            <div className="absolute inset-0 bg-black/40 backdrop-blur-[1px] flex flex-col items-center justify-center z-10">
-              <Lock className="w-5 h-5 text-white/20 mb-2" />
-              <span className="text-[10px] text-white/30 font-medium uppercase tracking-wider">Coming Soon</span>
+          <Card className={`p-5 ${report.healthAdvice ? "bg-gradient-to-b from-emerald-500/10 to-transparent border-emerald-500/20" : "bg-white/[0.02] border-white/5"}`} data-testid="card-health-advice">
+            <div className="flex items-center gap-2 mb-3">
+              <Stethoscope className="w-4 h-4 text-green-400" />
+              <span className="text-green-200 font-bold text-sm">건강/컨디션</span>
             </div>
-            <div className="opacity-30 blur-sm select-none">
-              <div className="flex items-center gap-2 mb-3">
-                <Stethoscope className="w-4 h-4 text-green-400" />
-                <span className="text-green-200 font-bold text-sm">건강/컨디션</span>
-              </div>
-              <p className="text-xs text-white/80">
-                스트레스로 인한 위장 장애를 조심해야 하며...
-              </p>
-            </div>
+            <p className="text-xs text-white/80 leading-relaxed whitespace-pre-line">
+              {report.healthAdvice || "리포트를 다시 생성하면 건강/컨디션 분석이 활성화됩니다."}
+            </p>
           </Card>
 
         </div>

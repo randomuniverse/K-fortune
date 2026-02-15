@@ -292,46 +292,68 @@ ${todayStem}${todayBranch} (천간:${STEMS_H[todayStemIdx]}/지지:${BRANCHES_H[
   const ziweiUserPrompt = `오늘 날짜: ${dateStr}, 이름: ${user.name}
 내 명궁(${ziweiResult.lifePalace})의 ${lifeStars}과 오늘 일진(${todayStem}${todayBranch})의 관계를 분석해줘.`;
 
-  // 병렬 API 호출 (사주 + 별자리 + 자미두수)
-  const [sajuRes, zodiacRes, ziweiRes] = await Promise.all([
+  // 병렬 API 호출 (사주 + 별자리 + 자미두수) — Graceful Degradation 적용
+  const results = await Promise.allSettled([
     generateWithRetry(sajuSystemPrompt, sajuUserPrompt, "사주"),
     generateWithRetry(zodiacSystemPrompt, zodiacUserPrompt, "별자리"),
     generateWithRetry(ziweiSystemPrompt, ziweiUserPrompt, "자미두수"),
   ]);
 
-  const sajuData = parseJson(sajuRes, sajuSchema);
-  const zodiacData = parseJson(zodiacRes, zodiacSchema);
-  const ziweiData = parseJson(ziweiRes, ziweiDailySchema);
+  const sajuRes = results[0].status === "fulfilled" ? results[0].value : null;
+  const zodiacRes = results[1].status === "fulfilled" ? results[1].value : null;
+  const ziweiRes = results[2].status === "fulfilled" ? results[2].value : null;
 
-  if (!sajuData || !zodiacData || !ziweiData) {
-    const failures = [];
-    if (!sajuData) failures.push(`사주(raw: ${sajuRes.substring(0, 200)})`);
-    if (!zodiacData) failures.push(`별자리(raw: ${zodiacRes.substring(0, 200)})`);
-    if (!ziweiData) failures.push(`자미두수(raw: ${ziweiRes.substring(0, 200)})`);
-    console.error("[FORTUNE] 파싱 실패 항목:", failures.join(" | "));
-    throw new Error("운세 데이터 파싱 실패: " + failures.map(f => f.split("(")[0]).join(", "));
+  const sajuData = sajuRes ? parseJson(sajuRes, sajuSchema) : null;
+  const zodiacData = zodiacRes ? parseJson(zodiacRes, zodiacSchema) : null;
+  const ziweiData = ziweiRes ? parseJson(ziweiRes, ziweiDailySchema) : null;
+
+  const successSystems: string[] = [];
+  const failedSystems: string[] = [];
+  if (sajuData) successSystems.push("사주"); else failedSystems.push("사주");
+  if (zodiacData) successSystems.push("별자리"); else failedSystems.push("별자리");
+  if (ziweiData) successSystems.push("자미두수"); else failedSystems.push("자미두수");
+
+  if (successSystems.length === 0) {
+    console.error("[FORTUNE] 모든 체계 파싱 실패");
+    throw new Error("모든 운세 시스템 분석에 실패했습니다. 잠시 후 다시 시도해주세요.");
   }
 
+  if (failedSystems.length > 0) {
+    console.warn(`[FORTUNE] 부분 성공: ${successSystems.join("+")} 성공, ${failedSystems.join("+")} 실패 — 부분 결과로 진행`);
+  }
+
+  const sajuFallback = { score: 50, summary: "분석 대기 중", direction: "중립", caution: "분석 대기 중", special: "분석 대기 중" };
+  const zodiacFallback = { score: 50, summary: "분석 대기 중", love: "분석 대기 중", money: "분석 대기 중", health: "분석 대기 중", work: "분석 대기 중" };
+  const ziweiFallback = { score: 50, summary: "분석 대기 중", advice: "분석 대기 중" };
+
+  const saju = sajuData || sajuFallback;
+  const zodiac = zodiacData || zodiacFallback;
+  const ziwei = ziweiData || ziweiFallback;
+
   // 4. [핵심] 3자 교차 검증 및 종합 분석 (사주 + 별자리 + 자미두수)
+  const partialNotice = failedSystems.length > 0
+    ? `\n\n[참고: ${failedSystems.join(", ")} 분석이 일시적으로 불가하여 ${successSystems.join(", ")} 기반으로 분석합니다. 일치도 점수를 그에 맞게 조정하세요.]\n`
+    : "";
+
   const synthesizePrompt = `당신은 '운명 데이터 융합 전문가'이자 '따뜻한 인생 멘토'입니다.
 동양의 명리학(사주), 서양의 점성술(별자리), 동양의 자미두수(紫微斗數) 결과를 **교차 검증(Cross-Validation)**하여, 이 3가지 시스템이 **공통적으로 가리키는 진실**을 찾아내세요.
-
+${partialNotice}
 [사주 분석 결과 (명리학 - 일진/일주 관계)]
-- 점수: ${sajuData.score}
-- 요약: ${sajuData.summary}
-- 주의: ${sajuData.caution}
-- 특이사항: ${sajuData.special}
+- 점수: ${saju.score}
+- 요약: ${saju.summary}
+- 주의: ${saju.caution}
+- 특이사항: ${saju.special}
 
 [별자리 분석 결과 (서양 점성술 - 행성 트랜짓)]
-- 점수: ${zodiacData.score}
-- 요약: ${zodiacData.summary}
-- 연애: ${zodiacData.love} | 재물: ${zodiacData.money}
-- 건강: ${zodiacData.health} | 직장: ${zodiacData.work}
+- 점수: ${zodiac.score}
+- 요약: ${zodiac.summary}
+- 연애: ${zodiac.love} | 재물: ${zodiac.money}
+- 건강: ${zodiac.health} | 직장: ${zodiac.work}
 
 [자미두수 분석 결과 (명궁 주성 - 별의 기운)]
-- 점수: ${ziweiData.score}
-- 요약: ${ziweiData.summary}
-- 조언: ${ziweiData.advice}
+- 점수: ${ziwei.score}
+- 요약: ${ziwei.summary}
+- 조언: ${ziwei.advice}
 
 [융합 분석 지침]
 1. **일치도 판단(Coherence Score):** 사주, 별자리, 자미두수 이 3가지 흐름이 얼마나 유사한지 0~100점으로 평가하세요.
@@ -373,19 +395,20 @@ ${todayStem}${todayBranch} (천간:${STEMS_H[todayStemIdx]}/지지:${BRANCHES_H[
     throw new Error("교차 검증 데이터 파싱 실패");
   }
 
-  // 최종 점수 계산 (3자 평균 + 일치도 가중치)
-  const baseScore = Math.round((sajuData.score + zodiacData.score + ziweiData.score) / 3);
+  // 최종 점수 계산 (성공한 체계 평균 + 일치도 가중치)
+  const scores = [saju.score, zodiac.score, ziwei.score].filter((_, i) => [sajuData, zodiacData, ziweiData][i] !== null);
+  const baseScore = scores.length > 0 ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length) : 50;
   const finalCombinedScore = synthesis.coherenceScore >= 80 
     ? Math.min(100, baseScore + 5)
     : baseScore;
 
   const fortuneData: FortuneData = {
-    sajuScore: sajuData.score,
-    sajuDirection: sajuData.direction,
+    sajuScore: saju.score,
+    sajuDirection: saju.direction,
     sajuCaution: synthesis.sajuCaution,
-    sajuSpecial: synthesis.sajuSpecial || sajuData.special,
+    sajuSpecial: synthesis.sajuSpecial || saju.special,
     sajuSummary: synthesis.sajuSummary,
-    zodiacScore: zodiacData.score,
+    zodiacScore: zodiac.score,
     zodiacLove: synthesis.zodiacLove,
     zodiacMoney: synthesis.zodiacMoney,
     zodiacHealth: synthesis.zodiacHealth,
@@ -394,7 +417,7 @@ ${todayStem}${todayBranch} (천간:${STEMS_H[todayStemIdx]}/지지:${BRANCHES_H[
     luckyNumbers: synthesis.luckyNumbers || [3, 7, 9],
     ziweiMessage: (synthesis.ziweiMessage && synthesis.ziweiMessage.length > 10 && !synthesis.ziweiMessage.includes("원본 유지"))
       ? synthesis.ziweiMessage 
-      : `${ziweiData.summary} ${ziweiData.advice}`,
+      : `${ziwei.summary} ${ziwei.advice}`,
     combinedScore: finalCombinedScore,
     coherenceScore: synthesis.coherenceScore,
     commonKeywords: synthesis.commonKeywords,
@@ -473,6 +496,20 @@ export async function generateGuardianReport(data: {
 - 구체적 비즈니스 모델/업종 추천 (B2B vs B2C, 중개 vs 직접 등).
 - 2026년 올해의 전략적 태도 제안.
 
+**loveAdvice** (250자 이상, 5~7문장):
+- 자미두수 부처궁(夫妻宮) 주성의 연애/인간관계 성향을 근거로 분석.
+- 사주 십성 중 편재/정재(남성 기준) 또는 편관/정관(여성 기준)의 배치를 참조.
+- 도화살 유무에 따른 매력 스타일 언급.
+- 2026년 올해 연애/인간관계에서 주의할 점과 기회를 구체적으로 서술.
+- 이상적 파트너 유형을 사주/자미두수 기반으로 제시.
+
+**healthAdvice** (250자 이상, 5~7문장):
+- 자미두수 질액궁(疾厄宮) 배치를 근거로 타고난 건강 취약점 분석.
+- 사주 오행 분포의 과다/부족 원소와 연관된 장부(목=간, 화=심장, 토=위장, 금=폐, 수=신장) 약점 지적.
+- 일간 강약에 따른 스트레스 반응 패턴 설명.
+- 2026년 올해 특히 주의해야 할 건강 이슈와 예방법.
+- 용신 기반 건강 개운법 (운동, 식단, 생활 습관) 1~2가지 구체적 제안.
+
 **[JSON 출력 형식]**
 {
   "coreEnergy": "내면의 충돌을 관통하는 모순적 타이틀 (예: 브레이크가 고장 난 페라리)",
@@ -483,8 +520,8 @@ export async function generateGuardianReport(data: {
   "bottleneck": "여기에 250자 이상 작성. 당신의 병목은 능력이 아닙니다. 구체적 습관/회피 반응 지적... (4~6문장 이상)",
   "solution": "여기에 250자 이상 작성. 오늘부터 규칙은 하나입니다... (5~7문장 이상)",
   "businessAdvice": "여기에 250자 이상 작성. 당신의 사주에서 [용신]은... (5~7문장 이상)",
-  "loveAdvice": null,
-  "healthAdvice": null
+  "loveAdvice": "여기에 250자 이상 작성. 부처궁의 [주성]은... 연애/인간관계 분석 (5~7문장 이상)",
+  "healthAdvice": "여기에 250자 이상 작성. 질액궁과 오행 분포 기반 건강 분석 (5~7문장 이상)"
 }
 `;
 
@@ -568,13 +605,29 @@ ${sc.daeun?.slice(0, 6).map((d: any) => `  - ${d.age}세(${d.year}년): ${d.stem
       return JSON.parse(content);
     };
 
-    const [report1, report2, report3] = await Promise.all([
+    const reportResults = await Promise.allSettled([
       generateOne(0),
       generateOne(1),
       generateOne(2),
     ]);
 
-    console.log("[Guardian] 3개 독립 리포트 완료. 교차 검증 종합 분석 시작...");
+    const successfulReports = reportResults
+      .filter((r): r is PromiseFulfilledResult<any> => r.status === "fulfilled")
+      .map(r => r.value);
+
+    if (successfulReports.length === 0) {
+      throw new Error("모든 가디언 독립 리포트 생성에 실패했습니다.");
+    }
+
+    if (successfulReports.length < 3) {
+      console.warn(`[Guardian] ${successfulReports.length}/3 독립 리포트만 성공 — 부분 결과로 진행`);
+    }
+
+    const report1 = successfulReports[0];
+    const report2 = successfulReports[1] || successfulReports[0];
+    const report3 = successfulReports[2] || successfulReports[Math.min(1, successfulReports.length - 1)];
+
+    console.log(`[Guardian] ${successfulReports.length}개 독립 리포트 완료. 교차 검증 종합 분석 시작...`);
 
     const allKeywords = [
       ...(report1.keywords || []),
@@ -638,15 +691,15 @@ ${JSON.stringify(report3, null, 2)}
   "bottleneck": "250자 이상. 당신의 병목은 능력이 아닙니다. 구체적 습관/회피 반응 지적... (4~6문장)",
   "solution": "250자 이상. 오늘부터 규칙은 하나입니다... (5~7문장)",
   "businessAdvice": "250자 이상. 용신과 십성 기반 적성 분석 + 비즈니스 모델 + 올해 전략 (5~7문장)",
-  "loveAdvice": null,
-  "healthAdvice": null
+  "loveAdvice": "250자 이상. 부처궁 주성 기반 연애/인간관계 분석 + 도화살 + 올해 연애 전략 (5~7문장)",
+  "healthAdvice": "250자 이상. 질액궁 + 오행 과다/부족 기반 건강 분석 + 올해 주의 사항 + 개운법 (5~7문장)"
 }
 `;
 
     const synthesisResponse = await openai.chat.completions.create({
       model: "gpt-4o",
       messages: [
-        { role: "system", content: "당신은 3개의 독립 분석 리포트를 교차 검증하여 최종 종합 리포트를 작성하는 검증관입니다. 2개 이상 일치하는 내용만 채택하세요. [치명적 금지] 사용자의 이름(예: Ricky)을 절대 사용하지 마세요. 모든 텍스트에서 반드시 '당신'이라고만 지칭하세요. 원본 리포트에 이름이 있더라도 '당신'으로 교체하세요. 각 섹션은 최소 3~5문장으로 길게 서술하세요." },
+        { role: "system", content: "당신은 3개의 독립 분석 리포트를 교차 검증하여 최종 종합 리포트를 작성하는 검증관입니다. 2개 이상 일치하는 내용만 채택하세요. [치명적 금지] 사용자의 이름(예: Ricky)을 절대 사용하지 마세요. 모든 텍스트에서 반드시 '당신'이라고만 지칭하세요. 원본 리포트에 이름이 있더라도 '당신'으로 교체하세요. 각 섹션은 최소 3~5문장으로 길게 서술하세요. loveAdvice와 healthAdvice도 반드시 250자 이상으로 작성하세요." },
         { role: "user", content: synthesisPrompt },
       ],
       response_format: { type: "json_object" },
@@ -671,7 +724,9 @@ ${JSON.stringify(report3, null, 2)}
       pastInference: "현재 운명 데이터 서버와 연결이 불안정하여 과거 패턴을 불러오지 못했습니다.",
       currentState: "일시적인 연결 오류가 발생했습니다.",
       bottleneck: "시스템 연결 대기 중",
-      solution: "잠시 후 다시 시도해주세요."
+      solution: "잠시 후 다시 시도해주세요.",
+      loveAdvice: null,
+      healthAdvice: null
     };
   }
 }
@@ -833,18 +888,44 @@ ${monthlyFlowFormat}`;
       return JSON.parse(response.choices[0].message.content || "{}");
     };
 
-    const [sajuReport, ziweiReport, zodiacReport] = await Promise.all([
+    const yearlyResults = await Promise.allSettled([
       generateSaju(),
       generateZiwei(),
       generateZodiac(),
     ]);
 
-    console.log("[Yearly] 3체계 독립 분석 완료. 가디언 교차 검증 종합 시작...");
+    const sajuReport = yearlyResults[0].status === "fulfilled" ? yearlyResults[0].value : null;
+    const ziweiReport = yearlyResults[1].status === "fulfilled" ? yearlyResults[1].value : null;
+    const zodiacReport = yearlyResults[2].status === "fulfilled" ? yearlyResults[2].value : null;
+
+    const yearlySuccess: string[] = [];
+    const yearlyFailed: string[] = [];
+    if (sajuReport) yearlySuccess.push("사주"); else yearlyFailed.push("사주");
+    if (ziweiReport) yearlySuccess.push("자미두수"); else yearlyFailed.push("자미두수");
+    if (zodiacReport) yearlySuccess.push("별자리"); else yearlyFailed.push("별자리");
+
+    if (yearlySuccess.length === 0) {
+      throw new Error("모든 연간 운세 체계 분석에 실패했습니다.");
+    }
+
+    if (yearlyFailed.length > 0) {
+      console.warn(`[Yearly] 부분 성공: ${yearlySuccess.join("+")} 성공, ${yearlyFailed.join("+")} 실패 — 부분 결과로 진행`);
+    }
+
+    const sajuFallback = { summary: "분석 대기 중", keywords: [], monthlyFlow: [] };
+    const ziweiFallbackY = { summary: "분석 대기 중", keywords: [], monthlyFlow: [] };
+    const zodiacFallbackY = { summary: "분석 대기 중", keywords: [], monthlyFlow: [] };
+
+    const safeSaju = sajuReport || sajuFallback;
+    const safeZiwei = ziweiReport || ziweiFallbackY;
+    const safeZodiac = zodiacReport || zodiacFallbackY;
+
+    console.log(`[Yearly] ${yearlySuccess.length}/3 체계 독립 분석 완료. 가디언 교차 검증 종합 시작...`);
 
     const allKeywords = [
-      ...(sajuReport.keywords || []),
-      ...(ziweiReport.keywords || []),
-      ...(zodiacReport.keywords || []),
+      ...(safeSaju.keywords || []),
+      ...(safeZiwei.keywords || []),
+      ...(safeZodiac.keywords || []),
     ];
     const keywordCount: Record<string, number> = {};
     allKeywords.forEach((kw: string) => {
@@ -857,7 +938,7 @@ ${monthlyFlowFormat}`;
       .slice(0, 5);
 
     const monthlyScores: Record<number, number[]> = {};
-    [sajuReport, ziweiReport, zodiacReport].forEach((r) => {
+    [safeSaju, safeZiwei, safeZodiac].forEach((r) => {
       (r.monthlyFlow || []).forEach((m: any) => {
         if (!monthlyScores[m.month]) monthlyScores[m.month] = [];
         monthlyScores[m.month].push(m.score);
@@ -885,14 +966,15 @@ ${monthlyFlowFormat}`;
 6. 월별 summary는 **"O월은 OO(간지)의 기운입니다."**로 시작
 7. 각 체계의 고유한 강점을 살려 종합하되, 모순되는 부분은 명확히 밝히세요.
 
+${yearlyFailed.length > 0 ? `\n[참고: ${yearlyFailed.join(", ")} 분석이 일시적으로 불가하여 ${yearlySuccess.join(", ")} 기반으로 분석합니다.]\n` : ""}
 **[사주팔자 분석 결과]**
-${JSON.stringify(sajuReport, null, 2)}
+${sajuReport ? JSON.stringify(sajuReport, null, 2) : "(분석 실패 — 이 체계 결과 없이 나머지 체계 기반으로 종합하세요)"}
 
 **[자미두수 분석 결과]**
-${JSON.stringify(ziweiReport, null, 2)}
+${ziweiReport ? JSON.stringify(ziweiReport, null, 2) : "(분석 실패 — 이 체계 결과 없이 나머지 체계 기반으로 종합하세요)"}
 
 **[별자리 분석 결과]**
-${JSON.stringify(zodiacReport, null, 2)}
+${zodiacReport ? JSON.stringify(zodiacReport, null, 2) : "(분석 실패 — 이 체계 결과 없이 나머지 체계 기반으로 종합하세요)"}
 
 **[출력 형식 (JSON)]**
 {
@@ -969,9 +1051,10 @@ ${JSON.stringify(zodiacReport, null, 2)}
       };
     };
 
-    const sajuParsed = parseSingleFlow(sajuReport);
-    const ziweiParsed = parseSingleFlow(ziweiReport);
-    const zodiacParsed = parseSingleFlow(zodiacReport);
+    const emptyFlow = { summary: "", monthlyFlow: [] };
+    const sajuParsed = sajuReport ? parseSingleFlow(sajuReport) : emptyFlow;
+    const ziweiParsed = ziweiReport ? parseSingleFlow(ziweiReport) : emptyFlow;
+    const zodiacParsed = zodiacReport ? parseSingleFlow(zodiacReport) : emptyFlow;
 
     console.log(`[Yearly] ${data.year}년 운세 3체계 교차 검증 완료. 일치도: ${finalResult.coherenceScore}%`);
 
