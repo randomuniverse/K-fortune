@@ -332,7 +332,10 @@ export async function registerRoutes(
       const sajuChart = calculateFullSaju(user.birthDate, user.birthTime, gender);
       const personality = analyzeSajuPersonality(sajuChart);
       const zodiacInfo = getZodiacInfo(user.birthDate);
-      res.json({ sajuChart, personality, zodiacInfo });
+      const [bYear, bMonth, bDay] = user.birthDate.split('-').map(Number);
+      const bHour = parseInt(user.birthTime.split(':')[0]);
+      const ziweiData = calculateZiWei(bYear, bMonth, bDay, bHour, gender);
+      res.json({ sajuChart, personality, zodiacInfo, ziweiData });
     } catch (error) {
       console.error("Error calculating saju:", error);
       res.status(500).json({ message: "사주 계산 중 오류가 발생했습니다." });

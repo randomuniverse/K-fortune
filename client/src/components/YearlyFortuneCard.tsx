@@ -2,11 +2,12 @@ import { motion } from "framer-motion";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { TrendingUp, TrendingDown, AlertTriangle, Star, Calendar, Compass, Loader2, Briefcase, Heart, HeartPulse, Activity, BrainCircuit, ChevronDown, ChevronUp } from "lucide-react";
+import { TrendingUp, TrendingDown, AlertTriangle, Star, Calendar, Compass, Loader2, Briefcase, Heart, HeartPulse, Activity, BrainCircuit, ChevronDown, ChevronUp, Sparkles, Globe, Moon } from "lucide-react";
 import type { SajuChart } from "@shared/saju";
 import { calculateYearlyFortune, calculateMonthlyFortunes } from "@shared/saju";
 import type { YearlyFortune, MonthlyFortune } from "@shared/saju";
-import type { MonthlyFlowItem } from "@shared/schema";
+import type { MonthlyFlowItem, ZodiacInfo } from "@shared/schema";
+import type { ZiWeiResult } from "@shared/ziwei";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useState } from "react";
@@ -16,6 +17,8 @@ interface Props {
   userName: string;
   telegramId: string;
   yearlySubTab: "guardian" | "saju" | "ziwei" | "zodiac";
+  ziweiData?: ZiWeiResult;
+  zodiacInfo?: ZodiacInfo;
 }
 
 interface YearlyFortuneData {
@@ -192,7 +195,7 @@ function MonthlyFlowSection({ title, flow, colorClass }: { title: string; flow: 
   );
 }
 
-export function YearlyFortuneCard({ chart, userName, telegramId, yearlySubTab }: Props) {
+export function YearlyFortuneCard({ chart, userName, telegramId, yearlySubTab, ziweiData, zodiacInfo }: Props) {
   const year = 2026;
   const yearlyFortune = calculateYearlyFortune(chart, year);
   const monthlyFortunes = calculateMonthlyFortunes(chart, year);
@@ -488,6 +491,91 @@ export function YearlyFortuneCard({ chart, userName, telegramId, yearlySubTab }:
   }
 
   if (yearlySubTab === "ziwei") {
+    const lifeStars = ziweiData?.stars?.life || [];
+    const spouseStars = ziweiData?.stars?.spouse || [];
+    const wealthStars = ziweiData?.stars?.wealth || [];
+    const travelStars = ziweiData?.stars?.travel || [];
+    const mainStar = lifeStars[0];
+
+    const ziweiSummaryCard = ziweiData && (
+      <Card className="bg-white/[0.03] border-white/10 p-6" data-testid="card-ziwei-profile">
+        <div className="flex flex-col md:flex-row items-start gap-6">
+          <div className="text-center md:text-left">
+            <h3 className="text-xl font-serif text-white mb-1">{year}년 자미두수 총평</h3>
+            <p className="text-xs text-muted-foreground mb-3">
+              명궁(命宮): {ziweiData.lifePalace}궁 · {ziweiData.bureau?.name || ""}
+            </p>
+            {mainStar && (
+              <div className="flex items-baseline gap-2 justify-center md:justify-start">
+                <Sparkles className="w-5 h-5 text-purple-400" />
+                <span className="text-lg font-bold text-purple-300" data-testid="text-ziwei-main-star">{mainStar.name}</span>
+              </div>
+            )}
+          </div>
+
+          <div className="flex-1 space-y-3">
+            <div className="bg-white/[0.03] rounded-lg p-3">
+              <p className="text-xs text-purple-400/80 font-medium mb-1">
+                <Star className="w-3 h-3 inline mr-1" />
+                명궁 해석
+              </p>
+              <p className="text-sm text-white/80 leading-relaxed">
+                {ziweiData.interpretation || "명궁 해석 데이터를 불러오는 중입니다."}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-6">
+          <div className="bg-white/[0.03] rounded-lg p-3 text-center">
+            <p className="text-[10px] text-muted-foreground mb-1">국(局)</p>
+            <p className="text-xs font-medium text-white">{ziweiData.bureau?.name || "정보 없음"}</p>
+          </div>
+          <div className="bg-purple-500/10 rounded-lg p-3 text-center">
+            <p className="text-[10px] text-purple-400/70 mb-1">
+              <Heart className="w-3 h-3 inline mr-0.5" /> 부처궁
+            </p>
+            <p className="text-xs font-bold text-purple-300">
+              {spouseStars.length > 0 ? spouseStars.map(s => s.name.replace(/성.*/, "")).join(" · ") : "주성 없음"}
+            </p>
+          </div>
+          <div className="bg-amber-500/10 rounded-lg p-3 text-center">
+            <p className="text-[10px] text-amber-400/70 mb-1">
+              <Briefcase className="w-3 h-3 inline mr-0.5" /> 재백궁
+            </p>
+            <p className="text-xs font-bold text-amber-300">
+              {wealthStars.length > 0 ? wealthStars.map(s => s.name.replace(/성.*/, "")).join(" · ") : "주성 없음"}
+            </p>
+          </div>
+          <div className="bg-cyan-500/10 rounded-lg p-3 text-center">
+            <p className="text-[10px] text-cyan-400/70 mb-1">
+              <Compass className="w-3 h-3 inline mr-0.5" /> 천이궁
+            </p>
+            <p className="text-xs font-bold text-cyan-300">
+              {travelStars.length > 0 ? travelStars.map(s => s.name.replace(/성.*/, "")).join(" · ") : "주성 없음"}
+            </p>
+          </div>
+        </div>
+
+        {mainStar && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
+            <div className="bg-white/[0.03] rounded-lg p-4">
+              <p className="text-xs text-pink-400/80 font-medium mb-2">
+                <Heart className="w-3 h-3 inline mr-1" /> 연애/인간관계 성향
+              </p>
+              <p className="text-sm text-white/70 leading-relaxed">{mainStar.loveStyle}</p>
+            </div>
+            <div className="bg-white/[0.03] rounded-lg p-4">
+              <p className="text-xs text-amber-400/80 font-medium mb-2">
+                <Briefcase className="w-3 h-3 inline mr-1" /> 재물/사업 성향
+              </p>
+              <p className="text-sm text-white/70 leading-relaxed">{mainStar.wealthStyle}</p>
+            </div>
+          </div>
+        )}
+      </Card>
+    );
+
     return (
       <motion.div
         initial={{ opacity: 0, y: 20 }}
@@ -496,25 +584,43 @@ export function YearlyFortuneCard({ chart, userName, telegramId, yearlySubTab }:
         className="space-y-6"
         data-testid="yearly-ziwei-tab"
       >
+        {ziweiSummaryCard}
         {generateButton}
 
         {aiYearly && (
           <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
             <div className="flex flex-wrap items-center gap-2 mb-2">
-              <h3 className="text-sm font-bold text-white/40 uppercase tracking-widest ml-1">자미두수 독립 분석</h3>
+              <h3 className="text-sm font-bold text-white/40 uppercase tracking-widest ml-1">자미두수 AI 독립 분석</h3>
             </div>
 
             {aiYearly.ziweiSummary && (
-              <Card className="bg-white/[0.03] border-white/10 p-5" data-testid="card-ziwei-summary">
-                <p className="text-sm text-white/80 leading-relaxed">{aiYearly.ziweiSummary}</p>
+              <Card className="bg-white/[0.03] border-white/10 p-5" data-testid="card-ziwei-ai-summary">
+                <p className="text-sm text-white/80 leading-relaxed whitespace-pre-line">{aiYearly.ziweiSummary}</p>
               </Card>
             )}
 
-            <MonthlyFlowSection
-              title={`${year}년 자미두수 월별 흐름 달력`}
-              flow={ziweiFlow}
-              colorClass="text-purple-400"
-            />
+            {ziweiFlow.length > 0 ? (
+              <MonthlyFlowSection
+                title={`${year}년 자미두수 월별 흐름 달력`}
+                flow={ziweiFlow}
+                colorClass="text-purple-400"
+              />
+            ) : (
+              <Card className="bg-white/[0.03] border-white/10 p-6 text-center">
+                <p className="text-sm text-muted-foreground mb-3">자미두수 독립 월별 달력 데이터가 없습니다.</p>
+                <p className="text-xs text-white/40">AI 분석을 다시 생성하면 각 체계별 독립 달력이 포함됩니다.</p>
+                <Button
+                  variant="mystical"
+                  size="sm"
+                  className="mt-3"
+                  onClick={() => generateYearly.mutate(true)}
+                  disabled={generateYearly.isPending}
+                  data-testid="button-regenerate-ziwei"
+                >
+                  <BrainCircuit className="mr-2 h-4 w-4" /> AI 분석 다시 생성
+                </Button>
+              </Card>
+            )}
           </motion.div>
         )}
 
@@ -528,6 +634,80 @@ export function YearlyFortuneCard({ chart, userName, telegramId, yearlySubTab }:
   }
 
   if (yearlySubTab === "zodiac") {
+    const zodiacSummaryCard = zodiacInfo && (
+      <Card className="bg-white/[0.03] border-white/10 p-6" data-testid="card-zodiac-profile">
+        <div className="flex flex-col md:flex-row items-start gap-6">
+          <div className="text-center md:text-left">
+            <h3 className="text-xl font-serif text-white mb-1">{year}년 별자리 총평</h3>
+            <p className="text-xs text-muted-foreground mb-3">
+              {zodiacInfo.sign} ({zodiacInfo.signEn}) · {zodiacInfo.dateRange}
+            </p>
+            <div className="flex items-baseline gap-2 justify-center md:justify-start">
+              <Globe className="w-5 h-5 text-blue-400" />
+              <span className="text-lg font-bold text-blue-300" data-testid="text-zodiac-sign">{zodiacInfo.sign}</span>
+              <span className="text-sm text-white/50">{zodiacInfo.symbol}</span>
+            </div>
+          </div>
+
+          <div className="flex-1 space-y-3">
+            <div className="bg-white/[0.03] rounded-lg p-3">
+              <p className="text-xs text-blue-400/80 font-medium mb-1">
+                <Sparkles className="w-3 h-3 inline mr-1" />
+                핵심 특성
+              </p>
+              <p className="text-sm text-white/80 leading-relaxed">
+                {zodiacInfo.traits?.join(" · ") || zodiacInfo.sign}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-6">
+          <div className="bg-white/[0.03] rounded-lg p-3 text-center">
+            <p className="text-[10px] text-muted-foreground mb-1">원소</p>
+            <p className="text-xs font-medium text-white">{zodiacInfo.element} ({zodiacInfo.elementEn})</p>
+          </div>
+          <div className="bg-blue-500/10 rounded-lg p-3 text-center">
+            <p className="text-[10px] text-blue-400/70 mb-1">
+              <Moon className="w-3 h-3 inline mr-0.5" /> 수호성
+            </p>
+            <p className="text-xs font-bold text-blue-300">
+              {zodiacInfo.rulingPlanet} ({zodiacInfo.rulingPlanetEn})
+            </p>
+          </div>
+          <div className="bg-pink-500/10 rounded-lg p-3 text-center">
+            <p className="text-[10px] text-pink-400/70 mb-1">
+              <Heart className="w-3 h-3 inline mr-0.5" /> 궁합 별자리
+            </p>
+            <p className="text-xs font-bold text-pink-300">
+              {zodiacInfo.compatibleSigns?.join(" · ") || "정보 없음"}
+            </p>
+          </div>
+          <div className="bg-white/[0.03] rounded-lg p-3 text-center">
+            <p className="text-[10px] text-muted-foreground mb-1">궁 유형</p>
+            <p className="text-xs font-medium text-white">
+              {zodiacInfo.quality} ({zodiacInfo.qualityEn})
+            </p>
+          </div>
+        </div>
+
+        <div className="bg-white/[0.03] rounded-lg p-4 mt-6">
+          <p className="text-xs text-blue-400/80 font-medium mb-2">
+            <Globe className="w-3 h-3 inline mr-1" /> {year}년 {zodiacInfo.sign} 핵심 기운 변화
+          </p>
+          <p className="text-sm text-white/70 leading-relaxed">
+            {year}년 병오년(丙午年)의 화(火) 에너지가 {zodiacInfo.element} 원소의 {zodiacInfo.sign}에 미치는 영향을 분석합니다.
+            수호성 {zodiacInfo.rulingPlanet}의 움직임과 {zodiacInfo.element} 원소의 조화가 올해의 핵심 변화를 이끕니다.
+            {zodiacInfo.element === "불" ? " 같은 불의 에너지가 만나 열정과 추진력이 극대화되지만, 과열에 주의가 필요합니다." :
+             zodiacInfo.element === "흙" ? " 불의 에너지가 대지를 달구어 새로운 가능성을 싹틔우는 해입니다." :
+             zodiacInfo.element === "공기" ? " 불의 에너지가 공기를 뜨겁게 달구어 변화와 소통이 활발해지는 해입니다." :
+             zodiacInfo.element === "물" ? " 불과 물의 대립으로 감정적 변동이 크지만, 균형을 찾으면 큰 성장의 기회가 됩니다." :
+             " 올해의 에너지 변화에 주목하세요."}
+          </p>
+        </div>
+      </Card>
+    );
+
     return (
       <motion.div
         initial={{ opacity: 0, y: 20 }}
@@ -536,25 +716,43 @@ export function YearlyFortuneCard({ chart, userName, telegramId, yearlySubTab }:
         className="space-y-6"
         data-testid="yearly-zodiac-tab"
       >
+        {zodiacSummaryCard}
         {generateButton}
 
         {aiYearly && (
           <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
             <div className="flex flex-wrap items-center gap-2 mb-2">
-              <h3 className="text-sm font-bold text-white/40 uppercase tracking-widest ml-1">별자리 독립 분석</h3>
+              <h3 className="text-sm font-bold text-white/40 uppercase tracking-widest ml-1">별자리 AI 독립 분석</h3>
             </div>
 
             {aiYearly.zodiacSummary && (
-              <Card className="bg-white/[0.03] border-white/10 p-5" data-testid="card-zodiac-summary">
-                <p className="text-sm text-white/80 leading-relaxed">{aiYearly.zodiacSummary}</p>
+              <Card className="bg-white/[0.03] border-white/10 p-5" data-testid="card-zodiac-ai-summary">
+                <p className="text-sm text-white/80 leading-relaxed whitespace-pre-line">{aiYearly.zodiacSummary}</p>
               </Card>
             )}
 
-            <MonthlyFlowSection
-              title={`${year}년 별자리 월별 흐름 달력`}
-              flow={zodiacFlow}
-              colorClass="text-blue-400"
-            />
+            {zodiacFlow.length > 0 ? (
+              <MonthlyFlowSection
+                title={`${year}년 별자리 월별 흐름 달력`}
+                flow={zodiacFlow}
+                colorClass="text-blue-400"
+              />
+            ) : (
+              <Card className="bg-white/[0.03] border-white/10 p-6 text-center">
+                <p className="text-sm text-muted-foreground mb-3">별자리 독립 월별 달력 데이터가 없습니다.</p>
+                <p className="text-xs text-white/40">AI 분석을 다시 생성하면 각 체계별 독립 달력이 포함됩니다.</p>
+                <Button
+                  variant="mystical"
+                  size="sm"
+                  className="mt-3"
+                  onClick={() => generateYearly.mutate(true)}
+                  disabled={generateYearly.isPending}
+                  data-testid="button-regenerate-zodiac"
+                >
+                  <BrainCircuit className="mr-2 h-4 w-4" /> AI 분석 다시 생성
+                </Button>
+              </Card>
+            )}
           </motion.div>
         )}
 

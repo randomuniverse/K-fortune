@@ -293,7 +293,7 @@ export default function Dashboard() {
                 <div className="flex justify-center py-12"><Loader2 className="w-8 h-8 text-primary/50 animate-spin" /></div>
               ) : (
                 <div className="min-h-[300px]">
-                  <YearlyFortuneCard chart={sajuData.sajuChart} userName={user.name} telegramId={telegramId} yearlySubTab={yearlySubTab} />
+                  <YearlyFortuneCard chart={sajuData.sajuChart} userName={user.name} telegramId={telegramId} yearlySubTab={yearlySubTab} ziweiData={sajuData.ziweiData} zodiacInfo={sajuData.zodiacInfo} />
                 </div>
               )}
             </motion.div>
