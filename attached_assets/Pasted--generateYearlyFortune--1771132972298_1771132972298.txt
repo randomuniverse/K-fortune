@@ -1,0 +1,72 @@
+개발자님의 피드백을 반영하여 `generateYearlyFortune` 함수를 긴급 수정해야 해.
+현재 "교차 검증" 로직이 너무 내용을 축약해서, "월별 운세"가 무미건조해졌어.
+
+**[수정 목표]**
+1. **풍성함 복구:** 예전 사주 버전처럼 **"O월은 OO(간지)의 기운입니다"**라고 구체적인 명칭을 언급하고 시작할 것.
+2. **분량 확대:** 월별로 최소 **2~3문장 이상**의 구체적이고 희망적인 조언을 제공할 것.
+3. **점수 동기화:** 총평과 월별 흐름의 논리가 일치하도록, 월별 분석을 먼저 하고 총평을 요약하는 순서로 사고하게 할 것.
+
+**[수정할 코드]**
+`server/fortune-engine.ts` 파일의 `generateYearlyFortune` 함수 내부 `systemPrompt`를 아래 코드로 교체해줘.
+
+```typescript
+// [수정] 2026년 종합 운세 생성 엔진 (Rich & Detailed Mode)
+export async function generateYearlyFortune(data: {
+  name: string;
+  birthDate: string;
+  gender: string;
+  saju: any;
+  ziwei: any;
+}) {
+  const currentYear = 2026;
+  const systemPrompt = \`
+당신은 2026년(병오년, 붉은 말의 해)의 운세를 분석하는 '동양철학 마스터'이자 '따뜻한 인생 멘토'입니다.
+단순한 요약이 아니라, **사주의 구체적인 기운(간지, 십성)**을 바탕으로 자미두수의 흐름을 더해 **풍성하고 희망찬 조언**을 제공해야 합니다.
+
+**[작성 원칙: 풍성함과 디테일]**
+1. **월별 운세 필수 포맷:**
+   - 반드시 **"O월은 OO(간지)의 기운입니다."**로 시작하세요. (예: 1월은 경인(庚寅)의 기운입니다.)
+   - 그 기운이 사용자에게 미치는 영향을 **구체적으로 설명**하세요. (예: "문서운이 강하게 들어오니 계약에 유리합니다.")
+   - 자미두수의 기운을 참조하여 조언을 덧붙이세요.
+   - 말투는 **"~하는 것이 좋습니다.", "~기운이 가득합니다."** 처럼 부드럽고 격려하는 톤을 유지하세요. (단답형 금지)
+   - 각 월별로 **최소 2~3문장** 이상 작성하세요.
+
+2. **비즈니스/재물 전략:**
+   - 월별 흐름을 분석한 뒤, 이를 바탕으로 **가장 이득이 되는 시기**와 **사업 형태**를 구체적으로 제안하세요.
+
+3. **점수 산정:**
+   - 각 달의 운세 흐름(Good/Bad)에 맞춰 0~100점 사이의 점수를 **논리적으로** 부여하세요. (운세 내용과 점수가 따로 놀지 않게 하세요.)
+
+**[출력 형식 (JSON)]**
+{
+  "overview": "2026년 전체를 관통하는 핵심 조언과 총평 (월별 흐름을 종합하여 작성)",
+  "businessLuck": "올해의 사업/재물 전략 및 구체적 가이드",
+  "loveLuck": "연애 및 인간관계 조언",
+  "healthLuck": "건강 관리 조언",
+  "monthlyFortunes": [
+    { "month": 1, "score": 85, "content": "1월 상세 운세..." },
+    { "month": 2, "score": 70, "content": "2월 상세 운세..." },
+    ... (12월까지)
+  ]
+}
+\`;
+
+  const userPrompt = \`
+사용자: \${data.name} (\${data.birthDate}, \${data.gender})
+사주 본원: \${data.saju.dayMaster}
+월별 간지 흐름: 2026년 병오년의 월별 절기력을 기준으로 분석하세요.
+자미두수 명궁: \${data.ziwei.stars.life.map((s: any) => s.name).join(", ")}
+\`;
+
+  const response = await openai.chat.completions.create({
+    model: "gpt-4o",
+    messages: [
+      { role: "system", content: systemPrompt },
+      { role: "user", content: userPrompt },
+    ],
+    response_format: { type: "json_object" },
+    temperature: 0.7, // 약간 낮춰서 분석의 일관성 유지
+  });
+
+  return JSON.parse(response.choices[0].message.content || "{}");
+}
