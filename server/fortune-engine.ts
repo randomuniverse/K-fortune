@@ -432,7 +432,9 @@ export async function generateGuardianReport(data: {
   "currentState": "상충하는 데이터로 인한 딜레마 분석",
   "bottleneck": "성장을 저해하는 현실적 원인",
   "solution": "비즈니스/생산성 프레임워크 기반의 구체적 조언",
-  "businessAdvice": "재물/직업 운에 기반한 구체적 업종 추천 및 올해의 사업 전략"
+  "businessAdvice": "재물/직업 운에 기반한 구체적 업종 추천 및 올해의 사업 전략",
+  "loveAdvice": null,
+  "healthAdvice": null
 }
 `;
 
@@ -519,7 +521,9 @@ ${JSON.stringify(report3, null, 2)}
   "currentState": "2개 이상 일치하는 딜레마 분석만 종합",
   "bottleneck": "2개 이상 일치하는 병목 진단만 종합",
   "solution": "2개 이상 일치하는 솔루션만 종합 (비즈니스/생산성 프레임워크 기반)",
-  "businessAdvice": "2개 이상 일치하는 재물/비즈니스 전략만 종합 (구체적 업종 추천 및 올해의 사업 전략)"
+  "businessAdvice": "2개 이상 일치하는 재물/비즈니스 전략만 종합 (구체적 업종 추천 및 올해의 사업 전략)",
+  "loveAdvice": null,
+  "healthAdvice": null
 }
 `;
 

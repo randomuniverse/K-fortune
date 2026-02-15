@@ -140,6 +140,8 @@ export const guardianReports = pgTable("guardian_reports", {
   bottleneck: text("bottleneck").notNull(),
   solution: text("solution").notNull(),
   businessAdvice: text("business_advice"),
+  loveAdvice: text("love_advice"),
+  healthAdvice: text("health_advice"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -153,6 +155,8 @@ export const insertGuardianReportSchema = createInsertSchema(guardianReports).pi
   bottleneck: true,
   solution: true,
   businessAdvice: true,
+  loveAdvice: true,
+  healthAdvice: true,
 });
 
 export type GuardianReportType = typeof guardianReports.$inferSelect;

@@ -1,7 +1,7 @@
 import { motion } from "framer-motion";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Loader2, Sparkles, Lock, Unlock, AlertTriangle, Activity, Search, BrainCircuit } from "lucide-react";
+import { Loader2, Sparkles, Lock, Unlock, AlertTriangle, Activity, Search, BrainCircuit, Briefcase, Heart, HeartPulse } from "lucide-react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 
@@ -13,6 +13,9 @@ export interface GuardianReportData {
   currentState: string;
   bottleneck: string;
   solution: string;
+  businessAdvice: string | null;
+  loveAdvice: string | null;
+  healthAdvice: string | null;
 }
 
 export function GuardianReport({ telegramId, userName }: { telegramId: string; userName: string }) {
@@ -155,6 +158,65 @@ export function GuardianReport({ telegramId, userName }: { telegramId: string; u
           </div>
         </div>
       </Card>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4" data-testid="advice-grid">
+        <Card className="bg-gradient-to-br from-amber-500/10 to-transparent border-amber-500/20 p-5" data-testid="card-business-advice">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="p-2 bg-amber-500/20 rounded-lg shrink-0">
+              <Briefcase className="w-5 h-5 text-amber-400" />
+            </div>
+            <h4 className="text-sm font-bold text-amber-200">Guardian's Compass</h4>
+          </div>
+          <p className="text-xs text-amber-100/70 font-bold mb-2">비즈니스 / 재물 전략</p>
+          {report.businessAdvice ? (
+            <p className="text-sm text-white/80 leading-relaxed whitespace-pre-line">
+              {report.businessAdvice}
+            </p>
+          ) : (
+            <p className="text-sm text-white/40 italic">데이터 수집 중...</p>
+          )}
+        </Card>
+
+        <Card className="bg-gradient-to-br from-pink-500/10 to-transparent border-pink-500/20 p-5 relative" data-testid="card-love-advice">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="p-2 bg-pink-500/20 rounded-lg shrink-0">
+              <Heart className="w-5 h-5 text-pink-400" />
+            </div>
+            <h4 className="text-sm font-bold text-pink-200">Love & Relationship</h4>
+          </div>
+          <p className="text-xs text-pink-100/70 font-bold mb-2">연애 / 인간관계</p>
+          {report.loveAdvice ? (
+            <p className="text-sm text-white/80 leading-relaxed whitespace-pre-line">
+              {report.loveAdvice}
+            </p>
+          ) : (
+            <div className="flex flex-col items-center justify-center py-4 gap-2">
+              <Lock className="w-6 h-6 text-pink-400/40" />
+              <p className="text-xs text-white/30 text-center">Coming Soon</p>
+            </div>
+          )}
+        </Card>
+
+        <Card className="bg-gradient-to-br from-cyan-500/10 to-transparent border-cyan-500/20 p-5 relative" data-testid="card-health-advice">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="p-2 bg-cyan-500/20 rounded-lg shrink-0">
+              <HeartPulse className="w-5 h-5 text-cyan-400" />
+            </div>
+            <h4 className="text-sm font-bold text-cyan-200">Health & Wellness</h4>
+          </div>
+          <p className="text-xs text-cyan-100/70 font-bold mb-2">건강 / 웰니스</p>
+          {report.healthAdvice ? (
+            <p className="text-sm text-white/80 leading-relaxed whitespace-pre-line">
+              {report.healthAdvice}
+            </p>
+          ) : (
+            <div className="flex flex-col items-center justify-center py-4 gap-2">
+              <Lock className="w-6 h-6 text-cyan-400/40" />
+              <p className="text-xs text-white/30 text-center">Coming Soon</p>
+            </div>
+          )}
+        </Card>
+      </div>
 
       <div className="text-center pt-4 space-y-3">
         <p className="text-xs text-white/30">
