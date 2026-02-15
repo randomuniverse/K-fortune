@@ -1,0 +1,159 @@
+마지막으로 `client/src/components/YearlyFortuneCard.tsx` 파일을 아래 코드로 전체 교체해줘.
+2026년 운세를 **[총평] + [비즈니스/연애/건강 카드]** 형태로 보여주는 UI야.
+
+```tsx
+import { useState } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Loader2, Sparkles, TrendingUp, Heart, Activity, Briefcase, Calendar } from "lucide-react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
+
+interface YearlyFortuneData {
+  overview: string;
+  businessLuck: string;
+  loveLuck: string;
+  healthLuck: string;
+}
+
+export function YearlyFortuneCard({ chart, userName }: { chart: any, userName: string }) {
+  const [fortune, setFortune] = useState<YearlyFortuneData | null>(null);
+  const queryClient = useQueryClient();
+
+  // API 호출 함수
+  const generateYearly = useMutation({
+    mutationFn: async () => {
+      // telegramId를 가져오기 위해 URL 파싱 (조금 거칠지만 확실한 방법)
+      const telegramId = window.location.pathname.split("/").pop(); 
+      const res = await apiRequest("POST", "/api/fortunes/yearly", { telegramId, year: 2026 });
+      return res.json();
+    },
+    onSuccess: (data) => {
+      setFortune(data);
+      queryClient.invalidateQueries({ queryKey: ["/api/fortunes/yearly"] });
+    },
+  });
+
+  // 아직 운세를 안 뽑았거나 로딩 중일 때
+  if (!fortune) {
+    return (
+      <Card className="bg-white/5 border-white/10 overflow-hidden relative">
+        <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/10 via-transparent to-purple-500/10" />
+        <CardContent className="p-12 text-center relative z-10">
+          <Calendar className="w-16 h-16 text-indigo-300 mx-auto mb-6 opacity-80" />
+          <h2 className="text-2xl font-serif text-white mb-3">2026년 붉은 말의 해</h2>
+          <p className="text-white/60 mb-8 max-w-md mx-auto leading-relaxed">
+            2026년 병오년(丙午年)의 기운이 {userName}님의 사주와 만나 어떤 변화를 일으킬까요?
+            <br />사업, 재물, 그리고 월별 흐름까지 완벽하게 분석해 드립니다.
+          </p>
+          <Button 
+            size="lg" 
+            variant="mystical" 
+            onClick={() => generateYearly.mutate()}
+            disabled={generateYearly.isPending}
+            className="min-w-[200px] shadow-lg shadow-indigo-500/20"
+          >
+            {generateYearly.isPending ? (
+              <><Loader2 className="mr-2 h-5 w-5 animate-spin" /> 2026년 운세 분석 중...</>
+            ) : (
+              <><Sparkles className="mr-2 h-5 w-5" /> 2026년 총평 확인하기</>
+            )}
+          </Button>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* 1. 메인 총평 카드 */}
+      <Card className="bg-gradient-to-br from-indigo-900/40 to-purple-900/40 border-indigo-500/30 overflow-hidden">
+        <CardHeader className="pb-2">
+          <div className="flex justify-between items-center">
+            <Badge variant="outline" className="text-indigo-300 border-indigo-400/30 bg-indigo-500/10">
+              2026 YEARLY OVERVIEW
+            </Badge>
+            <Sparkles className="w-5 h-5 text-indigo-400" />
+          </div>
+          <CardTitle className="text-2xl md:text-3xl font-serif text-white mt-2 leading-tight">
+            "{fortune.overview.split('.')[0]}..." 
+            {/* 첫 문장을 타이틀처럼 사용 */}
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-white/80 leading-relaxed whitespace-pre-line mt-2 text-lg">
+            {fortune.overview}
+          </p>
+        </CardContent>
+      </Card>
+
+      {/* 2. 상세 운세 그리드 */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        
+        {/* 사업/재물운 (가장 중요) */}
+        <Card className="bg-white/[0.03] border-white/10 md:col-span-2">
+          <CardHeader>
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-amber-500/20 rounded-lg">
+                <Briefcase className="w-5 h-5 text-amber-400" />
+              </div>
+              <CardTitle className="text-xl text-amber-100">비즈니스 & 재물 전략</CardTitle>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="prose prose-invert max-w-none">
+              <p className="text-white/80 leading-loose whitespace-pre-line">
+                {fortune.businessLuck}
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* 연애운 */}
+        <Card className="bg-white/[0.03] border-white/10">
+          <CardHeader>
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-pink-500/20 rounded-lg">
+                <Heart className="w-5 h-5 text-pink-400" />
+              </div>
+              <CardTitle className="text-lg text-pink-100">연애 & 인간관계</CardTitle>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-white/70 leading-relaxed whitespace-pre-line">
+              {fortune.loveLuck}
+            </p>
+          </CardContent>
+        </Card>
+
+        {/* 건강운 */}
+        <Card className="bg-white/[0.03] border-white/10">
+          <CardHeader>
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-emerald-500/20 rounded-lg">
+                <Activity className="w-5 h-5 text-emerald-400" />
+              </div>
+              <CardTitle className="text-lg text-emerald-100">건강 & 컨디션</CardTitle>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-white/70 leading-relaxed whitespace-pre-line">
+              {fortune.healthLuck}
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="text-center pt-4">
+        <Button 
+          variant="ghost" 
+          className="text-white/40 hover:text-white"
+          onClick={() => setFortune(null)}
+        >
+          닫기
+        </Button>
+      </div>
+    </div>
+  );
+}

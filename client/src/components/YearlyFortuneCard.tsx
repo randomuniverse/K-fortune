@@ -266,24 +266,28 @@ export function YearlyFortuneCard({ chart, userName, telegramId }: Props) {
       )}
 
       {!aiYearly && !generateYearly.isPending && !isAiLoading && (
-        <Card className="bg-gradient-to-br from-indigo-500/10 to-transparent border-indigo-500/20 p-6 text-center space-y-4" data-testid="yearly-ai-empty">
-          <div className="mx-auto w-12 h-12 bg-indigo-500/20 rounded-full flex items-center justify-center">
-            <BrainCircuit className="w-6 h-6 text-indigo-400" />
+        <Card className="bg-white/5 border-indigo-500/20 overflow-hidden relative" data-testid="yearly-ai-empty">
+          <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/10 via-transparent to-purple-500/10" />
+          <div className="p-8 md:p-12 text-center relative z-10 space-y-4">
+            <Calendar className="w-14 h-14 text-indigo-300 mx-auto opacity-80" />
+            <div className="space-y-2">
+              <h4 className="text-2xl font-serif text-white">{year}년 붉은 말의 해</h4>
+              <p className="text-sm text-white/50 max-w-md mx-auto leading-relaxed">
+                {year}년 병오년(丙午年)의 기운이 {userName}님의 사주와 만나 어떤 변화를 일으킬까요?
+                <br />사주 + 자미두수 + 별자리를 3회 교차 검증하여 사업운, 연애운, 건강운, 월별 흐름까지 분석합니다.
+              </p>
+            </div>
+            <Button
+              variant="mystical"
+              size="lg"
+              onClick={() => generateYearly.mutate(false)}
+              disabled={generateYearly.isPending}
+              className="min-w-[200px] shadow-lg shadow-indigo-500/20"
+              data-testid="button-generate-yearly"
+            >
+              <BrainCircuit className="mr-2 h-5 w-5" /> {year}년 AI 심층 분석 시작
+            </Button>
           </div>
-          <div className="space-y-1">
-            <h4 className="text-lg font-serif text-white">AI {year}년 심층 분석</h4>
-            <p className="text-xs text-white/50 max-w-md mx-auto">
-              사주 + 자미두수 + 별자리를 3회 교차 검증하여 사업운, 연애운, 건강운, 월별 흐름을 분석합니다.
-            </p>
-          </div>
-          <Button
-            variant="mystical"
-            onClick={() => generateYearly.mutate(false)}
-            disabled={generateYearly.isPending}
-            data-testid="button-generate-yearly"
-          >
-            <BrainCircuit className="mr-2 h-4 w-4" /> AI 심층 분석 시작
-          </Button>
         </Card>
       )}
 
