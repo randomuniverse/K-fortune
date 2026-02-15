@@ -54,7 +54,7 @@ export default function Dashboard() {
   
   const [isSendingTelegram, setIsSendingTelegram] = useState(false);
   const [activeTab, setActiveTab] = useState<MainTabId>("today");
-  const [yearlySubTab, setYearlySubTab] = useState<YearlyTabId>("saju");
+  const [yearlySubTab, setYearlySubTab] = useState<YearlyTabId>("guardian");
   const [destinySubTab, setDestinySubTab] = useState<DestinyTabId>("summary");
   const [fortunesShown, setFortunesShown] = useState(FORTUNES_PER_PAGE);
 
@@ -293,33 +293,7 @@ export default function Dashboard() {
                 <div className="flex justify-center py-12"><Loader2 className="w-8 h-8 text-primary/50 animate-spin" /></div>
               ) : (
                 <div className="min-h-[300px]">
-                  {yearlySubTab === "guardian" && (
-                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-                      <Card className="bg-white/[0.03] border-white/10 p-8 text-center">
-                        <p className="text-sm text-muted-foreground">가디언 총평은 준비 중입니다.</p>
-                      </Card>
-                    </motion.div>
-                  )}
-
-                  {yearlySubTab === "saju" && (
-                    <YearlyFortuneCard chart={sajuData.sajuChart} userName={user.name} telegramId={telegramId} />
-                  )}
-
-                  {yearlySubTab === "ziwei" && (
-                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-                      <Card className="bg-white/[0.03] border-white/10 p-8 text-center">
-                        <p className="text-sm text-muted-foreground">자미두수 총평은 준비 중입니다.</p>
-                      </Card>
-                    </motion.div>
-                  )}
-
-                  {yearlySubTab === "zodiac" && (
-                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-                      <Card className="bg-white/[0.03] border-white/10 p-8 text-center">
-                        <p className="text-sm text-muted-foreground">별자리 총평은 준비 중입니다.</p>
-                      </Card>
-                    </motion.div>
-                  )}
+                  <YearlyFortuneCard chart={sajuData.sajuChart} userName={user.name} telegramId={telegramId} yearlySubTab={yearlySubTab} />
                 </div>
               )}
             </motion.div>

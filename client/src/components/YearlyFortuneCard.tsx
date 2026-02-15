@@ -15,6 +15,7 @@ interface Props {
   chart: SajuChart;
   userName: string;
   telegramId: string;
+  yearlySubTab: "guardian" | "saju" | "ziwei" | "zodiac";
 }
 
 interface YearlyFortuneData {
@@ -25,6 +26,12 @@ interface YearlyFortuneData {
   healthFortune: string | null;
   monthlyFlow: MonthlyFlowItem[] | null;
   keywords: string[] | null;
+  sajuMonthlyFlow: MonthlyFlowItem[] | null;
+  sajuSummary: string | null;
+  ziweiMonthlyFlow: MonthlyFlowItem[] | null;
+  ziweiSummary: string | null;
+  zodiacMonthlyFlow: MonthlyFlowItem[] | null;
+  zodiacSummary: string | null;
 }
 
 function ScoreBar({ score, label }: { score: number; label?: string }) {
@@ -154,7 +161,38 @@ function AIMonthlyFlowCard({ item, index }: { item: MonthlyFlowItem; index: numb
   );
 }
 
-export function YearlyFortuneCard({ chart, userName, telegramId }: Props) {
+function MonthlyFlowSection({ title, flow, colorClass }: { title: string; flow: MonthlyFlowItem[]; colorClass: string }) {
+  const bestMonth = flow.length > 0 ? [...flow].sort((a, b) => b.score - a.score)[0] : null;
+  const worstMonth = flow.length > 0 ? [...flow].sort((a, b) => a.score - b.score)[0] : null;
+
+  if (flow.length === 0) return null;
+
+  return (
+    <div>
+      <div className="flex items-center gap-3 mb-4 flex-wrap">
+        <Calendar className={`w-4 h-4 ${colorClass}`} />
+        <h4 className="text-sm font-serif text-white">{title}</h4>
+        {bestMonth && worstMonth && (
+          <div className="flex gap-2 ml-auto">
+            <span className="text-[10px] text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full">
+              <TrendingUp className="w-3 h-3 inline mr-0.5" /> {bestMonth.month}월
+            </span>
+            <span className="text-[10px] text-red-400 bg-red-500/10 px-2 py-0.5 rounded-full">
+              <TrendingDown className="w-3 h-3 inline mr-0.5" /> {worstMonth.month}월
+            </span>
+          </div>
+        )}
+      </div>
+      <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
+        {flow.map((item, i) => (
+          <AIMonthlyFlowCard key={item.month} item={item} index={i} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+export function YearlyFortuneCard({ chart, userName, telegramId, yearlySubTab }: Props) {
   const year = 2026;
   const yearlyFortune = calculateYearlyFortune(chart, year);
   const monthlyFortunes = calculateMonthlyFortunes(chart, year);
@@ -194,80 +232,80 @@ export function YearlyFortuneCard({ chart, userName, telegramId }: Props) {
   const aiBestMonth = aiMonthlyFlow.length > 0 ? [...aiMonthlyFlow].sort((a, b) => b.score - a.score)[0] : null;
   const aiWorstMonth = aiMonthlyFlow.length > 0 ? [...aiMonthlyFlow].sort((a, b) => a.score - b.score)[0] : null;
 
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5 }}
-      className="space-y-6"
-      data-testid="yearly-fortune-card"
-    >
-      <Card className="bg-white/[0.03] border-white/10 p-6">
-        <div className="flex flex-col md:flex-row items-start gap-6">
-          <div className="text-center md:text-left">
-            <h3 className="text-xl font-serif text-white mb-1">{year}년 운세 총평</h3>
-            <p className="text-xs text-muted-foreground mb-3">
-              {yearlyFortune.yearPillar.stemHanja}{yearlyFortune.yearPillar.branchHanja}년 ({yearlyFortune.yearElement})
-            </p>
-            <div className="flex items-baseline gap-2 justify-center md:justify-start">
-              <span className={`text-4xl font-bold ${scoreColor}`} data-testid="text-yearly-score">{yearlyFortune.overallScore}</span>
-              <span className="text-sm text-muted-foreground">/ 100점</span>
-            </div>
-          </div>
+  const sajuFlow = (aiYearly?.sajuMonthlyFlow || []) as MonthlyFlowItem[];
+  const ziweiFlow = (aiYearly?.ziweiMonthlyFlow || []) as MonthlyFlowItem[];
+  const zodiacFlow = (aiYearly?.zodiacMonthlyFlow || []) as MonthlyFlowItem[];
 
-          <div className="flex-1 space-y-3">
-            <div className="bg-white/[0.03] rounded-lg p-3">
-              <p className="text-xs text-primary/80 font-medium mb-1">
-                <Compass className="w-3 h-3 inline mr-1" />
-                올해의 키워드
-              </p>
-              <p className="text-sm text-white/80 leading-relaxed">
-                {aiYearly?.keywords && aiYearly.keywords.length > 0
-                  ? (aiYearly.keywords as string[]).map((kw: string, i: number) => (
-                      <span key={i}>
-                        {kw}{i < (aiYearly.keywords as string[]).length - 1 ? " · " : ""}
-                      </span>
-                    ))
-                  : yearlyFortune.advice}
-              </p>
-            </div>
+  const topSummaryCard = (
+    <Card className="bg-white/[0.03] border-white/10 p-6">
+      <div className="flex flex-col md:flex-row items-start gap-6">
+        <div className="text-center md:text-left">
+          <h3 className="text-xl font-serif text-white mb-1">{year}년 운세 총평</h3>
+          <p className="text-xs text-muted-foreground mb-3">
+            {yearlyFortune.yearPillar.stemHanja}{yearlyFortune.yearPillar.branchHanja}년 ({yearlyFortune.yearElement})
+          </p>
+          <div className="flex items-baseline gap-2 justify-center md:justify-start">
+            <span className={`text-4xl font-bold ${scoreColor}`} data-testid="text-yearly-score">{yearlyFortune.overallScore}</span>
+            <span className="text-sm text-muted-foreground">/ 100점</span>
           </div>
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-6">
-          <div className="bg-white/[0.03] rounded-lg p-3 text-center">
-            <p className="text-[10px] text-muted-foreground mb-1">올해 관계</p>
-            <p className="text-xs font-medium text-white">{yearlyFortune.relationship}</p>
-          </div>
-          <div className="bg-emerald-500/10 rounded-lg p-3 text-center">
-            <p className="text-[10px] text-emerald-400/70 mb-1">
-              <TrendingUp className="w-3 h-3 inline mr-0.5" /> 최고의 달
+        <div className="flex-1 space-y-3">
+          <div className="bg-white/[0.03] rounded-lg p-3">
+            <p className="text-xs text-primary/80 font-medium mb-1">
+              <Compass className="w-3 h-3 inline mr-1" />
+              올해의 키워드
             </p>
-            <p className="text-xs font-bold text-emerald-400">
-              {aiBestMonth ? `${aiBestMonth.month}월 (${aiBestMonth.score}점)` : `${bestMonth.month}월 (${bestMonth.score}점)`}
-            </p>
-          </div>
-          <div className="bg-red-500/10 rounded-lg p-3 text-center">
-            <p className="text-[10px] text-red-400/70 mb-1">
-              <TrendingDown className="w-3 h-3 inline mr-0.5" /> 주의할 달
-            </p>
-            <p className="text-xs font-bold text-red-400">
-              {aiWorstMonth ? `${aiWorstMonth.month}월 (${aiWorstMonth.score}점)` : `${worstMonth.month}월 (${worstMonth.score}점)`}
-            </p>
-          </div>
-          <div className="bg-white/[0.03] rounded-lg p-3 text-center">
-            <p className="text-[10px] text-muted-foreground mb-1">올해 오행</p>
-            <p className="text-xs font-medium text-white">
-              {yearlyFortune.yearElementHanja} ({yearlyFortune.yearElement})
+            <p className="text-sm text-white/80 leading-relaxed">
+              {aiYearly?.keywords && aiYearly.keywords.length > 0
+                ? (aiYearly.keywords as string[]).map((kw: string, i: number) => (
+                    <span key={i}>
+                      {kw}{i < (aiYearly.keywords as string[]).length - 1 ? " · " : ""}
+                    </span>
+                  ))
+                : yearlyFortune.advice}
             </p>
           </div>
         </div>
-      </Card>
+      </div>
 
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-6">
+        <div className="bg-white/[0.03] rounded-lg p-3 text-center">
+          <p className="text-[10px] text-muted-foreground mb-1">올해 관계</p>
+          <p className="text-xs font-medium text-white">{yearlyFortune.relationship}</p>
+        </div>
+        <div className="bg-emerald-500/10 rounded-lg p-3 text-center">
+          <p className="text-[10px] text-emerald-400/70 mb-1">
+            <TrendingUp className="w-3 h-3 inline mr-0.5" /> 최고의 달
+          </p>
+          <p className="text-xs font-bold text-emerald-400">
+            {aiBestMonth ? `${aiBestMonth.month}월 (${aiBestMonth.score}점)` : `${bestMonth.month}월 (${bestMonth.score}점)`}
+          </p>
+        </div>
+        <div className="bg-red-500/10 rounded-lg p-3 text-center">
+          <p className="text-[10px] text-red-400/70 mb-1">
+            <TrendingDown className="w-3 h-3 inline mr-0.5" /> 주의할 달
+          </p>
+          <p className="text-xs font-bold text-red-400">
+            {aiWorstMonth ? `${aiWorstMonth.month}월 (${aiWorstMonth.score}점)` : `${worstMonth.month}월 (${worstMonth.score}점)`}
+          </p>
+        </div>
+        <div className="bg-white/[0.03] rounded-lg p-3 text-center">
+          <p className="text-[10px] text-muted-foreground mb-1">올해 오행</p>
+          <p className="text-xs font-medium text-white">
+            {yearlyFortune.yearElementHanja} ({yearlyFortune.yearElement})
+          </p>
+        </div>
+      </div>
+    </Card>
+  );
+
+  const generateButton = (
+    <>
       {generateYearly.isPending && (
         <Card className="bg-white/[0.03] border-white/10 p-8 text-center space-y-4" data-testid="yearly-ai-loading">
           <Loader2 className="w-8 h-8 text-indigo-400 animate-spin mx-auto" />
-          <p className="text-sm text-white/60">AI가 3회 교차 검증으로 {year}년을 분석 중...</p>
+          <p className="text-sm text-white/60">AI가 사주 · 자미두수 · 별자리 3체계 독립 분석 중...</p>
         </Card>
       )}
 
@@ -280,7 +318,7 @@ export function YearlyFortuneCard({ chart, userName, telegramId }: Props) {
               <h4 className="text-2xl font-serif text-white">{year}년 붉은 말의 해</h4>
               <p className="text-sm text-white/50 max-w-md mx-auto leading-relaxed">
                 {year}년 병오년(丙午年)의 기운이 {userName}님의 사주와 만나 어떤 변화를 일으킬까요?
-                <br />사주 + 자미두수 + 별자리를 3회 교차 검증하여 사업운, 연애운, 건강운, 월별 흐름까지 분석합니다.
+                <br />사주 · 자미두수 · 별자리 3체계를 독립 분석 후 교차 검증합니다.
               </p>
             </div>
             <Button
@@ -296,120 +334,238 @@ export function YearlyFortuneCard({ chart, userName, telegramId }: Props) {
           </div>
         </Card>
       )}
+    </>
+  );
 
-      {aiYearly && (
-        <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
-          <div className="flex flex-wrap items-center gap-2 mb-2">
-            <h3 className="text-sm font-bold text-white/40 uppercase tracking-widest ml-1">AI 심층 분석</h3>
-            <span className="px-2 py-0.5 rounded-full bg-white/5 border border-white/10 text-white/50 text-[10px] font-bold flex items-center gap-1">
-              <Activity className="w-3 h-3" /> 일치도 {aiYearly.coherenceScore}%
-            </span>
-          </div>
+  const regenerateButton = aiYearly && (
+    <div className="text-center pt-2">
+      <Button
+        variant="mystical"
+        onClick={() => generateYearly.mutate(true)}
+        disabled={generateYearly.isPending}
+        data-testid="button-regenerate-yearly"
+      >
+        <BrainCircuit className="mr-2 h-4 w-4" /> AI 분석 다시 생성
+      </Button>
+    </div>
+  );
 
-          <Card className="bg-white/[0.03] border-white/10 p-5" data-testid="card-ai-overall">
-            <p className="text-sm text-white/80 leading-relaxed">{aiYearly.overallSummary}</p>
-            {aiYearly.keywords && aiYearly.keywords.length > 0 && (
-              <div className="flex flex-wrap gap-1.5 mt-3">
-                {aiYearly.keywords.map((kw, i) => (
-                  <span key={i} className="text-[10px] text-white/50 bg-white/5 px-2 py-0.5 rounded-md border border-white/5">
-                    #{kw}
-                  </span>
-                ))}
-              </div>
-            )}
-          </Card>
+  if (yearlySubTab === "guardian") {
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        className="space-y-6"
+        data-testid="yearly-fortune-card"
+      >
+        {topSummaryCard}
+        {generateButton}
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4" data-testid="yearly-category-grid">
-            <Card className="bg-gradient-to-b from-amber-500/10 to-transparent border-amber-500/20 p-5" data-testid="card-yearly-business">
-              <div className="flex items-center gap-2 mb-3">
-                <Briefcase className="w-4 h-4 text-amber-400" />
-                <span className="text-amber-200 font-bold text-sm">사업/재물운</span>
-              </div>
-              <p className="text-sm text-white/80 leading-7 whitespace-pre-line">
-                {aiYearly.businessFortune || "분석 대기 중"}
-              </p>
-            </Card>
-
-            <Card className="bg-gradient-to-b from-pink-500/10 to-transparent border-pink-500/20 p-5" data-testid="card-yearly-love">
-              <div className="flex items-center gap-2 mb-3">
-                <Heart className="w-4 h-4 text-pink-400" />
-                <span className="text-pink-200 font-bold text-sm">연애/인간관계운</span>
-              </div>
-              <p className="text-sm text-white/80 leading-7 whitespace-pre-line">
-                {aiYearly.loveFortune || "분석 대기 중"}
-              </p>
-            </Card>
-
-            <Card className="bg-gradient-to-b from-cyan-500/10 to-transparent border-cyan-500/20 p-5" data-testid="card-yearly-health">
-              <div className="flex items-center gap-2 mb-3">
-                <HeartPulse className="w-4 h-4 text-cyan-400" />
-                <span className="text-cyan-200 font-bold text-sm">건강/웰니스운</span>
-              </div>
-              <p className="text-sm text-white/80 leading-7 whitespace-pre-line">
-                {aiYearly.healthFortune || "분석 대기 중"}
-              </p>
-            </Card>
-          </div>
-
-          {aiMonthlyFlow.length > 0 && (
-            <div>
-              <div className="flex items-center gap-3 mb-4">
-                <Calendar className="w-4 h-4 text-indigo-400" />
-                <h4 className="text-sm font-serif text-white">AI 월별 흐름 (교차 검증)</h4>
-                {aiBestMonth && aiWorstMonth && (
-                  <div className="flex gap-2 ml-auto">
-                    <span className="text-[10px] text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full">
-                      <TrendingUp className="w-3 h-3 inline mr-0.5" /> {aiBestMonth.month}월
-                    </span>
-                    <span className="text-[10px] text-red-400 bg-red-500/10 px-2 py-0.5 rounded-full">
-                      <TrendingDown className="w-3 h-3 inline mr-0.5" /> {aiWorstMonth.month}월
-                    </span>
-                  </div>
-                )}
-              </div>
-              <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
-                {aiMonthlyFlow.map((item, i) => (
-                  <AIMonthlyFlowCard key={item.month} item={item} index={i} />
-                ))}
-              </div>
+        {aiYearly && (
+          <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
+            <div className="flex flex-wrap items-center gap-2 mb-2">
+              <h3 className="text-sm font-bold text-white/40 uppercase tracking-widest ml-1">3체계 교차 검증 종합</h3>
+              <span className="px-2 py-0.5 rounded-full bg-white/5 border border-white/10 text-white/50 text-[10px] font-bold flex items-center gap-1">
+                <Activity className="w-3 h-3" /> 일치도 {aiYearly.coherenceScore}%
+              </span>
             </div>
-          )}
 
-          <div className="text-center pt-2">
-            <Button
-              variant="mystical"
-              onClick={() => generateYearly.mutate(true)}
-              disabled={generateYearly.isPending}
-              data-testid="button-regenerate-yearly"
-            >
-              <BrainCircuit className="mr-2 h-4 w-4" /> AI 분석 다시 생성
-            </Button>
-          </div>
-        </motion.div>
-      )}
+            <Card className="bg-white/[0.03] border-white/10 p-5" data-testid="card-ai-overall">
+              <p className="text-sm text-white/80 leading-relaxed">{aiYearly.overallSummary}</p>
+              {aiYearly.keywords && aiYearly.keywords.length > 0 && (
+                <div className="flex flex-wrap gap-1.5 mt-3">
+                  {aiYearly.keywords.map((kw, i) => (
+                    <span key={i} className="text-[10px] text-white/50 bg-white/5 px-2 py-0.5 rounded-md border border-white/5">
+                      #{kw}
+                    </span>
+                  ))}
+                </div>
+              )}
+            </Card>
 
-      <div>
-        <button
-          onClick={() => setShowSajuMonthly(!showSajuMonthly)}
-          className="flex items-center gap-2 mb-4 text-sm text-white/50 hover:text-white/70 transition-colors"
-          data-testid="button-toggle-saju-monthly"
-        >
-          <Calendar className="w-4 h-4 text-primary" />
-          <span className="font-serif">사주 기반 월별 상세 운세</span>
-          {showSajuMonthly ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-        </button>
-        {showSajuMonthly && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            className="grid gap-3 md:grid-cols-2 lg:grid-cols-3"
-          >
-            {monthlyFortunes.map((mf, i) => (
-              <MonthCard key={mf.month} fortune={mf} index={i} />
-            ))}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4" data-testid="yearly-category-grid">
+              <Card className="bg-gradient-to-b from-amber-500/10 to-transparent border-amber-500/20 p-5" data-testid="card-yearly-business">
+                <div className="flex items-center gap-2 mb-3">
+                  <Briefcase className="w-4 h-4 text-amber-400" />
+                  <span className="text-amber-200 font-bold text-sm">사업/재물운</span>
+                </div>
+                <p className="text-sm text-white/80 leading-7 whitespace-pre-line">
+                  {aiYearly.businessFortune || "분석 대기 중"}
+                </p>
+              </Card>
+
+              <Card className="bg-gradient-to-b from-pink-500/10 to-transparent border-pink-500/20 p-5" data-testid="card-yearly-love">
+                <div className="flex items-center gap-2 mb-3">
+                  <Heart className="w-4 h-4 text-pink-400" />
+                  <span className="text-pink-200 font-bold text-sm">연애/인간관계운</span>
+                </div>
+                <p className="text-sm text-white/80 leading-7 whitespace-pre-line">
+                  {aiYearly.loveFortune || "분석 대기 중"}
+                </p>
+              </Card>
+
+              <Card className="bg-gradient-to-b from-cyan-500/10 to-transparent border-cyan-500/20 p-5" data-testid="card-yearly-health">
+                <div className="flex items-center gap-2 mb-3">
+                  <HeartPulse className="w-4 h-4 text-cyan-400" />
+                  <span className="text-cyan-200 font-bold text-sm">건강/웰니스운</span>
+                </div>
+                <p className="text-sm text-white/80 leading-7 whitespace-pre-line">
+                  {aiYearly.healthFortune || "분석 대기 중"}
+                </p>
+              </Card>
+            </div>
+
+            <MonthlyFlowSection
+              title={`${year}년 월별 흐름 달력 (AI 교차검증)`}
+              flow={aiMonthlyFlow}
+              colorClass="text-indigo-400"
+            />
+
+            {regenerateButton}
           </motion.div>
         )}
-      </div>
-    </motion.div>
-  );
+      </motion.div>
+    );
+  }
+
+  if (yearlySubTab === "saju") {
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        className="space-y-6"
+        data-testid="yearly-saju-tab"
+      >
+        {topSummaryCard}
+        {generateButton}
+
+        {aiYearly && (
+          <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
+            <div className="flex flex-wrap items-center gap-2 mb-2">
+              <h3 className="text-sm font-bold text-white/40 uppercase tracking-widest ml-1">사주팔자 독립 분석</h3>
+            </div>
+
+            {aiYearly.sajuSummary && (
+              <Card className="bg-white/[0.03] border-white/10 p-5" data-testid="card-saju-summary">
+                <p className="text-sm text-white/80 leading-relaxed">{aiYearly.sajuSummary}</p>
+              </Card>
+            )}
+
+            <MonthlyFlowSection
+              title={`${year}년 사주 월별 흐름 달력`}
+              flow={sajuFlow}
+              colorClass="text-amber-400"
+            />
+          </motion.div>
+        )}
+
+        <div>
+          <button
+            onClick={() => setShowSajuMonthly(!showSajuMonthly)}
+            className="flex items-center gap-2 mb-4 text-sm text-white/50 hover:text-white/70 transition-colors"
+            data-testid="button-toggle-saju-monthly"
+          >
+            <Calendar className="w-4 h-4 text-primary" />
+            <span className="font-serif">사주 기반 월별 상세 운세 (로직 계산)</span>
+            {showSajuMonthly ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+          </button>
+          {showSajuMonthly && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              className="grid gap-3 md:grid-cols-2 lg:grid-cols-3"
+            >
+              {monthlyFortunes.map((mf, i) => (
+                <MonthCard key={mf.month} fortune={mf} index={i} />
+              ))}
+            </motion.div>
+          )}
+        </div>
+      </motion.div>
+    );
+  }
+
+  if (yearlySubTab === "ziwei") {
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        className="space-y-6"
+        data-testid="yearly-ziwei-tab"
+      >
+        {generateButton}
+
+        {aiYearly && (
+          <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
+            <div className="flex flex-wrap items-center gap-2 mb-2">
+              <h3 className="text-sm font-bold text-white/40 uppercase tracking-widest ml-1">자미두수 독립 분석</h3>
+            </div>
+
+            {aiYearly.ziweiSummary && (
+              <Card className="bg-white/[0.03] border-white/10 p-5" data-testid="card-ziwei-summary">
+                <p className="text-sm text-white/80 leading-relaxed">{aiYearly.ziweiSummary}</p>
+              </Card>
+            )}
+
+            <MonthlyFlowSection
+              title={`${year}년 자미두수 월별 흐름 달력`}
+              flow={ziweiFlow}
+              colorClass="text-purple-400"
+            />
+          </motion.div>
+        )}
+
+        {!aiYearly && !generateYearly.isPending && !isAiLoading && (
+          <Card className="bg-white/[0.03] border-white/10 p-8 text-center">
+            <p className="text-sm text-muted-foreground">가디언 총평 탭에서 AI 심층 분석을 먼저 시작해주세요.</p>
+          </Card>
+        )}
+      </motion.div>
+    );
+  }
+
+  if (yearlySubTab === "zodiac") {
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        className="space-y-6"
+        data-testid="yearly-zodiac-tab"
+      >
+        {generateButton}
+
+        {aiYearly && (
+          <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
+            <div className="flex flex-wrap items-center gap-2 mb-2">
+              <h3 className="text-sm font-bold text-white/40 uppercase tracking-widest ml-1">별자리 독립 분석</h3>
+            </div>
+
+            {aiYearly.zodiacSummary && (
+              <Card className="bg-white/[0.03] border-white/10 p-5" data-testid="card-zodiac-summary">
+                <p className="text-sm text-white/80 leading-relaxed">{aiYearly.zodiacSummary}</p>
+              </Card>
+            )}
+
+            <MonthlyFlowSection
+              title={`${year}년 별자리 월별 흐름 달력`}
+              flow={zodiacFlow}
+              colorClass="text-blue-400"
+            />
+          </motion.div>
+        )}
+
+        {!aiYearly && !generateYearly.isPending && !isAiLoading && (
+          <Card className="bg-white/[0.03] border-white/10 p-8 text-center">
+            <p className="text-sm text-muted-foreground">가디언 총평 탭에서 AI 심층 분석을 먼저 시작해주세요.</p>
+          </Card>
+        )}
+      </motion.div>
+    );
+  }
+
+  return null;
 }

@@ -294,6 +294,12 @@ export async function registerRoutes(
         healthFortune: fortuneData.healthFortune || null,
         monthlyFlow: fortuneData.monthlyFlow || null,
         keywords: fortuneData.keywords || [],
+        sajuMonthlyFlow: fortuneData.sajuMonthlyFlow || null,
+        sajuSummary: fortuneData.sajuSummary || null,
+        ziweiMonthlyFlow: fortuneData.ziweiMonthlyFlow || null,
+        ziweiSummary: fortuneData.ziweiSummary || null,
+        zodiacMonthlyFlow: fortuneData.zodiacMonthlyFlow || null,
+        zodiacSummary: fortuneData.zodiacSummary || null,
       });
 
       res.json(saved);

@@ -65,6 +65,17 @@ Design preference: Apple Human Interface Guidelines style - clean, minimal.
 6. **Result**: The synthesized fortune is saved to DB as both formatted text and structured JSON (FortuneData).
 7. **Telegram**: Fortune is automatically sent to user's Telegram upon generation.
 
+### Yearly Fortune Generation (3-System Independent Analysis + Guardian Synthesis)
+1. **3 Independent System-Specific Prompts** (run in parallel):
+   - 사주팔자 (Saju): Uses ONLY Four Pillars data (pillars, daeun, five elements, yongshin, ten gods)
+   - 자미두수 (Ziwei Doushu): Uses ONLY Ziwei data (palaces, stars, bureau)
+   - 별자리 (Western Zodiac): Uses ONLY zodiac data (sign, element, ruling planet, transits)
+2. **Each system prompt returns**: summary + keywords + monthlyFlow (12 months with score/keyword/summary)
+3. **Guardian Synthesis** (4th API call, temperature 0.35): Cross-validates 3 system results, adopts content mentioned in 2+ systems
+4. **Storage**: Per-system data stored separately (sajuMonthlyFlow, sajuSummary, ziweiMonthlyFlow, ziweiSummary, zodiacMonthlyFlow, zodiacSummary) alongside guardian synthesis
+5. **UI Tabs**: "가디언 총평" (cross-validated synthesis), "사주 총평", "자미두수 총평", "별자리 총평" — each showing its system's independent analysis + monthly calendar
+6. **Total API Calls**: 4 (3 independent + 1 guardian synthesis)
+
 ### Key Components
 - **FortuneScoreCard**: Apple HIG-style card showing combined score ring, mini score bars for saju/zodiac, direction, lucky numbers, and detailed sections for each fortune type
 - **FortuneCard**: Individual fortune history cards with formatted content

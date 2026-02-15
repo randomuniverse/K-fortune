@@ -173,6 +173,12 @@ export const yearlyFortunes = pgTable("yearly_fortunes", {
   healthFortune: text("health_fortune"),
   monthlyFlow: jsonb("monthly_flow"),
   keywords: text("keywords").array(),
+  sajuMonthlyFlow: jsonb("saju_monthly_flow"),
+  sajuSummary: text("saju_summary"),
+  ziweiMonthlyFlow: jsonb("ziwei_monthly_flow"),
+  ziweiSummary: text("ziwei_summary"),
+  zodiacMonthlyFlow: jsonb("zodiac_monthly_flow"),
+  zodiacSummary: text("zodiac_summary"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -186,6 +192,12 @@ export const insertYearlyFortuneSchema = createInsertSchema(yearlyFortunes).pick
   healthFortune: true,
   monthlyFlow: true,
   keywords: true,
+  sajuMonthlyFlow: true,
+  sajuSummary: true,
+  ziweiMonthlyFlow: true,
+  ziweiSummary: true,
+  zodiacMonthlyFlow: true,
+  zodiacSummary: true,
 });
 
 export type YearlyFortune = typeof yearlyFortunes.$inferSelect;
