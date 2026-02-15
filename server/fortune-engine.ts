@@ -679,75 +679,116 @@ ${JSON.stringify(report3, null, 2)}
 export async function generateYearlyFortune(data: {
   name: string;
   year: number;
-  saju: any;
+  sajuChart: any;
+  sajuPersonality: any;
   ziwei: any;
   zodiac: any;
 }) {
+  const sc = data.sajuChart;
+  const sp = data.sajuPersonality;
+  const zw = data.ziwei;
+
   const individualPrompt = `
-당신은 ${data.year}년(병오년, 붉은 말의 해)의 운세를 분석하는 '동양철학 마스터'이자 '따뜻한 인생 멘토'입니다.
-단순한 요약이 아니라, **사주의 구체적인 기운(간지, 십성)**을 바탕으로 자미두수와 별자리의 흐름을 더해 **풍성하고 희망찬 조언**을 제공해야 합니다.
+당신은 ${data.year}년(병오년, 붉은 말의 해)의 운세를 분석하는 '정통 명리학 대가'이자 '인생 전략가'입니다.
+AI 같은 기계적인 요약투를 버리고, 실제 철학관에서 상담하듯 **깊이 있고 풍성한 통찰**을 제공하세요.
 
-**[작성 원칙: 풍성함과 디테일]**
+**[치명적 지시사항 - 위반 시 실패]**
+1. **분량 강제:** 모든 섹션은 **최소 10문장(500자) 이상** 작성하세요. UI 박스 크기는 신경 쓰지 말고, 할 말을 끝까지 다 하세요.
+2. **대운(Big Cycle) 필수 분석:** 제공된 '대운(Daewoon)' 데이터를 반드시 확인하세요. 대운이 바뀌는 시기거나, 현재 대운이 올해와 합/충이 되는 경우 이를 **"인생의 거대한 기회/위기"**로 강력하게 서술하세요. (예: "올해는 10년짜리 대운이 들어오는 엄청난 해입니다!")
+3. **구체적 액션 플랜:** "좋습니다"로 끝내지 말고, "무조건 계약하세요", "북쪽으로 가세요" 같은 **점지(Divination)** 수준의 조언을 하세요.
 
-1. **월별 운세 필수 포맷 (monthlyFlow):**
-   - 반드시 **"O월은 OO(간지)의 기운입니다."**로 시작하세요. (예: "1월은 경인(庚寅)의 기운입니다.")
-   - 그 기운이 사용자에게 미치는 영향을 **구체적으로 설명**하세요. (예: "문서운이 강하게 들어오니 계약에 유리합니다.")
-   - 자미두수의 기운을 참조하여 조언을 덧붙이세요.
-   - 말투는 **"~하는 것이 좋습니다.", "~기운이 가득합니다."** 처럼 부드럽고 격려하는 톤을 유지하세요. (단답형 금지)
-   - 각 월별로 **최소 2~3문장** 이상 작성하세요.
-   - **사고 순서:** 월별 분석을 먼저 완성한 뒤, 그 흐름을 종합하여 총평(overallSummary)을 작성하세요.
+**[작성 가이드라인]**
 
-2. **businessFortune (사업/재물운 & 월별 전략):**
-   - 월별 흐름을 분석한 뒤, 이를 바탕으로 **가장 이득이 되는 시기**와 **사업 형태**를 구체적으로 제안하세요.
-   - **반드시 포함:** ${data.year}년에 가장 이득이 되는 **구체적인 비즈니스 형태** (예: "올해는 확장보다는 내실", "여름에 신규 계약 추진").
-   - **근거:** 사주의 세운(Yearly Luck)과 자미두수의 유년(Limit) 데이터를 근거로 드세요.
-   - 상반기/하반기 구분하여 투자 시기, 확장/수성 전략 구체적으로.
+1. **overallSummary (${data.year}년 총평 - 가장 중요):**
+   - **형식:** 편지글이나 심층 칼럼 형식.
+   - **내용:** 병오년(세운)과 사용자 사주(일주/대운)의 화학적 결합을 설명하세요.
+   - **대운 분석:** "올해는 당신에게 대운이 작용하여..." 라는 문장이 반드시 포함되어야 합니다. 대운이 주는 기회를 놓치지 말라고 강력히 응원하세요.
+   - **분량:** 1000자 내외의 심층 총평.
+
+2. **businessFortune (사업/재물운):**
+   - **길게 쓰세요:** 월별 흐름을 요약하지 말고, 올해 전체의 **재물 그릇**을 설명하세요.
+   - **비즈니스 모델:** "유통보다는 제조", "확장보다는 내실" 등 구체적 전략 제시.
+   - **분량:** 500자 이상.
 
 3. **loveFortune (연애/인간관계운):**
-   - ${data.year}년의 대인관계와 연애 흐름. 좋은 인연을 만날 시기, 주의할 시기.
-   - 도화살이나 홍염살의 작용 여부 분석. 싱글/커플별 조언.
+   - 3줄 요약 금지. 상황별(싱글/커플)로 **상세하게** 서술하세요.
+   - 도화살, 홍염살의 작용 여부 분석. 좋은 인연을 만날 시기.
+   - **분량:** 500자 이상.
 
 4. **healthFortune (건강운):**
-   - ${data.year}년의 화(火) 기운과 관련하여 조심해야 할 **구체적 신체 부위**나 컨디션 관리법.
+   - 3줄 요약 금지. 신체 부위별로 **상세하게** 서술하세요.
    - 오행 균형에 기반한 식이/운동/생활습관 구체적 조언.
+   - **분량:** 500자 이상.
 
-5. **overallSummary (${data.year}년 총평):**
-   - 월별 흐름을 종합하여, 한 해를 관통하는 핵심 조언과 분위기를 3~4문장으로 요약.
-   - 병오년 화(火) 기운이 사용자의 사주/자미두수와 어떻게 상호작용하는지 핵심 포인트.
-
-6. **점수 산정:**
-   - 각 달의 운세 흐름(Good/Bad)에 맞춰 0~100점 사이의 점수를 **논리적으로** 부여하세요. (운세 내용과 점수가 따로 놀지 않게 하세요.)
-
-7. **keywords**: 올해를 관통하는 핵심 키워드 5개
+5. **monthlyFlow (월별 흐름):**
+   - 반드시 **"O월은 OO(간지)의 기운입니다."**로 시작.
+   - 각 월별 **최소 3문장** 이상 작성.
+   - 점수는 0~100점 사이, 운세 내용과 점수가 일관되게.
 
 **[출력 형식 (JSON)]**
 {
-  "overallSummary": "월별 흐름을 종합한 ${data.year}년 총평 (3~4문장)",
-  "businessFortune": "사업/재물운 & 월별 전략 상세 분석",
-  "loveFortune": "연애/인간관계운 상세 분석 (도화살/홍염살 포함)",
-  "healthFortune": "건강운 상세 분석 (화 기운 관련 신체 부위 포함)",
+  "overallSummary": "대운과 세운을 아우르는 1000자 분량의 심층 총평 (응원과 확신)",
+  "businessFortune": "500자 이상의 구체적 사업/재물 전략",
+  "loveFortune": "500자 이상의 상세 연애/인간관계 조언",
+  "healthFortune": "500자 이상의 건강 관리법 (식이/운동 포함)",
   "keywords": ["키워드1", "키워드2", "키워드3", "키워드4", "키워드5"],
   "monthlyFlow": [
-    {"month": 1, "score": 85, "keyword": "문서운", "summary": "1월은 경인(庚寅)의 기운입니다. 문서운이 강하게 들어오므로 계약이나 서류 처리에 유리한 시기입니다. 특히 자미두수의 기운이 더해져 새로운 시작을 알리는 좋은 에너지가 감돌고 있습니다."},
-    {"month": 2, "score": 70, "keyword": "인내", "summary": "2월은 신묘(辛卯)의 기운입니다. ..."},
+    {"month": 1, "score": 85, "keyword": "문서운", "summary": "1월은 ... (3문장 이상)"},
     ...
-    {"month": 12, "score": 75, "keyword": "결실", "summary": "12월은 ..."}
   ]
 }
 `;
 
+  const daeunInfo = sc.daeun
+    ? sc.daeun.slice(0, 6).map((d: any) => `${d.age}세(${d.year}년): ${d.stem}${d.branch}(${d.stemHanja}${d.branchHanja})`).join("\n  ")
+    : "대운 데이터 없음";
+
   const userPrompt = `
-[사용자: ${data.name}] - ${data.year}년 운세 분석
+[사용자: ${data.name}] - ${data.year}년 운세 정밀 분석
 
-1. [사주] 본성: ${data.saju.mainTrait}, 특수살: ${data.saju.specialSals.map((s: any) => s.name).join(", ")}, 용신: ${data.saju.yongShin.element}, 일주 강약: ${data.saju.dayMasterStrength}
-2. [자미두수] 주성: ${data.ziwei.stars.life.map((s: any) => s.name).join(", ")}, 국: ${data.ziwei.bureau.name}
-3. [별자리] ${data.zodiac.sign}, 특징: ${data.zodiac.info.traits?.join(", ") || data.zodiac.sign}
+━━━━ 1. 사주팔자 (四柱八字) 원본 데이터 ━━━━
+■ 사주 원국:
+  - 년주: ${sc.yearPillar?.stem}${sc.yearPillar?.branch} (${sc.yearPillar?.stemHanja}${sc.yearPillar?.branchHanja})
+  - 월주: ${sc.monthPillar?.stem}${sc.monthPillar?.branch} (${sc.monthPillar?.stemHanja}${sc.monthPillar?.branchHanja})
+  - 일주: ${sc.dayPillar?.stem}${sc.dayPillar?.branch} (${sc.dayPillar?.stemHanja}${sc.dayPillar?.branchHanja}) ← 일간(나)
+  - 시주: ${sc.hourPillar?.stem}${sc.hourPillar?.branch} (${sc.hourPillar?.stemHanja}${sc.hourPillar?.branchHanja})
 
-위 데이터를 종합하여 ${data.year}년 운세를 카테고리별로 분석하세요.
+■ 일간 성격: ${sp.mainTrait}
+■ 일주 강약: ${sc.dayMasterStrength} (${sp.dayMasterDescription})
+
+■ 오행 분포:
+${sc.fiveElementRatios?.map((r: any) => `  - ${r.element}(${r.elementHanja}): ${r.ratio}% (가중치 ${r.weight})`).join("\n") || "  데이터 없음"}
+
+■ 용신(用神): ${sc.yongShin?.element}(${sc.yongShin?.elementHanja}) — ${sc.yongShin?.reason}
+
+■ 십성(十星) 배치: ${sp.tenGodProfile}
+■ 특수살: ${sp.specialSals?.map((s: any) => `${s.name}(${s.hanja})`).join(", ") || "없음"}
+■ 구조 패턴: ${sp.structurePatterns?.map((p: any) => `${p.name}(${p.hanja})`).join(", ") || "없음"}
+
+■ **대운 흐름 (10년 단위) — 반드시 분석할 것:**
+  ${daeunInfo}
+  (현재 나이와 대운을 대조하여, ${data.year}년에 어떤 대운이 작용하는지 최우선으로 분석하세요)
+
+━━━━ 2. 자미두수 (紫微斗數) 데이터 ━━━━
+■ 명궁(命宮): ${zw.lifePalace}궁
+■ 국(局): ${zw.bureau?.name} — ${zw.bureau?.desc}
+■ 명궁 주성: ${zw.stars?.life?.map((s: any) => `${s.name}(${s.nature})`).join(", ") || "없음"}
+■ 부처궁 성진: ${zw.stars?.spouse?.map((s: any) => `${s.name}(${s.nature})`).join(", ") || "없음"}
+■ 재백궁 성진: ${zw.stars?.wealth?.map((s: any) => `${s.name}(${s.nature})`).join(", ") || "없음"}
+■ 천이궁 성진: ${zw.stars?.travel?.map((s: any) => `${s.name}(${s.nature})`).join(", ") || "없음"}
+
+━━━━ 3. 서양 별자리 데이터 ━━━━
+■ 별자리: ${data.zodiac.sign}
+■ 원소: ${data.zodiac.info.element || ""}
+■ 수호성: ${data.zodiac.info.ruling || ""}
+■ 특징: ${data.zodiac.info.traits?.join(", ") || data.zodiac.sign}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+위 데이터를 바탕으로, 특히 **'대운'의 작용**을 강조하여 ${data.year}년 운세를 아주 상세하게(섹션당 500자 이상) 서술하세요.
 `;
 
   try {
-    console.log(`[Yearly] ${data.year}년 운세 3회 교차 검증 시작...`);
+    console.log(`[Yearly] ${data.year}년 운세 생성 시작 (Deep Mode)...`);
 
     const generateOne = async (runIndex: number) => {
       const response = await openai.chat.completions.create({
@@ -757,7 +798,7 @@ export async function generateYearlyFortune(data: {
           { role: "user", content: userPrompt },
         ],
         response_format: { type: "json_object" },
-        temperature: 0.85,
+        temperature: 0.85 + (runIndex * 0.05),
       });
       const content = response.choices[0].message.content || "{}";
       console.log(`[Yearly] 독립 분석 #${runIndex + 1} 완료`);
@@ -801,21 +842,19 @@ export async function generateYearlyFortune(data: {
     }));
 
     const synthesisPrompt = `
-당신은 ${data.year}년 운세의 최종 검증관이자 '따뜻한 인생 멘토'입니다.
-동일 사용자의 ${data.year}년 운세를 3명의 독립 분석가가 각각 분석한 결과입니다.
+당신은 최종 검증관입니다. 3개의 분석 리포트를 종합하세요.
 
-**[당신의 임무]**
-1. 3개 분석에서 **2개 이상이 공통적으로 언급한 내용만** 최종 리포트에 포함.
-2. 1개에서만 언급된 독자적 주장은 제거.
-3. 공통 키워드: [${commonKeywords.join(", ")}]
-4. 월별 점수는 3개 평균을 사용: ${avgMonthlyScores.map(m => `${m.month}월=${m.avgScore}점`).join(", ")}
-5. coherenceScore: 3개 분석 간 실제 일치도 반영.
-
-**[중요: 월별 운세 풍성함 유지]**
-- 월별 summary는 반드시 **"O월은 OO(간지)의 기운입니다."**로 시작하세요.
-- 각 월별 summary는 **최소 2~3문장** 이상으로 풍성하게 작성하세요. 단답형/축약형 금지.
-- 3개 분석의 월별 내용 중 2개 이상 일치하는 구체적 조언을 살려서 종합하세요.
-- 말투는 **"~하는 것이 좋습니다.", "~기운이 가득합니다."** 처럼 부드럽고 격려하는 톤을 유지하세요.
+**[종합 원칙]**
+1. **절대 요약 금지:** 3개 리포트의 내용을 합쳐서 **가장 길고 자세한 버전**을 만드세요. 줄이지 마세요.
+2. **대운 강조:** "올해는 대운이 들어오는 해입니다" 같은 강력한 멘트를 overallSummary 맨 앞에 배치하세요.
+3. **2개 이상 공통 언급된 내용만 채택.** 1개에서만 언급된 독자적 주장은 제거.
+4. **분량:**
+   - overallSummary: 1000자 내외
+   - business/love/health: 각 500자 내외
+   - monthlyFlow: 각 월별 3문장 이상
+5. 월별 점수는 3개 평균을 사용: ${avgMonthlyScores.map(m => `${m.month}월=${m.avgScore}점`).join(", ")}
+6. 공통 키워드: [${commonKeywords.join(", ")}]
+7. 월별 summary는 반드시 **"O월은 OO(간지)의 기운입니다."**로 시작하세요.
 
 **[분석가 A]**
 ${JSON.stringify(report1, null, 2)}
@@ -828,14 +867,14 @@ ${JSON.stringify(report3, null, 2)}
 
 **[출력 형식 (JSON)]**
 {
-  "overallSummary": "월별 흐름을 종합한 ${data.year}년 총평 (따뜻하고 희망적인 톤, 3~4문장)",
+  "overallSummary": "대운과 세운을 아우르는 1000자 분량의 심층 총평",
   "coherenceScore": 70~95,
-  "businessFortune": "2개 이상 일치하는 사업/재물운만 종합 (월별 Best/Worst 포함)",
-  "loveFortune": "2개 이상 일치하는 연애/인간관계운만 종합 (도화살/홍염살 포함)",
-  "healthFortune": "2개 이상 일치하는 건강운만 종합 (화 기운 관련 신체 부위 포함)",
+  "businessFortune": "500자 이상 사업/재물 전략",
+  "loveFortune": "500자 이상 연애/인간관계 조언",
+  "healthFortune": "500자 이상 건강 관리법",
   "keywords": ["공통키워드1", "공통키워드2", ...],
   "monthlyFlow": [
-    {"month": 1, "score": 평균점수, "keyword": "공통키워드", "summary": "1월은 OO(간지)의 기운입니다. 2개 이상 일치하는 구체적 조언 2~3문장 이상"},
+    {"month": 1, "score": 평균점수, "keyword": "공통키워드", "summary": "1월은 OO(간지)의 기운입니다. 3문장 이상"},
     ... (1~12월 전체)
   ]
 }
@@ -844,11 +883,11 @@ ${JSON.stringify(report3, null, 2)}
     const synthesisResponse = await openai.chat.completions.create({
       model: "gpt-4o",
       messages: [
-        { role: "system", content: `당신은 3개의 독립 ${data.year}년 운세 분석을 교차 검증하여 최종 종합 리포트를 작성하는 검증관이자 따뜻한 인생 멘토입니다. 2개 이상 일치하는 내용만 채택하되, 월별 운세는 반드시 "O월은 OO(간지)의 기운입니다"로 시작하고 최소 2~3문장 이상 풍성하게 작성하세요.` },
+        { role: "system", content: "당신은 요약을 싫어하는 운세 에디터입니다. 내용을 최대한 길고 풍성하게 작성하세요. 2개 이상 일치하는 내용만 채택하되, 대운 분석을 반드시 포함하고, 월별 운세는 'O월은 OO(간지)의 기운입니다'로 시작하세요." },
         { role: "user", content: synthesisPrompt },
       ],
       response_format: { type: "json_object" },
-      temperature: 0.3,
+      temperature: 0.4,
     });
 
     const yearlyFortuneResponseSchema = z.object({
@@ -880,7 +919,7 @@ ${JSON.stringify(report3, null, 2)}
     };
 
     if (!finalResult.keywords || finalResult.keywords.length === 0) finalResult.keywords = commonKeywords;
-    if (!finalResult.monthlyFlow) {
+    if (!finalResult.monthlyFlow || finalResult.monthlyFlow.length === 0) {
       finalResult.monthlyFlow = avgMonthlyScores.map(m => ({
         month: m.month,
         score: m.avgScore,
@@ -895,12 +934,12 @@ ${JSON.stringify(report3, null, 2)}
   } catch (e) {
     console.error("Yearly Fortune Generation Error:", e);
     return {
-      overallSummary: "운세 데이터 서버 연결이 불안정합니다. 잠시 후 다시 시도해주세요.",
+      overallSummary: "운세 데이터를 분석하는 중 문제가 발생했습니다.",
       coherenceScore: 50,
-      businessFortune: "분석 대기 중",
-      loveFortune: "분석 대기 중",
-      healthFortune: "분석 대기 중",
-      keywords: ["대기", "연결"],
+      businessFortune: "잠시 후 다시 시도해주세요.",
+      loveFortune: "잠시 후 다시 시도해주세요.",
+      healthFortune: "잠시 후 다시 시도해주세요.",
+      keywords: ["분석", "대기"],
       monthlyFlow: Array.from({ length: 12 }, (_, i) => ({
         month: i + 1, score: 50, keyword: "대기", summary: "분석 대기 중"
       })),

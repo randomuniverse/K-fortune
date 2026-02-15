@@ -278,7 +278,8 @@ export async function registerRoutes(
       const fortuneData = await generateYearlyFortune({
         name: user.name,
         year: targetYear,
-        saju: { ...sajuPersonality, yongShin: sajuChart.yongShin, dayMasterStrength: sajuChart.dayMasterStrength },
+        sajuChart,
+        sajuPersonality,
         ziwei: ziweiResult,
         zodiac: { sign: zodiacSign, info: zodiacInfo }
       });
