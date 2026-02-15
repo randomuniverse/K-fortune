@@ -388,7 +388,7 @@ export async function generateGuardianReport(data: {
   ziwei: any;
   zodiac: any;
 }) {
-  const systemPrompt = `
+  const individualPrompt = `
 당신은 '운명의 가디언'이자, 냉철한 데이터 분석가 및 실리콘밸리급 '인생 컨설턴트'입니다.
 사용자의 사주, 자미두수, 별자리 데이터를 분석하여 **"논리적인 인과관계"**와 **"현실적인 성공 전략"**을 제시하세요.
 
@@ -401,30 +401,26 @@ export async function generateGuardianReport(data: {
 
 1. **coreEnergy (타이틀)**:
    - 사용자의 강점과 약점을 동시에 보여주는 직관적 타이틀.
-   - 예: "브레이크가 고장 난 페라리", "아이디어 부자, 마무리의 빈곤"
 
-2. **pastInference (운명의 추적 - 셜록 홈즈 모드)**:
+2. **pastInference (운명의 추적)**:
    - **데이터 기반의 논리적 추론**이어야 합니다.
    - 구조: "당신은 [사주/별자리 데이터]의 영향으로 [재능]이 뛰어납니다. 하지만 [상충하는 데이터] 때문에 [구체적 실패 패턴]을 반복했을 확률이 높습니다."
-   - 예: "당신은 쌍둥이자리와 사주의 식상 기운으로 아이디어가 폭발적입니다. 하지만 이를 제어할 관성이 약해, 시작한 프로젝트는 10개지만 끝낸 것은 하나도 없는 '용두사미' 경험이 많았을 것입니다."
 
-3. **currentState (현재 딜레마 - Paradox)**:
+3. **currentState (현재 딜레마)**:
    - 감성이 아니라 **이성적 분석**으로 접근하세요.
-   - 예: "당신의 머리는 '안정(정관)'을 원하지만, 기질은 '변화(역마)'를 추구합니다. 이로 인해 이직이나 창업을 고민만 하다가 타이밍을 놓치는 딜레마에 빠져 있습니다."
 
 4. **bottleneck (결정적 병목)**:
    - 성장을 막는 **현실적인 원인**을 지적하세요.
-   - 예: "당신의 병목은 능력이 아니라 '선택 장애'입니다. 모든 기회를 다 잡으려다 에너지가 분산되어 이도 저도 아닌 상태가 되는 것이 가장 큰 문제입니다."
 
-5. **solution (가디언 솔루션 - 실리콘밸리 멘토링)**:
+5. **solution (가디언 솔루션)**:
    - **비즈니스 프레임워크**나 **검증된 생산성 법칙**을 적용하세요. (80:20 법칙, 에센셜리즘, 원씽, 딥워크 등)
-   - 예: "오늘 당장 '파레토 법칙'을 적용하세요. 돈이 되는 상위 20% 일 하나만 남기고 나머지는 과감히 위임하거나 미루세요. 호기심을 억제하고 '수익성'에 집중하는 것만이 당신의 병목을 뚫는 열쇠입니다."
+
+6. **keywords**: 핵심 키워드 5개
 
 **[출력 형식 (JSON)]**
 {
   "coreEnergy": "직관적인 타이틀",
-  "coherenceScore": 85,
-  "keywords": ["키워드1", "키워드2", "키워드3"],
+  "keywords": ["키워드1", "키워드2", "키워드3", "키워드4", "키워드5"],
   "pastInference": "데이터 근거 -> 성향 -> 과거 패턴 추론 (논리적)",
   "currentState": "상충하는 데이터로 인한 딜레마 분석",
   "bottleneck": "성장을 저해하는 현실적 원인",
@@ -444,22 +440,99 @@ export async function generateGuardianReport(data: {
 `;
 
   try {
-    const response = await openai.chat.completions.create({
+    console.log("[Guardian] 3회 교차 검증 시작 (독립 리포트 3개 병렬 생성)...");
+
+    const generateOne = async (runIndex: number) => {
+      const response = await openai.chat.completions.create({
+        model: "gpt-4o",
+        messages: [
+          { role: "system", content: individualPrompt },
+          { role: "user", content: userPrompt },
+        ],
+        response_format: { type: "json_object" },
+        temperature: 0.85,
+      });
+      const content = response.choices[0].message.content || "{}";
+      console.log(`[Guardian] 독립 리포트 #${runIndex + 1} 생성 완료`);
+      return JSON.parse(content);
+    };
+
+    const [report1, report2, report3] = await Promise.all([
+      generateOne(0),
+      generateOne(1),
+      generateOne(2),
+    ]);
+
+    console.log("[Guardian] 3개 독립 리포트 완료. 교차 검증 종합 분석 시작...");
+
+    const allKeywords = [
+      ...(report1.keywords || []),
+      ...(report2.keywords || []),
+      ...(report3.keywords || []),
+    ];
+    const keywordCount: Record<string, number> = {};
+    allKeywords.forEach((kw: string) => {
+      keywordCount[kw] = (keywordCount[kw] || 0) + 1;
+    });
+    const commonKeywords = Object.entries(keywordCount)
+      .filter(([_, count]) => count >= 2)
+      .sort((a, b) => b[1] - a[1])
+      .map(([kw]) => kw)
+      .slice(0, 5);
+
+    const synthesisPrompt = `
+당신은 '운명의 가디언' 최종 검증관입니다.
+동일한 사용자 데이터를 3명의 독립 분석가가 각각 분석한 결과가 아래에 있습니다.
+
+**[당신의 임무]**
+1. 3개 리포트에서 **2개 이상이 공통적으로 언급한 내용만** 최종 리포트에 포함하세요.
+2. 1개 리포트에서만 언급된 독자적 주장은 **제거**하세요.
+3. 공통 키워드: [${commonKeywords.join(", ")}] — 이 키워드를 중심으로 종합하세요.
+4. 소설/감성적 묘사 절대 금지. 논리적 인과관계와 데이터 근거만 사용하세요.
+5. coherenceScore는 3개 리포트의 실제 일치도를 반영하세요 (공통점이 많으면 높게, 적으면 낮게).
+
+**[분석가 A의 리포트]**
+${JSON.stringify(report1, null, 2)}
+
+**[분석가 B의 리포트]**
+${JSON.stringify(report2, null, 2)}
+
+**[분석가 C의 리포트]**
+${JSON.stringify(report3, null, 2)}
+
+위 3개를 교차 검증하여, 2개 이상 일치하는 내용만으로 **최종 종합 리포트**를 작성하세요.
+
+**[출력 형식 (JSON)]**
+{
+  "coreEnergy": "3개 리포트의 공통 본질을 관통하는 타이틀",
+  "coherenceScore": 70~95 (3개 리포트 간 실제 일치도),
+  "keywords": ["공통키워드1", "공통키워드2", "공통키워드3"],
+  "pastInference": "2개 이상 일치하는 과거 패턴 추론만 종합",
+  "currentState": "2개 이상 일치하는 딜레마 분석만 종합",
+  "bottleneck": "2개 이상 일치하는 병목 진단만 종합",
+  "solution": "2개 이상 일치하는 솔루션만 종합 (비즈니스/생산성 프레임워크 기반)"
+}
+`;
+
+    const synthesisResponse = await openai.chat.completions.create({
       model: "gpt-4o",
       messages: [
-        { role: "system", content: systemPrompt },
-        { role: "user", content: userPrompt },
+        { role: "system", content: "당신은 3개의 독립 분석 리포트를 교차 검증하여 최종 종합 리포트를 작성하는 검증관입니다. 2개 이상 일치하는 내용만 채택하세요." },
+        { role: "user", content: synthesisPrompt },
       ],
       response_format: { type: "json_object" },
-      temperature: 0.85,
+      temperature: 0.3,
     });
 
-    const content = response.choices[0].message.content || "{}";
-    const result = JSON.parse(content);
+    const finalContent = synthesisResponse.choices[0].message.content || "{}";
+    const finalResult = JSON.parse(finalContent);
 
-    if (!result.pastInference) result.pastInference = "데이터 분석 중 과거 패턴을 특정할 수 없습니다.";
+    if (!finalResult.pastInference) finalResult.pastInference = "데이터 분석 중 과거 패턴을 특정할 수 없습니다.";
+    if (!finalResult.keywords || finalResult.keywords.length === 0) finalResult.keywords = commonKeywords;
 
-    return result;
+    console.log(`[Guardian] 3회 교차 검증 완료. 일치도: ${finalResult.coherenceScore}%`);
+
+    return finalResult;
   } catch (e) {
     console.error("Guardian Report Generation Error:", e);
     return {
