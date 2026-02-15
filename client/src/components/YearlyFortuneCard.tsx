@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
-import { Card } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { TrendingUp, TrendingDown, AlertTriangle, Star, Calendar, Compass, Loader2, Briefcase, Heart, HeartPulse, Activity, BrainCircuit, ChevronDown, ChevronUp } from "lucide-react";
 import type { SajuChart } from "@shared/saju";
 import { calculateYearlyFortune, calculateMonthlyFortunes } from "@shared/saju";
@@ -122,35 +123,33 @@ function AIMonthlyFlowCard({ item, index }: { item: MonthlyFlowItem; index: numb
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.04, duration: 0.3 }}
-      className={`rounded-xl p-4 border ${
+      data-testid={`card-ai-month-${item.month}`}
+    >
+      <Card className={`border ${
         isGood ? "border-emerald-500/20 bg-emerald-500/5" :
         isBad ? "border-red-500/20 bg-red-500/5" :
         "border-white/5 bg-white/[0.02]"
-      }`}
-      data-testid={`card-ai-month-${item.month}`}
-    >
-      <div className="flex items-center justify-between mb-2 flex-wrap gap-1">
-        <div className="flex items-center gap-2">
-          <span className="text-lg font-bold text-white">{item.month}월</span>
-          <span className={`text-[10px] px-2 py-0.5 rounded-full ${
-            isGood ? "bg-emerald-500/20 text-emerald-400" :
-            isBad ? "bg-red-500/20 text-red-400" :
-            "bg-primary/20 text-primary"
-          }`}>
-            {item.keyword}
-          </span>
-        </div>
-        <span className={`text-sm font-bold ${
-          item.score >= 75 ? "text-emerald-400" :
-          item.score >= 60 ? "text-primary" :
-          item.score >= 45 ? "text-amber-400" :
-          "text-red-400"
-        }`}>
-          {item.score}점
-        </span>
-      </div>
-      <ScoreBar score={item.score} />
-      <p className="text-xs text-white/70 leading-relaxed mt-2">{item.summary}</p>
+      }`}>
+        <CardContent className="p-4">
+          <div className="flex items-center justify-between mb-2 flex-wrap gap-1">
+            <div className="flex items-center gap-2">
+              <span className="text-lg font-bold text-white">{item.month}월</span>
+              <Badge variant={isGood ? "default" : isBad ? "destructive" : "secondary"} className="text-[10px]">
+                {item.keyword}
+              </Badge>
+            </div>
+            <Badge variant={
+              item.score >= 75 ? "default" :
+              item.score >= 45 ? "secondary" :
+              "destructive"
+            } className="text-xs">
+              {item.score}점
+            </Badge>
+          </div>
+          <ScoreBar score={item.score} />
+          <p className="text-sm text-white/80 leading-relaxed mt-3">{item.summary}</p>
+        </CardContent>
+      </Card>
     </motion.div>
   );
 }
