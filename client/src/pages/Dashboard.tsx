@@ -2,6 +2,7 @@ import { useRoute, useLocation } from "wouter";
 import { useUser, useGenerateFortune, useFortunes, useSajuAnalysis } from "@/hooks/use-fortune";
 import { Layout } from "@/components/Layout";
 import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { FortuneCard } from "@/components/FortuneCard";
 import { Loader2, Sparkles, AlertCircle, Send, Sun, CalendarDays, Compass, Star, Moon, User, LayoutDashboard } from "lucide-react";
 import { useState } from "react";
@@ -16,6 +17,7 @@ import { GuardianReport } from "@/components/GuardianReport";
 
 type MainTabId = "today" | "yearly" | "destiny";
 type DestinyTabId = "summary" | "saju" | "ziwei" | "zodiac";
+type YearlyTabId = "guardian" | "saju" | "ziwei" | "zodiac";
 
 const MAIN_TABS: { id: MainTabId; label: string; icon: any }[] = [
   { id: "today", label: "오늘의 운세", icon: Sun },
@@ -23,9 +25,16 @@ const MAIN_TABS: { id: MainTabId; label: string; icon: any }[] = [
   { id: "destiny", label: "운명 종합 분석", icon: Sparkles },
 ];
 
+const YEARLY_TABS: { id: YearlyTabId; label: string; icon: any }[] = [
+  { id: "guardian", label: "가디언 총평", icon: LayoutDashboard },
+  { id: "saju", label: "사주 총평", icon: Compass },
+  { id: "ziwei", label: "자미두수 총평", icon: Star },
+  { id: "zodiac", label: "별자리 총평", icon: Moon },
+];
+
 const DESTINY_TABS: { id: DestinyTabId; label: string; icon: any }[] = [
   { id: "summary", label: "가디언 리포트", icon: LayoutDashboard },
-  { id: "saju", label: "사주 심층", icon: Compass },
+  { id: "saju", label: "사주팔자", icon: Compass },
   { id: "ziwei", label: "자미두수", icon: Star },
   { id: "zodiac", label: "별자리 정보", icon: Moon },
 ];
@@ -45,6 +54,7 @@ export default function Dashboard() {
   
   const [isSendingTelegram, setIsSendingTelegram] = useState(false);
   const [activeTab, setActiveTab] = useState<MainTabId>("today");
+  const [yearlySubTab, setYearlySubTab] = useState<YearlyTabId>("saju");
   const [destinySubTab, setDestinySubTab] = useState<DestinyTabId>("summary");
   const [fortunesShown, setFortunesShown] = useState(FORTUNES_PER_PAGE);
 
@@ -255,11 +265,62 @@ export default function Dashboard() {
               initial={{ opacity: 0, x: -10 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.3 }}
+              className="space-y-6"
             >
-              {sajuData?.sajuChart ? (
-                <YearlyFortuneCard chart={sajuData.sajuChart} userName={user.name} telegramId={telegramId} />
-              ) : (
+              <div className="flex overflow-x-auto gap-2 pb-2 scrollbar-hide">
+                {YEARLY_TABS.map((tab) => {
+                  const Icon = tab.icon;
+                  const isActive = yearlySubTab === tab.id;
+                  return (
+                    <button
+                      key={tab.id}
+                      onClick={() => setYearlySubTab(tab.id)}
+                      data-testid={`subtab-yearly-${tab.id}`}
+                      className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs font-medium whitespace-nowrap transition-all border ${
+                        isActive
+                          ? "bg-indigo-500/20 text-indigo-300 border-indigo-500/30"
+                          : "bg-white/5 text-muted-foreground border-white/5 hover:bg-white/10"
+                      }`}
+                    >
+                      <Icon className="w-3.5 h-3.5" />
+                      {tab.label}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {!sajuData?.sajuChart ? (
                 <div className="flex justify-center py-12"><Loader2 className="w-8 h-8 text-primary/50 animate-spin" /></div>
+              ) : (
+                <div className="min-h-[300px]">
+                  {yearlySubTab === "guardian" && (
+                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+                      <Card className="bg-white/[0.03] border-white/10 p-8 text-center">
+                        <p className="text-sm text-muted-foreground">가디언 총평은 준비 중입니다.</p>
+                      </Card>
+                    </motion.div>
+                  )}
+
+                  {yearlySubTab === "saju" && (
+                    <YearlyFortuneCard chart={sajuData.sajuChart} userName={user.name} telegramId={telegramId} />
+                  )}
+
+                  {yearlySubTab === "ziwei" && (
+                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+                      <Card className="bg-white/[0.03] border-white/10 p-8 text-center">
+                        <p className="text-sm text-muted-foreground">자미두수 총평은 준비 중입니다.</p>
+                      </Card>
+                    </motion.div>
+                  )}
+
+                  {yearlySubTab === "zodiac" && (
+                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+                      <Card className="bg-white/[0.03] border-white/10 p-8 text-center">
+                        <p className="text-sm text-muted-foreground">별자리 총평은 준비 중입니다.</p>
+                      </Card>
+                    </motion.div>
+                  )}
+                </div>
               )}
             </motion.div>
           )}

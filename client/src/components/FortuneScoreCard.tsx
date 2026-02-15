@@ -91,7 +91,16 @@ export function FortuneScoreCard({ data, zodiacSign }: Props) {
         <div className="flex flex-col md:flex-row items-center gap-6">
           <ScoreRing score={data.combinedScore} />
           <div className="flex-1 w-full space-y-2">
-            <h3 className="text-lg font-serif text-white mb-3">종합 운세 점수</h3>
+            <h3 className="text-lg font-serif text-white mb-3">
+              종합 운세 점수 <span className="text-xs text-muted-foreground font-normal ml-2">
+                {(() => {
+                  const now = new Date();
+                  const utc = now.getTime() + now.getTimezoneOffset() * 60000;
+                  const kst = new Date(utc + 9 * 3600000);
+                  return `${kst.getMonth() + 1}월${kst.getDate()}일${kst.getFullYear()}년`;
+                })()}
+              </span>
+            </h3>
             <MiniScore label="사주팔자" score={data.sajuScore} />
             <MiniScore label="별자리" score={data.zodiacScore} />
           </div>
@@ -144,6 +153,17 @@ export function FortuneScoreCard({ data, zodiacSign }: Props) {
             </div>
           </div>
         </div>
+
+        {(data.ziweiMessage || (data as any).numerologyMessage) && (
+          <div className="mt-5 bg-white/[0.03] rounded-xl p-4">
+            <h4 className="text-xs font-serif text-primary mb-2" data-testid="text-ziwei-title">
+              {data.ziweiMessage ? "자미두수 메시지" : "수비학 메시지"}
+            </h4>
+            <p className="text-sm text-white/80 leading-relaxed" data-testid="text-ziwei-message">
+              {data.ziweiMessage || (data as any).numerologyMessage}
+            </p>
+          </div>
+        )}
       </Card>
 
       <div className="grid gap-4 md:grid-cols-2">
@@ -163,17 +183,6 @@ export function FortuneScoreCard({ data, zodiacSign }: Props) {
           <InfoRow icon={Briefcase} label="직장운" value={data.zodiacWork} />
         </Card>
       </div>
-
-      {(data.ziweiMessage || (data as any).numerologyMessage) && (
-        <Card className="bg-white/[0.03] border-white/10 p-5">
-          <h4 className="text-sm font-serif text-primary mb-2" data-testid="text-ziwei-title">
-            {data.ziweiMessage ? "자미두수 메시지" : "수비학 메시지"}
-          </h4>
-          <p className="text-sm text-white/80 leading-relaxed" data-testid="text-ziwei-message">
-            {data.ziweiMessage || (data as any).numerologyMessage}
-          </p>
-        </Card>
-      )}
     </motion.div>
   );
 }

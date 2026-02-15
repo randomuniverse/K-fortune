@@ -75,6 +75,37 @@ export function SajuDeepAnalysis({ chart, birthDate, birthTime, userName }: Saju
     <div className="space-y-4">
       <SajuInfoCard chart={chart} birthDate={birthDate} birthTime={birthTime} userName={userName} />
 
+      <Section icon={Shield} title="용신(用神)과 개운법" delay={0.05}>
+        <div className="grid grid-cols-2 gap-3 mb-3">
+          <div className={`rounded-lg p-3 border ${ELEMENT_BG[chart.yongShin.element] || "bg-white/5 border-white/10"}`}>
+            <p className="text-[10px] text-muted-foreground mb-1">용신 (보호 기운)</p>
+            <p className={`text-sm font-bold ${ELEMENT_COLORS[chart.yongShin.element] || "text-white"}`}>
+              {chart.yongShin.elementHanja} ({chart.yongShin.element})
+            </p>
+          </div>
+          <div className="bg-white/[0.03] rounded-lg p-3">
+            <p className="text-[10px] text-muted-foreground mb-1">일간 강약</p>
+            <p className="text-sm font-bold text-white">{chart.dayMasterStrength}</p>
+          </div>
+        </div>
+        <p className="text-xs text-white/60 leading-relaxed mb-3">{chart.yongShin.reason}</p>
+        
+        <div className="space-y-2">
+          <div className="grid grid-cols-2 gap-2">
+            <div className="bg-white/[0.03] rounded p-2 text-xs text-white/70"><span className="text-primary/70 mr-1">시간:</span> {personality.yongShinRemedy.luckyTime}</div>
+            <div className="bg-white/[0.03] rounded p-2 text-xs text-white/70"><span className="text-primary/70 mr-1">장소:</span> {personality.yongShinRemedy.luckyPlace}</div>
+            <div className="bg-white/[0.03] rounded p-2 text-xs text-white/70"><span className="text-primary/70 mr-1">색상:</span> {personality.yongShinRemedy.luckyColor}</div>
+            <div className="bg-white/[0.03] rounded p-2 text-xs text-white/70"><span className="text-primary/70 mr-1">음식:</span> {personality.yongShinRemedy.luckyFood}</div>
+          </div>
+          <div className="bg-red-500/5 border border-red-500/10 rounded p-3">
+            <p className="text-xs text-white/60">
+              <span className="text-red-400 font-bold mr-1">주의:</span>
+              {personality.yongShinRemedy.avoidElementHanja}({personality.yongShinRemedy.avoidElement})의 과한 기운을 피하세요.
+            </p>
+          </div>
+        </div>
+      </Section>
+
       <Section icon={User} title="일간(日干)으로 본 나의 본성" delay={0.1}>
         <div className={`rounded-xl p-4 border ${elBg}`}>
           <div className="flex items-center gap-3 mb-2">
@@ -122,37 +153,6 @@ export function SajuDeepAnalysis({ chart, birthDate, birthTime, userName }: Saju
             <p className="text-xs text-white/70 leading-relaxed">{pattern.description}</p>
           </div>
         ))}
-      </Section>
-
-      <Section icon={Shield} title="용신(用神)과 개운법" delay={0.25}>
-        <div className="grid grid-cols-2 gap-3 mb-3">
-          <div className={`rounded-lg p-3 border ${ELEMENT_BG[chart.yongShin.element] || "bg-white/5 border-white/10"}`}>
-            <p className="text-[10px] text-muted-foreground mb-1">용신 (보호 기운)</p>
-            <p className={`text-sm font-bold ${ELEMENT_COLORS[chart.yongShin.element] || "text-white"}`}>
-              {chart.yongShin.elementHanja} ({chart.yongShin.element})
-            </p>
-          </div>
-          <div className="bg-white/[0.03] rounded-lg p-3">
-            <p className="text-[10px] text-muted-foreground mb-1">일간 강약</p>
-            <p className="text-sm font-bold text-white">{chart.dayMasterStrength}</p>
-          </div>
-        </div>
-        <p className="text-xs text-white/60 leading-relaxed mb-3">{chart.yongShin.reason}</p>
-        
-        <div className="space-y-2">
-          <div className="grid grid-cols-2 gap-2">
-            <div className="bg-white/[0.03] rounded p-2 text-xs text-white/70"><span className="text-primary/70 mr-1">시간:</span> {personality.yongShinRemedy.luckyTime}</div>
-            <div className="bg-white/[0.03] rounded p-2 text-xs text-white/70"><span className="text-primary/70 mr-1">장소:</span> {personality.yongShinRemedy.luckyPlace}</div>
-            <div className="bg-white/[0.03] rounded p-2 text-xs text-white/70"><span className="text-primary/70 mr-1">색상:</span> {personality.yongShinRemedy.luckyColor}</div>
-            <div className="bg-white/[0.03] rounded p-2 text-xs text-white/70"><span className="text-primary/70 mr-1">음식:</span> {personality.yongShinRemedy.luckyFood}</div>
-          </div>
-          <div className="bg-red-500/5 border border-red-500/10 rounded p-3">
-            <p className="text-xs text-white/60">
-              <span className="text-red-400 font-bold mr-1">주의:</span>
-              {personality.yongShinRemedy.avoidElementHanja}({personality.yongShinRemedy.avoidElement})의 과한 기운을 피하세요.
-            </p>
-          </div>
-        </div>
       </Section>
     </div>
   );

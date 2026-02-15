@@ -72,87 +72,89 @@ export function SajuInfoCard({ chart, birthDate, birthTime, userName }: Props) {
   ];
 
   return (
-    <Card className="bg-white/[0.03] border-white/10 p-5 space-y-5" data-testid="saju-info-card">
+    <Card className="bg-white/[0.03] border-white/10 p-5 space-y-4" data-testid="saju-info-card">
       <div className="text-center space-y-1">
-        <h4 className="text-sm font-serif text-primary" data-testid="text-saju-title">사주 팔자란</h4>
+        <h4 className="text-sm font-serif text-primary" data-testid="text-saju-title">사주 팔자</h4>
         <p className="text-xs text-muted-foreground">
           양력 {(() => { const [y, m, d] = birthDate.split("-"); return `${y}년 ${parseInt(m)}월 ${parseInt(d)}일`; })()} {birthTime}생
+          {" · "}{chart.chineseZodiac}띠 ({chart.chineseZodiacBranch})
         </p>
-        <p className="text-xs text-muted-foreground">{chart.chineseZodiac}띠 ({chart.chineseZodiacBranch})</p>
       </div>
 
-      <div className="flex justify-center gap-5 py-3 px-2 rounded-xl bg-white/[0.02] border border-white/5">
-        <PillarCell
-          label="時" stemHanja={chart.hourPillar.stemHanja} branchHanja={chart.hourPillar.branchHanja}
-          tenGodTop={chart.hourTenGod.name} tenGodBottom={chart.hourBranchTenGod.name}
-        />
-        <PillarCell
-          label="日" stemHanja={chart.dayPillar.stemHanja} branchHanja={chart.dayPillar.branchHanja}
-          tenGodTop="일간" tenGodBottom={chart.dayBranchTenGod.name} isDay
-        />
-        <PillarCell
-          label="月" stemHanja={chart.monthPillar.stemHanja} branchHanja={chart.monthPillar.branchHanja}
-          tenGodTop={chart.monthTenGod.name} tenGodBottom={chart.monthBranchTenGod.name}
-        />
-        <PillarCell
-          label="年" stemHanja={chart.yearPillar.stemHanja} branchHanja={chart.yearPillar.branchHanja}
-          tenGodTop={chart.yearTenGod.name} tenGodBottom={chart.yearBranchTenGod.name}
-        />
-      </div>
+      <div className="flex flex-col md:flex-row gap-4">
+        <div className="flex justify-center gap-5 py-3 px-4 rounded-xl bg-white/[0.02] border border-white/5 md:shrink-0">
+          <PillarCell
+            label="時" stemHanja={chart.hourPillar.stemHanja} branchHanja={chart.hourPillar.branchHanja}
+            tenGodTop={chart.hourTenGod.name} tenGodBottom={chart.hourBranchTenGod.name}
+          />
+          <PillarCell
+            label="日" stemHanja={chart.dayPillar.stemHanja} branchHanja={chart.dayPillar.branchHanja}
+            tenGodTop="일간" tenGodBottom={chart.dayBranchTenGod.name} isDay
+          />
+          <PillarCell
+            label="月" stemHanja={chart.monthPillar.stemHanja} branchHanja={chart.monthPillar.branchHanja}
+            tenGodTop={chart.monthTenGod.name} tenGodBottom={chart.monthBranchTenGod.name}
+          />
+          <PillarCell
+            label="年" stemHanja={chart.yearPillar.stemHanja} branchHanja={chart.yearPillar.branchHanja}
+            tenGodTop={chart.yearTenGod.name} tenGodBottom={chart.yearBranchTenGod.name}
+          />
+        </div>
 
-      <div className="space-y-3">
-        <div>
-          <h5 className="text-xs font-medium text-muted-foreground mb-2">오행 분포</h5>
-          <div className="space-y-1.5">
-            {topElements.map(e => (
-              <div key={e.element} className="flex items-center gap-2">
-                <span className={`text-xs w-8 font-medium ${elementColors[e.element] || "text-white"}`}>
-                  {e.elementHanja} {e.element}
-                </span>
-                <div className="flex-1 h-1.5 bg-white/10 rounded-full overflow-hidden">
-                  <div
-                    className={`h-full rounded-full ${
-                      e.element === "목" ? "bg-green-500" :
-                      e.element === "화" ? "bg-red-500" :
-                      e.element === "토" ? "bg-amber-500" :
-                      e.element === "금" ? "bg-slate-400" :
-                      "bg-blue-500"
-                    }`}
-                    style={{ width: `${e.ratio}%` }}
-                  />
+        <div className="flex-1 space-y-3">
+          <div>
+            <h5 className="text-xs font-medium text-muted-foreground mb-2">오행 분포</h5>
+            <div className="space-y-1.5">
+              {topElements.map(e => (
+                <div key={e.element} className="flex items-center gap-2">
+                  <span className={`text-xs w-8 font-medium ${elementColors[e.element] || "text-white"}`}>
+                    {e.elementHanja} {e.element}
+                  </span>
+                  <div className="flex-1 h-1.5 bg-white/10 rounded-full overflow-hidden">
+                    <div
+                      className={`h-full rounded-full ${
+                        e.element === "목" ? "bg-green-500" :
+                        e.element === "화" ? "bg-red-500" :
+                        e.element === "토" ? "bg-amber-500" :
+                        e.element === "금" ? "bg-slate-400" :
+                        "bg-blue-500"
+                      }`}
+                      style={{ width: `${e.ratio}%` }}
+                    />
+                  </div>
+                  <span className="text-[11px] text-muted-foreground w-12 text-right">{e.ratio}%</span>
                 </div>
-                <span className="text-[11px] text-muted-foreground w-12 text-right">{e.ratio}%</span>
+              ))}
+            </div>
+          </div>
+
+          <div className="flex gap-3">
+            <div className="flex-1 bg-white/[0.03] rounded-lg p-3">
+              <p className="text-[10px] text-muted-foreground mb-0.5">일간 강약</p>
+              <p className="text-sm font-medium text-white" data-testid="text-day-master-strength">{chart.dayMasterStrength}</p>
+            </div>
+            <div className="flex-1 bg-white/[0.03] rounded-lg p-3">
+              <p className="text-[10px] text-muted-foreground mb-0.5">용신</p>
+              <p className={`text-sm font-medium ${elementColors[chart.yongShin.element] || "text-white"}`} data-testid="text-yongshin">
+                {chart.yongShin.elementHanja} {chart.yongShin.element}
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <h5 className="text-xs font-medium text-muted-foreground mb-2">대운 주기</h5>
+        <div className="flex flex-wrap gap-x-3 gap-y-1">
+          {chart.daeun.map(d => {
+            const isCurrent = d.year <= new Date().getFullYear() && d.year + 10 > new Date().getFullYear();
+            return (
+              <div key={d.age} className={`text-center ${isCurrent ? "text-primary" : "text-muted-foreground"}`}>
+                <p className="text-[10px]">{d.year}</p>
+                <p className={`text-xs font-medium ${isCurrent ? "text-primary font-bold" : ""}`}>{d.age}세</p>
               </div>
-            ))}
-          </div>
-        </div>
-
-        <div className="flex gap-3">
-          <div className="flex-1 bg-white/[0.03] rounded-lg p-3">
-            <p className="text-[10px] text-muted-foreground mb-0.5">일간 강약</p>
-            <p className="text-sm font-medium text-white" data-testid="text-day-master-strength">{chart.dayMasterStrength}</p>
-          </div>
-          <div className="flex-1 bg-white/[0.03] rounded-lg p-3">
-            <p className="text-[10px] text-muted-foreground mb-0.5">용신</p>
-            <p className={`text-sm font-medium ${elementColors[chart.yongShin.element] || "text-white"}`} data-testid="text-yongshin">
-              {chart.yongShin.elementHanja} {chart.yongShin.element}
-            </p>
-          </div>
-        </div>
-
-        <div>
-          <h5 className="text-xs font-medium text-muted-foreground mb-2">대운 주기</h5>
-          <div className="flex flex-wrap gap-x-3 gap-y-1">
-            {chart.daeun.map(d => {
-              const isCurrent = d.year <= new Date().getFullYear() && d.year + 10 > new Date().getFullYear();
-              return (
-                <div key={d.age} className={`text-center ${isCurrent ? "text-primary" : "text-muted-foreground"}`}>
-                  <p className="text-[10px]">{d.year}</p>
-                  <p className={`text-xs font-medium ${isCurrent ? "text-primary font-bold" : ""}`}>{d.age}세</p>
-                </div>
-              );
-            })}
-          </div>
+            );
+          })}
         </div>
       </div>
     </Card>
