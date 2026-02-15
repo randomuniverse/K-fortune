@@ -216,17 +216,20 @@ export function YearlyFortuneCard({ chart, userName, telegramId }: Props) {
           </div>
 
           <div className="flex-1 space-y-3">
-            <p className="text-sm text-white/80 leading-relaxed">
-              {aiYearly?.overallSummary
-                ? aiYearly.overallSummary.slice(0, 200) + (aiYearly.overallSummary.length > 200 ? "..." : "")
-                : yearlyFortune.summary}
-            </p>
             <div className="bg-white/[0.03] rounded-lg p-3">
               <p className="text-xs text-primary/80 font-medium mb-1">
                 <Compass className="w-3 h-3 inline mr-1" />
-                올해의 조언
+                올해의 키워드
               </p>
-              <p className="text-sm text-white/70">{yearlyFortune.advice}</p>
+              <p className="text-sm text-white/80 leading-relaxed">
+                {aiYearly?.keywords && aiYearly.keywords.length > 0
+                  ? (aiYearly.keywords as string[]).map((kw: string, i: number) => (
+                      <span key={i}>
+                        {kw}{i < (aiYearly.keywords as string[]).length - 1 ? " · " : ""}
+                      </span>
+                    ))
+                  : yearlyFortune.advice}
+              </p>
             </div>
           </div>
         </div>
