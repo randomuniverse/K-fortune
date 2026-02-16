@@ -1,0 +1,45 @@
+2026-02-16T06:40:15.000000000Z [inf]  Starting Container
+2026-02-16T06:40:16.450755097Z [err]  npm warn config production Use `--omit=dev` instead.
+2026-02-16T06:40:16.450758457Z [inf]  No config path provided, using default 'drizzle.config.ts'
+2026-02-16T06:40:16.450761327Z [inf]  Reading config file '/app/drizzle.config.ts'
+2026-02-16T06:40:16.450764037Z [err]  DATABASE_URL, ensure the database is provisioned
+2026-02-16T06:40:16.505581914Z [err]  npm warn config production Use `--omit=dev` instead.
+2026-02-16T06:40:16.672327610Z [inf]  No config path provided, using default 'drizzle.config.ts'
+2026-02-16T06:40:16.672330690Z [inf]  Reading config file '/app/drizzle.config.ts'
+2026-02-16T06:40:16.722299688Z [err]  DATABASE_URL, ensure the database is provisioned
+2026-02-16T06:40:17.466722894Z [err]  npm warn config production Use `--omit=dev` instead.
+2026-02-16T06:40:17.629939567Z [inf]  No config path provided, using default 'drizzle.config.ts'
+2026-02-16T06:40:17.629944587Z [inf]  Reading config file '/app/drizzle.config.ts'
+2026-02-16T06:40:17.658177912Z [err]  DATABASE_URL, ensure the database is provisioned
+2026-02-16T06:40:18.435279937Z [err]  npm warn config production Use `--omit=dev` instead.
+2026-02-16T06:40:18.543183128Z [inf]  No config path provided, using default 'drizzle.config.ts'
+2026-02-16T06:40:18.543187368Z [inf]  Reading config file '/app/drizzle.config.ts'
+2026-02-16T06:40:18.585454997Z [err]  DATABASE_URL, ensure the database is provisioned
+2026-02-16T06:40:19.257476390Z [err]  npm warn config production Use `--omit=dev` instead.
+2026-02-16T06:40:19.449188365Z [inf]  Reading config file '/app/drizzle.config.ts'
+2026-02-16T06:40:19.449297494Z [inf]  No config path provided, using default 'drizzle.config.ts'
+2026-02-16T06:40:19.486006371Z [err]  DATABASE_URL, ensure the database is provisioned
+2026-02-16T06:40:20.478289995Z [err]  npm warn config production Use `--omit=dev` instead.
+2026-02-16T06:40:20.520426804Z [inf]  No config path provided, using default 'drizzle.config.ts'
+2026-02-16T06:40:20.520432544Z [inf]  Reading config file '/app/drizzle.config.ts'
+2026-02-16T06:40:20.569358673Z [err]  DATABASE_URL, ensure the database is provisioned
+2026-02-16T06:40:21.525930230Z [err]  npm warn config production Use `--omit=dev` instead.
+2026-02-16T06:40:21.614988059Z [inf]  No config path provided, using default 'drizzle.config.ts'
+2026-02-16T06:40:21.614998389Z [inf]  Reading config file '/app/drizzle.config.ts'
+2026-02-16T06:40:21.659419624Z [err]  DATABASE_URL, ensure the database is provisioned
+2026-02-16T06:40:22.969765582Z [err]  npm warn config production Use `--omit=dev` instead.
+2026-02-16T06:40:23.143645325Z [inf]  No config path provided, using default 'drizzle.config.ts'
+2026-02-16T06:40:23.143649715Z [inf]  Reading config file '/app/drizzle.config.ts'
+2026-02-16T06:40:23.206245720Z [err]  DATABASE_URL, ensure the database is provisioned
+2026-02-16T06:40:23.863579277Z [err]  npm warn config production Use `--omit=dev` instead.
+2026-02-16T06:40:24.037490087Z [inf]  No config path provided, using default 'drizzle.config.ts'
+2026-02-16T06:40:24.037494927Z [inf]  Reading config file '/app/drizzle.config.ts'
+2026-02-16T06:40:24.078082223Z [err]  DATABASE_URL, ensure the database is provisioned
+2026-02-16T06:40:24.745029699Z [err]  npm warn config production Use `--omit=dev` instead.
+2026-02-16T06:40:24.950340162Z [inf]  No config path provided, using default 'drizzle.config.ts'
+2026-02-16T06:40:24.950344252Z [inf]  Reading config file '/app/drizzle.config.ts'
+2026-02-16T06:40:24.985582963Z [err]  DATABASE_URL, ensure the database is provisioned
+2026-02-16T06:40:25.712346444Z [err]  npm warn config production Use `--omit=dev` instead.
+2026-02-16T06:40:25.903961450Z [inf]  No config path provided, using default 'drizzle.config.ts'
+2026-02-16T06:40:25.903968310Z [inf]  Reading config file '/app/drizzle.config.ts'
+2026-02-16T06:40:25.941091092Z [err]  DATABASE_URL, ensure the database is provisioned
