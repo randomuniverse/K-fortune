@@ -37,7 +37,7 @@ export default function Home() {
             <span className="text-sm font-medium tracking-wide">매일 전해지는 우주의 인도</span>
           </div>
           
-          <h1 className="text-5xl md:text-7xl font-serif font-bold leading-tight">
+          <h1 className="text-4xl sm:text-5xl md:text-7xl font-serif font-bold leading-tight">
             별들의 <br />
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-200 via-primary to-amber-500 text-glow">
               지혜를 깨우다

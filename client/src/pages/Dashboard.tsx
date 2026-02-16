@@ -4,7 +4,7 @@ import { Layout } from "@/components/Layout";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { FortuneCard } from "@/components/FortuneCard";
-import { Loader2, Sparkles, AlertCircle, Send, Sun, CalendarDays, Compass, Star, Moon, User, LayoutDashboard } from "lucide-react";
+import { Loader2, Sparkles, AlertCircle, Send, Sun, CalendarDays, Compass, Star, Moon, User, LayoutDashboard, MessageCircle, ExternalLink } from "lucide-react";
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { useToast } from "@/hooks/use-toast";
@@ -194,6 +194,34 @@ export default function Dashboard() {
             )}
           </div>
         </div>
+
+        {!user.telegramChatId && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="flex flex-col sm:flex-row items-start sm:items-center gap-3 p-4 rounded-xl bg-amber-500/10 border border-amber-500/20"
+            data-testid="banner-telegram-connect"
+          >
+            <MessageCircle className="w-5 h-5 text-amber-400 shrink-0 mt-0.5 sm:mt-0" />
+            <div className="flex-1 min-w-0">
+              <p className="text-sm text-amber-200 font-medium">텔레그램 알림을 받으려면 봇에 연결하세요</p>
+              <p className="text-xs text-amber-200/60 mt-0.5">
+                아래 버튼을 눌러 봇에게 <span className="font-mono text-amber-300">/start</span>를 보내면 자동으로 연결됩니다.
+              </p>
+            </div>
+            <a
+              href="https://t.me/ricky_lucky_guardian_bot"
+              target="_blank"
+              rel="noopener noreferrer"
+              data-testid="link-telegram-bot"
+            >
+              <Button variant="outline" className="border-amber-500/30 text-amber-200 shrink-0 whitespace-nowrap">
+                <ExternalLink className="mr-2 h-4 w-4" />
+                봇 열기
+              </Button>
+            </a>
+          </motion.div>
+        )}
 
         <div className="flex gap-1 p-1 bg-white/[0.03] rounded-xl border border-white/5">
           {MAIN_TABS.map((tab) => {

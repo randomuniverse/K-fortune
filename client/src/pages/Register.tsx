@@ -97,7 +97,7 @@ export default function Register() {
 
   return (
     <Layout>
-      <div className="flex flex-col items-center justify-center min-h-[80vh] w-full max-w-lg mx-auto">
+      <div className="flex flex-col items-center justify-center min-h-[80vh] w-full max-w-lg mx-auto px-1">
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -111,11 +111,11 @@ export default function Register() {
             </p>
           </div>
 
-          <div className="glass-panel p-8 rounded-2xl">
+          <div className="glass-panel p-4 sm:p-8 rounded-2xl">
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
                 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <FormField
                     control={form.control}
                     name="name"
@@ -146,10 +146,20 @@ export default function Register() {
                 </div>
 
                 <p className="text-xs text-muted-foreground -mt-4">
-                  텔레그램 @username을 입력하세요. 가입 후 봇(@천상의운세)에게 /start를 보내면 운세 알림이 자동 연결됩니다.
+                  텔레그램 @username을 입력하세요. 가입 후{" "}
+                  <a
+                    href="https://t.me/ricky_lucky_guardian_bot"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-primary underline underline-offset-2"
+                    data-testid="link-telegram-bot-register"
+                  >
+                    @ricky_lucky_guardian_bot
+                  </a>
+                  에게 /start를 보내면 운세 알림이 자동 연결됩니다.
                 </p>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <FormField
                     control={form.control}
                     name="birthDate"
@@ -179,7 +189,7 @@ export default function Register() {
                   />
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <FormField
                     control={form.control}
                     name="gender"
@@ -227,7 +237,7 @@ export default function Register() {
                   />
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <FormField
                     control={form.control}
                     name="birthCountry"
