@@ -18,6 +18,7 @@ function Router() {
       <Route path="/dashboard/:telegramId" component={Dashboard} />
       <Route path="/settings/:telegramId" component={Settings} />
       <Route path="/simulator" component={Simulator} />
+      <Route path="/test" component={Simulator} />
       <Route component={NotFound} />
     </Switch>
   );
