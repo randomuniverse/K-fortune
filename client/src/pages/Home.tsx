@@ -12,8 +12,12 @@ export default function Home() {
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    if (telegramIdInput.trim()) {
-      setLocation(`/dashboard/${telegramIdInput.trim()}`);
+    let id = telegramIdInput.trim();
+    if (id.startsWith("@")) {
+      id = id.substring(1);
+    }
+    if (id) {
+      setLocation(`/dashboard/${id}`);
     }
   };
 
@@ -88,12 +92,12 @@ export default function Home() {
             <div>
               <h3 className="text-2xl font-serif text-white mb-2">다시 오셨나요?</h3>
               <p className="text-muted-foreground text-sm">
-                텔레그램 ID를 입력하여 대시보드와 과거 운세를 확인하세요.
+                가입 시 사용한 텔레그램 @username을 입력하세요.
               </p>
             </div>
             <form onSubmit={handleLogin} className="w-full mt-auto flex gap-2">
               <Input 
-                placeholder="ID 또는 핸들명" 
+                placeholder="@username" 
                 value={telegramIdInput}
                 onChange={(e) => setTelegramIdInput(e.target.value)}
                 className="bg-black/20 border-white/10 focus:border-primary/50 text-white placeholder:text-white/20"

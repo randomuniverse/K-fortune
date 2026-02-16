@@ -26,10 +26,10 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getUserByTelegramId(telegramId: string): Promise<User | undefined> {
-    const [user] = await db.select().from(users).where(eq(users.telegramId, telegramId));
+    const normalized = telegramId.replace(/^@/, '');
+    const [user] = await db.select().from(users).where(eq(users.telegramId, normalized));
     if (user) return user;
-    const handle = telegramId.replace(/^@/, '');
-    const [byHandle] = await db.select().from(users).where(eq(users.telegramHandle, handle));
+    const [byHandle] = await db.select().from(users).where(eq(users.telegramHandle, normalized));
     return byHandle;
   }
 
@@ -39,12 +39,19 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateUser(telegramId: string, data: Partial<InsertUser>): Promise<User | undefined> {
+    const normalized = telegramId.replace(/^@/, '');
     const [updated] = await db
       .update(users)
       .set(data)
-      .where(eq(users.telegramId, telegramId))
+      .where(eq(users.telegramId, normalized))
       .returning();
-    return updated;
+    if (updated) return updated;
+    const [byHandle] = await db
+      .update(users)
+      .set(data)
+      .where(eq(users.telegramHandle, normalized))
+      .returning();
+    return byHandle;
   }
 
   async createFortune(fortune: InsertFortune): Promise<Fortune> {

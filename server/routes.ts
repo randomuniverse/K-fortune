@@ -17,6 +17,17 @@ export async function registerRoutes(
     try {
       const input = api.users.create.input.parse(req.body);
       
+      let telegramId = input.telegramId.trim();
+      if (telegramId.startsWith("@")) {
+        telegramId = telegramId.substring(1);
+      }
+      input.telegramId = telegramId;
+
+      const isNumericId = /^\d+$/.test(telegramId);
+      if (!isNumericId && !input.telegramHandle) {
+        input.telegramHandle = telegramId;
+      }
+
       const existing = await storage.getUserByTelegramId(input.telegramId);
       if (existing) {
         return res.status(409).json({ message: "User already exists", telegramId: existing.telegramId });
@@ -36,7 +47,9 @@ export async function registerRoutes(
   });
 
   app.get(api.users.get.path, async (req, res) => {
-    const user = await storage.getUserByTelegramId(req.params.telegramId);
+    let telegramId = req.params.telegramId;
+    if (telegramId.startsWith("@")) telegramId = telegramId.substring(1);
+    const user = await storage.getUserByTelegramId(telegramId);
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
@@ -45,8 +58,10 @@ export async function registerRoutes(
 
   app.put(api.users.update.path, async (req, res) => {
     try {
+      let telegramId = req.params.telegramId;
+      if (telegramId.startsWith("@")) telegramId = telegramId.substring(1);
       const data = updateUserSchema.parse(req.body);
-      const user = await storage.updateUser(req.params.telegramId, data);
+      const user = await storage.updateUser(telegramId, data);
       if (!user) {
         return res.status(404).json({ message: 'User not found' });
       }

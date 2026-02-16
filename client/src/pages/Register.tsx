@@ -21,7 +21,8 @@ const MBTI_TYPES = [
 ];
 
 const registerSchema = insertUserSchema.extend({
-  telegramHandle: z.string().optional(),
+  telegramId: z.string().min(1, "텔레그램 아이디를 입력해주세요"),
+  telegramHandle: z.string().nullable().optional(),
   telegramChatId: z.string().nullable().optional(),
   preferredDeliveryTime: z.string().default("07:00"),
   mbti: z.string().nullable().optional(),
@@ -51,10 +52,17 @@ export default function Register() {
   });
 
   const onSubmit = (data: InsertUser) => {
-    const isNumericId = /^\d+$/.test(data.telegramId);
+    let telegramId = data.telegramId.trim();
+    if (telegramId.startsWith("@")) {
+      telegramId = telegramId.substring(1);
+    }
+
+    const isNumericId = /^\d+$/.test(telegramId);
     const payload = {
       ...data,
-      telegramChatId: isNumericId ? data.telegramId : null,
+      telegramId,
+      telegramHandle: isNumericId ? (data.telegramHandle || null) : telegramId,
+      telegramChatId: isNumericId ? telegramId : null,
       mbti: data.mbti || null,
       birthCountry: data.birthCountry || null,
       birthCity: data.birthCity || null,
@@ -99,7 +107,7 @@ export default function Register() {
           <div className="text-center mb-8">
             <h2 className="text-3xl font-serif text-glow mb-2">여정 시작하기</h2>
             <p className="text-muted-foreground">
-              태어난 정보를 입력하여 별들과 정렬하세요. 텔레그램 ID를 통해 매일 운세를 보내드립니다.
+              태어난 정보를 입력하여 별들과 정렬하세요. 텔레그램을 통해 매일 운세를 보내드립니다.
             </p>
           </div>
 
@@ -124,12 +132,12 @@ export default function Register() {
 
                   <FormField
                     control={form.control}
-                    name="telegramHandle"
+                    name="telegramId"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-primary/90">텔레그램 핸들 (선택)</FormLabel>
+                        <FormLabel className="text-primary/90">텔레그램 아이디</FormLabel>
                         <FormControl>
-                          <Input placeholder="@username" {...field} value={field.value || ""} className={inputClass} data-testid="input-telegram-handle" />
+                          <Input placeholder="@username 또는 숫자ID" {...field} className={inputClass} data-testid="input-telegram-id" />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -137,20 +145,9 @@ export default function Register() {
                   />
                 </div>
 
-                <FormField
-                  control={form.control}
-                  name="telegramId"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="text-primary/90">텔레그램 사용자 ID (숫자)</FormLabel>
-                      <FormControl>
-                        <Input placeholder="123456789" {...field} className={inputClass} data-testid="input-telegram-id" />
-                      </FormControl>
-                      <p className="text-xs text-muted-foreground">텔레그램 @userinfobot 등을 통해 확인 가능한 숫자 ID입니다.</p>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                <p className="text-xs text-muted-foreground -mt-4">
+                  텔레그램 @username을 입력하세요. 가입 후 봇(@천상의운세)에게 /start를 보내면 운세 알림이 자동 연결됩니다.
+                </p>
 
                 <div className="grid grid-cols-2 gap-4">
                   <FormField
