@@ -433,7 +433,13 @@ export async function registerRoutes(
         gender: genderVal,
       });
 
-      res.json(result);
+      res.json({
+        ...result,
+        sajuChart,
+        sajuPersonality,
+        ziwei: ziweiResult,
+        zodiac: { sign: zodiacSign, info: zodiacInfo },
+      });
     } catch (error) {
       console.error("[Simulate Guardian] Error:", error);
       res.status(500).json({ message: "Simulation failed" });
@@ -467,7 +473,13 @@ export async function registerRoutes(
         zodiac: { sign: zodiacSign, info: zodiacInfo },
       });
 
-      res.json(result);
+      res.json({
+        ...result,
+        sajuChart,
+        sajuPersonality,
+        ziwei: ziweiResult,
+        zodiac: { sign: zodiacSign, info: zodiacInfo },
+      });
     } catch (error) {
       console.error("[Simulate Yearly] Error:", error);
       res.status(500).json({ message: "Simulation failed" });

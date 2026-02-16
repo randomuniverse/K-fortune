@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, Play, Sparkles, TrendingUp, Heart, Briefcase, AlertTriangle, Lightbulb, Search, Activity } from "lucide-react";
+import { Loader2, Play, Sparkles, TrendingUp, Heart, Briefcase, AlertTriangle, Lightbulb, Search, Activity, Star, Sun } from "lucide-react";
 
 export default function Simulator() {
   const [form, setForm] = useState({
@@ -123,11 +123,36 @@ export default function Simulator() {
         )}
 
         <Tabs defaultValue="guardian" className="w-full">
-          <TabsList className="bg-white/5 border border-white/10">
+          <TabsList className="bg-white/5 border border-white/10 flex-wrap gap-1">
+            <TabsTrigger value="saju" data-testid="tab-saju">사주팔자</TabsTrigger>
+            <TabsTrigger value="ziwei" data-testid="tab-ziwei">자미두수</TabsTrigger>
             <TabsTrigger value="guardian" data-testid="tab-guardian">가디언 리포트</TabsTrigger>
             <TabsTrigger value="yearly" data-testid="tab-yearly">2026년 운세</TabsTrigger>
             <TabsTrigger value="json" data-testid="tab-json">Raw JSON</TabsTrigger>
           </TabsList>
+
+          <TabsContent value="saju">
+            {(resultGuardian?.sajuChart || resultYearly?.sajuChart) ? (
+              <SajuDisplay
+                chart={resultGuardian?.sajuChart || resultYearly?.sajuChart}
+                personality={resultGuardian?.sajuPersonality || resultYearly?.sajuPersonality}
+              />
+            ) : (
+              <div className="text-center p-10 text-white/20" data-testid="text-saju-empty">
+                시뮬레이션을 실행하면 사주팔자 분석 결과가 표시됩니다.
+              </div>
+            )}
+          </TabsContent>
+
+          <TabsContent value="ziwei">
+            {(resultGuardian?.ziwei || resultYearly?.ziwei) ? (
+              <ZiweiDisplay ziwei={resultGuardian?.ziwei || resultYearly?.ziwei} />
+            ) : (
+              <div className="text-center p-10 text-white/20" data-testid="text-ziwei-empty">
+                시뮬레이션을 실행하면 자미두수 분석 결과가 표시됩니다.
+              </div>
+            )}
+          </TabsContent>
 
           <TabsContent value="guardian">
             {resultGuardian ? (
@@ -232,6 +257,200 @@ export default function Simulator() {
           </TabsContent>
         </Tabs>
       </div>
+    </div>
+  );
+}
+
+function SajuDisplay({ chart, personality }: { chart: any; personality: any }) {
+  if (!chart) return null;
+  const pillars = [
+    { label: "년주", stem: chart.yearStem, branch: chart.yearBranch },
+    { label: "월주", stem: chart.monthStem, branch: chart.monthBranch },
+    { label: "일주", stem: chart.dayStem, branch: chart.dayBranch },
+    { label: "시주", stem: chart.hourStem, branch: chart.hourBranch },
+  ];
+
+  return (
+    <div className="space-y-4" data-testid="result-saju">
+      <div className="flex items-center gap-2 mb-2">
+        <Star className="w-5 h-5 text-amber-400" />
+        <h2 className="text-lg font-bold text-amber-300">사주팔자 (四柱八字)</h2>
+      </div>
+
+      <Card className="bg-amber-500/10 border-amber-500/20">
+        <CardContent className="p-4">
+          <h3 className="text-sm font-bold text-amber-300 mb-3">사주 원국</h3>
+          <div className="grid grid-cols-4 gap-2 text-center">
+            {pillars.map(p => (
+              <div key={p.label} className="space-y-1">
+                <div className="text-[10px] text-white/40">{p.label}</div>
+                <div className="text-lg font-bold text-amber-200">{p.stem}</div>
+                <div className="text-lg font-bold text-amber-400">{p.branch}</div>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+
+      {chart.dayMaster && (
+        <Card className="bg-amber-500/5 border-amber-500/15">
+          <CardContent className="p-4">
+            <h3 className="text-sm font-bold text-amber-300 mb-2">일주 분석</h3>
+            <div className="grid grid-cols-2 gap-3 text-xs">
+              <div><span className="text-white/40">일간: </span><span className="text-white/80">{chart.dayMaster}</span></div>
+              {chart.dayMasterElement && <div><span className="text-white/40">오행: </span><span className="text-white/80">{chart.dayMasterElement}</span></div>}
+              {chart.dayMasterStrength && <div><span className="text-white/40">강약: </span><span className="text-white/80">{chart.dayMasterStrength}</span></div>}
+              {chart.yongshin && <div><span className="text-white/40">용신: </span><span className="text-white/80">{chart.yongshin}</span></div>}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {chart.fiveElementRatio && (
+        <Card className="bg-amber-500/5 border-amber-500/15">
+          <CardContent className="p-4">
+            <h3 className="text-sm font-bold text-amber-300 mb-2">오행 비율</h3>
+            <div className="grid grid-cols-5 gap-2 text-center text-xs">
+              {Object.entries(chart.fiveElementRatio as Record<string, number>).map(([el, val]) => (
+                <div key={el}>
+                  <div className="text-white/40">{el}</div>
+                  <div className="text-amber-200 font-bold">{val}</div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {chart.tenGods && (
+        <Card className="bg-amber-500/5 border-amber-500/15">
+          <CardContent className="p-4">
+            <h3 className="text-sm font-bold text-amber-300 mb-2">십신 (十神)</h3>
+            <div className="grid grid-cols-4 gap-2 text-center text-xs">
+              {Object.entries(chart.tenGods as Record<string, string>).map(([pos, god]) => (
+                <div key={pos}>
+                  <div className="text-white/40">{pos}</div>
+                  <div className="text-amber-200">{god as string}</div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {chart.specialCharacteristics && chart.specialCharacteristics.length > 0 && (
+        <Card className="bg-amber-500/5 border-amber-500/15">
+          <CardContent className="p-4">
+            <h3 className="text-sm font-bold text-amber-300 mb-2">특수 신살</h3>
+            <div className="flex flex-wrap gap-2">
+              {chart.specialCharacteristics.map((s: string, i: number) => (
+                <span key={i} className="text-xs bg-amber-500/20 text-amber-300 px-2 py-1 rounded">{s}</span>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {chart.daeunCycles && chart.daeunCycles.length > 0 && (
+        <Card className="bg-amber-500/5 border-amber-500/15">
+          <CardContent className="p-4">
+            <h3 className="text-sm font-bold text-amber-300 mb-2">대운 흐름</h3>
+            <div className="grid grid-cols-3 sm:grid-cols-5 gap-2 text-xs">
+              {chart.daeunCycles.map((d: any, i: number) => (
+                <div key={i} className="text-center bg-black/20 rounded p-2">
+                  <div className="text-white/40">{d.startAge}~{d.endAge}세</div>
+                  <div className="text-amber-200 font-bold">{d.stem}{d.branch}</div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {personality && (
+        <Card className="bg-amber-500/5 border-amber-500/15">
+          <CardContent className="p-4">
+            <h3 className="text-sm font-bold text-amber-300 mb-2">성격 분석</h3>
+            <p className="text-xs text-white/70 leading-relaxed whitespace-pre-line">{typeof personality === 'string' ? personality : JSON.stringify(personality, null, 2)}</p>
+          </CardContent>
+        </Card>
+      )}
+    </div>
+  );
+}
+
+function ZiweiDisplay({ ziwei }: { ziwei: any }) {
+  if (!ziwei) return null;
+
+  return (
+    <div className="space-y-4" data-testid="result-ziwei">
+      <div className="flex items-center gap-2 mb-2">
+        <Sun className="w-5 h-5 text-purple-400" />
+        <h2 className="text-lg font-bold text-purple-300">자미두수 (紫微斗數)</h2>
+      </div>
+
+      {ziwei.bureau && (
+        <Card className="bg-purple-500/10 border-purple-500/20">
+          <CardContent className="p-4">
+            <h3 className="text-sm font-bold text-purple-300 mb-2">기본 정보</h3>
+            <div className="grid grid-cols-2 gap-3 text-xs">
+              {ziwei.bureau && <div><span className="text-white/40">국: </span><span className="text-white/80">{ziwei.bureau}</span></div>}
+              {ziwei.lifePalace && <div><span className="text-white/40">명궁: </span><span className="text-white/80">{ziwei.lifePalace}</span></div>}
+              {ziwei.bodyPalace && <div><span className="text-white/40">신궁: </span><span className="text-white/80">{ziwei.bodyPalace}</span></div>}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {ziwei.palaces && ziwei.palaces.length > 0 && (
+        <Card className="bg-purple-500/10 border-purple-500/20">
+          <CardContent className="p-4">
+            <h3 className="text-sm font-bold text-purple-300 mb-3">십이궁 배치</h3>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+              {ziwei.palaces.map((palace: any, i: number) => (
+                <div key={i} className="bg-black/20 rounded p-3">
+                  <div className="text-xs font-bold text-purple-300 mb-1">{palace.name || palace.palace}</div>
+                  {palace.branch && <div className="text-[10px] text-white/30">{palace.branch}</div>}
+                  {palace.stars && palace.stars.length > 0 && (
+                    <div className="flex flex-wrap gap-1 mt-1">
+                      {palace.stars.map((star: string, j: number) => (
+                        <span key={j} className="text-[10px] bg-purple-500/20 text-purple-300 px-1 rounded">{star}</span>
+                      ))}
+                    </div>
+                  )}
+                  {palace.interpretation && (
+                    <p className="text-[10px] text-white/50 mt-1 line-clamp-2">{palace.interpretation}</p>
+                  )}
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {ziwei.majorStars && ziwei.majorStars.length > 0 && (
+        <Card className="bg-purple-500/5 border-purple-500/15">
+          <CardContent className="p-4">
+            <h3 className="text-sm font-bold text-purple-300 mb-2">주요 성수 (14 主星)</h3>
+            <div className="flex flex-wrap gap-2">
+              {ziwei.majorStars.map((star: any, i: number) => (
+                <span key={i} className="text-xs bg-purple-500/20 text-purple-300 px-2 py-1 rounded">
+                  {typeof star === 'string' ? star : `${star.name} (${star.palace || ''})`}
+                </span>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {!ziwei.palaces && !ziwei.majorStars && (
+        <Card className="bg-purple-500/5 border-purple-500/15">
+          <CardContent className="p-4">
+            <h3 className="text-sm font-bold text-purple-300 mb-2">자미두수 원국 데이터</h3>
+            <pre className="text-[11px] text-white/60 overflow-auto max-h-96 whitespace-pre-wrap">{JSON.stringify(ziwei, null, 2)}</pre>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }
