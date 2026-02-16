@@ -1,0 +1,70 @@
+앱의 퀄리티 검증을 위해, 텔레그램 ID가 없는 사람들의 사주 정보로도 리포트를 생성해볼 수 있는 **[운명 시뮬레이터(Admin Mode)]**가 필요해.
+기존 로직을 해치지 말고, 별도의 API와 페이지를 추가해줘.
+
+### 1. `server/routes.ts` 수정 (시뮬레이션 API 추가)
+텔레그램 ID 없이, 클라이언트에서 보낸 생년월일 데이터를 받아 즉시 리포트를 생성하는 API 엔드포인트 2개를 추가해줘.
+(`calculateFullSaju`, `calculateZiWei` 등을 import해서 직접 계산 후 엔진에 넘겨야 함)
+
+```typescript
+// [신규] 관리자용 가디언 리포트 시뮬레이션 API
+app.post("/api/simulate/guardian", async (req, res) => {
+  try {
+    const { name, birthDate, birthTime, gender } = req.body;
+    
+    // 1. 사주/자미두수/별자리 즉시 계산
+    const genderVal = (gender === "여" || gender === "female") ? "female" : "male";
+    const sajuChart = calculateFullSaju(birthDate, birthTime, genderVal);
+    
+    const [y, m, d] = birthDate.split('-').map(Number);
+    const h = parseInt(birthTime.split(':')[0]);
+    const ziweiResult = calculateZiWei(y, m, d, h, genderVal);
+    
+    const zodiacSign = getZodiacSign(birthDate);
+    const zodiacInfo = getZodiacInfo(birthDate);
+
+    // 2. 엔진 호출 (Saju Personality 분석 포함)
+    const sajuPersonality = interpretSaju(sajuChart); // 기존 함수 활용
+
+    const result = await generateGuardianReport({
+      name,
+      sajuChart,
+      sajuPersonality,
+      ziwei: ziweiResult,
+      zodiac: { sign: zodiacSign, info: zodiacInfo }
+    });
+
+    res.json(result);
+  } catch (error) {
+    console.error("Simulation Error:", error);
+    res.status(500).json({ message: "Simulation Failed" });
+  }
+});
+
+// [신규] 관리자용 2026년 운세 시뮬레이션 API
+app.post("/api/simulate/yearly", async (req, res) => {
+  try {
+    const { name, birthDate, birthTime, gender, year = 2026 } = req.body;
+    
+    // 계산 로직은 위와 동일
+    const genderVal = (gender === "여" || gender === "female") ? "female" : "male";
+    const sajuChart = calculateFullSaju(birthDate, birthTime, genderVal);
+    const [y, m, d] = birthDate.split('-').map(Number);
+    const h = parseInt(birthTime.split(':')[0]);
+    const ziweiResult = calculateZiWei(y, m, d, h, genderVal);
+    const zodiacSign = getZodiacSign(birthDate);
+    const zodiacInfo = getZodiacInfo(birthDate);
+
+    const result = await generateYearlyFortune({
+      name,
+      year,
+      saju: sajuChart,
+      ziwei: ziweiResult,
+      zodiac: { sign: zodiacSign, info: zodiacInfo }
+    });
+
+    res.json(result);
+  } catch (error) {
+    console.error("Yearly Sim Error:", error);
+    res.status(500).json({ message: "Simulation Failed" });
+  }
+});

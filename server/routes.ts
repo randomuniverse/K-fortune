@@ -406,5 +406,73 @@ export async function registerRoutes(
     res.json(fortunes);
   });
 
+  app.post("/api/simulate/guardian", async (req, res) => {
+    try {
+      const { name, birthDate, birthTime, gender } = req.body;
+      if (!name || !birthDate || !birthTime) {
+        return res.status(400).json({ message: "name, birthDate, birthTime are required" });
+      }
+
+      const genderVal = (gender === "여" || gender === "female") ? "female" : "male" as "male" | "female";
+      const sajuChart = calculateFullSaju(birthDate, birthTime, genderVal);
+      const sajuPersonality = analyzeSajuPersonality(sajuChart);
+
+      const [y, m, d] = birthDate.split('-').map(Number);
+      const h = parseInt(birthTime.split(':')[0]);
+      const ziweiResult = calculateZiWei(y, m, d, h, genderVal);
+
+      const zodiacSign = getZodiacSign(birthDate);
+      const zodiacInfo = getZodiacInfo(birthDate);
+
+      const result = await generateGuardianReport({
+        name,
+        sajuChart,
+        sajuPersonality,
+        ziwei: ziweiResult,
+        zodiac: { sign: zodiacSign, info: zodiacInfo },
+        gender: genderVal,
+      });
+
+      res.json(result);
+    } catch (error) {
+      console.error("[Simulate Guardian] Error:", error);
+      res.status(500).json({ message: "Simulation failed" });
+    }
+  });
+
+  app.post("/api/simulate/yearly", async (req, res) => {
+    try {
+      const { name, birthDate, birthTime, gender, year = 2026 } = req.body;
+      if (!name || !birthDate || !birthTime) {
+        return res.status(400).json({ message: "name, birthDate, birthTime are required" });
+      }
+
+      const genderVal = (gender === "여" || gender === "female") ? "female" : "male" as "male" | "female";
+      const sajuChart = calculateFullSaju(birthDate, birthTime, genderVal);
+      const sajuPersonality = analyzeSajuPersonality(sajuChart);
+
+      const [y, m, d] = birthDate.split('-').map(Number);
+      const h = parseInt(birthTime.split(':')[0]);
+      const ziweiResult = calculateZiWei(y, m, d, h, genderVal);
+
+      const zodiacSign = getZodiacSign(birthDate);
+      const zodiacInfo = getZodiacInfo(birthDate);
+
+      const result = await generateYearlyFortune({
+        name,
+        year,
+        sajuChart,
+        sajuPersonality,
+        ziwei: ziweiResult,
+        zodiac: { sign: zodiacSign, info: zodiacInfo },
+      });
+
+      res.json(result);
+    } catch (error) {
+      console.error("[Simulate Yearly] Error:", error);
+      res.status(500).json({ message: "Simulation failed" });
+    }
+  });
+
   return httpServer;
 }
