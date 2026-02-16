@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Layout } from "@/components/Layout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -6,9 +6,23 @@ import { useLocation } from "wouter";
 import { motion } from "framer-motion";
 import { ArrowRight, Star, Sparkles, Moon } from "lucide-react";
 
+const LAST_USER_KEY = "celestial_fortune_last_user";
+
 export default function Home() {
   const [, setLocation] = useLocation();
   const [telegramIdInput, setTelegramIdInput] = useState("");
+  const [lastUser, setLastUser] = useState<{ telegramId: string; name: string } | null>(null);
+
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(LAST_USER_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        setLastUser(parsed);
+        setTelegramIdInput(parsed.telegramId);
+      }
+    } catch {}
+  }, []);
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
@@ -91,10 +105,26 @@ export default function Home() {
             </div>
             <div>
               <h3 className="text-2xl font-serif text-white mb-2">다시 오셨나요?</h3>
-              <p className="text-muted-foreground text-sm">
-                가입 시 사용한 텔레그램 @username을 입력하세요.
-              </p>
+              {lastUser ? (
+                <p className="text-muted-foreground text-sm">
+                  <span className="text-primary font-medium">{lastUser.name}</span>님, 바로 이동하거나 다른 아이디를 입력하세요.
+                </p>
+              ) : (
+                <p className="text-muted-foreground text-sm">
+                  가입 시 사용한 텔레그램 @username을 입력하세요.
+                </p>
+              )}
             </div>
+            {lastUser && (
+              <Button
+                variant="mystical"
+                className="w-full"
+                onClick={() => setLocation(`/dashboard/${lastUser.telegramId}`)}
+                data-testid="button-quick-login"
+              >
+                {lastUser.name}님의 대시보드로 이동 <ArrowRight className="ml-2 w-4 h-4" />
+              </Button>
+            )}
             <form onSubmit={handleLogin} className="w-full mt-auto flex gap-2">
               <Input 
                 placeholder="@username" 

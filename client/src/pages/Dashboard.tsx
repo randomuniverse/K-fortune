@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { FortuneCard } from "@/components/FortuneCard";
 import { Loader2, Sparkles, AlertCircle, Send, Sun, CalendarDays, Compass, Star, Moon, User, LayoutDashboard, MessageCircle, ExternalLink } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useToast } from "@/hooks/use-toast";
 import { getZodiacSign, getZodiacInfo } from "@shared/schema";
@@ -57,6 +57,17 @@ export default function Dashboard() {
   const [yearlySubTab, setYearlySubTab] = useState<YearlyTabId>("guardian");
   const [destinySubTab, setDestinySubTab] = useState<DestinyTabId>("summary");
   const [fortunesShown, setFortunesShown] = useState(FORTUNES_PER_PAGE);
+
+  useEffect(() => {
+    if (user) {
+      try {
+        localStorage.setItem("celestial_fortune_last_user", JSON.stringify({
+          telegramId: user.telegramId,
+          name: user.name,
+        }));
+      } catch {}
+    }
+  }, [user]);
 
   if (isUserLoading) {
     return (
@@ -168,7 +179,7 @@ export default function Dashboard() {
                 <><Sparkles className="mr-2 h-5 w-5" /> 오늘의 운세 보기</>
               )}
             </Button>
-            {hasTodayFortune && (
+            {hasTodayFortune && user.telegramChatId && (
               <Button
                 variant="outline"
                 size="lg"

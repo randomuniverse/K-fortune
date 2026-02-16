@@ -254,21 +254,27 @@ export function YearlyFortuneCard({ chart, userName, telegramId, yearlySubTab, z
         </div>
 
         <div className="flex-1 space-y-3">
-          <div className="bg-white/[0.03] rounded-lg p-3">
-            <p className="text-xs text-primary/80 font-medium mb-1">
-              <Compass className="w-3 h-3 inline mr-1" />
-              올해의 키워드
-            </p>
-            <p className="text-sm text-white/80 leading-relaxed">
-              {aiYearly?.keywords && aiYearly.keywords.length > 0
-                ? (aiYearly.keywords as string[]).map((kw: string, i: number) => (
-                    <span key={i}>
-                      {kw}{i < (aiYearly.keywords as string[]).length - 1 ? " · " : ""}
-                    </span>
-                  ))
-                : yearlyFortune.advice}
-            </p>
-          </div>
+          {aiYearly?.keywords && aiYearly.keywords.length > 0 ? (
+            <div className="bg-white/[0.03] rounded-lg p-3">
+              <p className="text-xs text-primary/80 font-medium mb-1">
+                <Compass className="w-3 h-3 inline mr-1" />
+                올해의 키워드
+              </p>
+              <p className="text-sm text-white/80 leading-relaxed">
+                {(aiYearly.keywords as string[]).map((kw: string, i: number) => (
+                  <span key={i}>
+                    {kw}{i < (aiYearly.keywords as string[]).length - 1 ? " · " : ""}
+                  </span>
+                ))}
+              </p>
+            </div>
+          ) : (
+            <div className="bg-white/[0.03] rounded-lg p-3">
+              <p className="text-xs text-muted-foreground">
+                아래에서 AI 총평을 생성하면 올해의 키워드와 상세 분석이 여기에 표시됩니다.
+              </p>
+            </div>
+          )}
         </div>
       </div>
 
