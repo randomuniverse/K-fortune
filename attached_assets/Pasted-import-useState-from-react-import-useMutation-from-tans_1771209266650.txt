@@ -1,0 +1,151 @@
+import { useState } from "react";
+import { useMutation } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Loader2, Play } from "lucide-react";
+
+export default function Simulator() {
+  const [form, setForm] = useState({
+    name: "테스트",
+    birthDate: "1990-01-01",
+    birthTime: "12:00",
+    gender: "male"
+  });
+  const [resultGuardian, setResultGuardian] = useState<any>(null);
+  const [resultYearly, setResultYearly] = useState<any>(null);
+
+  const simulateGuardian = useMutation({
+    mutationFn: async () => {
+      const res = await apiRequest("POST", "/api/simulate/guardian", form);
+      return res.json();
+    },
+    onSuccess: (data) => setResultGuardian(data)
+  });
+
+  const simulateYearly = useMutation({
+    mutationFn: async () => {
+      const res = await apiRequest("POST", "/api/simulate/yearly", form);
+      return res.json();
+    },
+    onSuccess: (data) => setResultYearly(data)
+  });
+
+  return (
+    <div className="min-h-screen bg-slate-950 text-white p-8">
+      <div className="max-w-4xl mx-auto space-y-8">
+        <h1 className="text-3xl font-bold text-indigo-400">🔮 운명 시뮬레이터 (God Mode)</h1>
+        
+        {/* 입력 폼 */}
+        <Card className="bg-white/5 border-white/10">
+          <CardContent className="p-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>이름 (식별용)</Label>
+              <Input value={form.name} onChange={e => setForm({...form, name: e.target.value})} className="bg-black/20 border-white/10" />
+            </div>
+            <div className="space-y-2">
+              <Label>성별</Label>
+              <Select value={form.gender} onValueChange={v => setForm({...form, gender: v})}>
+                <SelectTrigger className="bg-black/20 border-white/10"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="male">남성</SelectItem>
+                  <SelectItem value="female">여성</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>생년월일</Label>
+              <Input type="date" value={form.birthDate} onChange={e => setForm({...form, birthDate: e.target.value})} className="bg-black/20 border-white/10" />
+            </div>
+            <div className="space-y-2">
+              <Label>태어난 시간</Label>
+              <Input type="time" value={form.birthTime} onChange={e => setForm({...form, birthTime: e.target.value})} className="bg-black/20 border-white/10" />
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* 실행 버튼 */}
+        <div className="flex gap-4">
+          <Button 
+            onClick={() => simulateGuardian.mutate()} 
+            disabled={simulateGuardian.isPending}
+            className="flex-1 bg-indigo-600 hover:bg-indigo-700"
+          >
+            {simulateGuardian.isPending ? <Loader2 className="animate-spin mr-2"/> : <Play className="mr-2"/>} 
+            가디언 리포트 생성
+          </Button>
+          <Button 
+            onClick={() => simulateYearly.mutate()} 
+            disabled={simulateYearly.isPending}
+            className="flex-1 bg-violet-600 hover:bg-violet-700"
+          >
+             {simulateYearly.isPending ? <Loader2 className="animate-spin mr-2"/> : <Play className="mr-2"/>}
+             2026년 운세 생성
+          </Button>
+        </div>
+
+        {/* 결과 뷰어 */}
+        <Tabs defaultValue="guardian" className="w-full">
+          <TabsList className="bg-white/5">
+            <TabsTrigger value="guardian">가디언 리포트 결과</TabsTrigger>
+            <TabsTrigger value="yearly">2026년 운세 결과</TabsTrigger>
+            <TabsTrigger value="json">Raw JSON</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="guardian">
+            {resultGuardian ? (
+              <div className="p-4 bg-white/5 rounded-lg whitespace-pre-wrap leading-relaxed text-sm">
+                 {/* 여기에 간단히 텍스트로 뿌려주거나, 기존 컴포넌트를 재활용해도 됨 */}
+                 <h2 className="text-xl font-bold text-indigo-300 mb-4">{resultGuardian.coreEnergy}</h2>
+                 <div className="space-y-4">
+                   <div className="p-3 bg-black/20 rounded"><strong>운명의 추적:</strong><br/>{resultGuardian.pastInference}</div>
+                   <div className="p-3 bg-black/20 rounded"><strong>현재 딜레마:</strong><br/>{resultGuardian.currentState}</div>
+                   <div className="p-3 bg-black/20 rounded"><strong>병목:</strong><br/>{resultGuardian.bottleneck}</div>
+                   <div className="p-3 bg-black/20 rounded"><strong>솔루션:</strong><br/>{resultGuardian.solution}</div>
+                   <div className="p-3 bg-amber-900/20 border border-amber-500/20 rounded"><strong>비즈니스:</strong><br/>{resultGuardian.businessAdvice}</div>
+                   <div className="p-3 bg-pink-900/20 border border-pink-500/20 rounded"><strong>연애:</strong><br/>{resultGuardian.loveAdvice}</div>
+                 </div>
+              </div>
+            ) : <div className="text-center p-10 text-white/30">결과가 여기에 표시됩니다.</div>}
+          </TabsContent>
+
+          <TabsContent value="yearly">
+             {resultYearly ? (
+              <div className="p-4 bg-white/5 rounded-lg whitespace-pre-wrap leading-relaxed text-sm space-y-4">
+                 <h2 className="text-xl font-bold text-violet-300 mb-4">{resultYearly.keywords.join(", ")}</h2>
+                 <div className="p-4 bg-violet-500/10 border border-violet-500/20 rounded">
+                   <strong>총평:</strong><br/>{resultYearly.overallSummary}
+                 </div>
+                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="p-3 bg-black/20 rounded"><strong>사업운:</strong><br/>{resultYearly.businessFortune}</div>
+                    <div className="p-3 bg-black/20 rounded"><strong>연애운:</strong><br/>{resultYearly.loveFortune}</div>
+                    <div className="p-3 bg-black/20 rounded"><strong>건강운:</strong><br/>{resultYearly.healthFortune}</div>
+                 </div>
+                 <div className="mt-4">
+                   <strong>월별 흐름:</strong>
+                   <div className="grid grid-cols-3 gap-2 mt-2">
+                     {resultYearly.monthlyFlow.map((m: any) => (
+                       <div key={m.month} className="bg-black/30 p-2 rounded text-xs">
+                         <span className="text-indigo-400 font-bold">{m.month}월</span>: {m.summary.substring(0, 50)}...
+                       </div>
+                     ))}
+                   </div>
+                 </div>
+              </div>
+            ) : <div className="text-center p-10 text-white/30">결과가 여기에 표시됩니다.</div>}
+          </TabsContent>
+
+           <TabsContent value="json">
+            <pre className="bg-black p-4 rounded text-xs overflow-auto max-h-[500px] text-green-400">
+              {JSON.stringify(resultGuardian || resultYearly, null, 2)}
+            </pre>
+          </TabsContent>
+        </Tabs>
+      </div>
+    </div>
+  );
+}
