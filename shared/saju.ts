@@ -240,12 +240,14 @@ export function calculateMonthPillar(year: number, month: number, day: number, y
 }
 
 // ---------------------------------------------------------
-// [중요] 일주 계산 함수 (절대 건드리지 마세요! +2가 정답입니다)
+// 일주 계산: (JDN + 49) % 60 으로 육십갑자 인덱스 산출
+// 검증: 1975-06-10=丁亥, 2000-01-01=戊午, 1949-10-01=甲子
 // ---------------------------------------------------------
 export function calculateDayPillar(year: number, month: number, day: number): Pillar {
   const jdn = getJDN(year, month, day);
-  const stemIdx = ((jdn + 2) % 10 + 10) % 10; // 여기가 핵심입니다. +2 유지!
-  const branchIdx = ((jdn) % 12 + 12) % 12;
+  const sexagenaryCycle = ((jdn + 49) % 60 + 60) % 60;
+  const stemIdx = sexagenaryCycle % 10;
+  const branchIdx = sexagenaryCycle % 12;
   return makePillar(stemIdx, branchIdx);
 }
 
