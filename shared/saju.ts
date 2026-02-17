@@ -1,3 +1,5 @@
+import { Solar } from 'lunar-javascript';
+
 export const HEAVENLY_STEMS = ["갑", "을", "병", "정", "무", "기", "경", "신", "임", "계"] as const;
 export const HEAVENLY_STEMS_HANJA = ["甲", "乙", "丙", "丁", "戊", "己", "庚", "辛", "壬", "癸"] as const;
 
@@ -100,6 +102,8 @@ export interface SajuChart {
   hourPillar: Pillar;
   chineseZodiac: string;
   chineseZodiacBranch: string;
+  chineseZodiacDisplay: string;
+  lunarDate: string;
   yearTenGod: TenGod;
   monthTenGod: TenGod;
   hourTenGod: TenGod;
@@ -530,6 +534,39 @@ export function getChineseZodiac(year: number): { animal: string; branchIndex: n
   };
 }
 
+const STEM_COLOR_NAMES: Record<number, string> = {
+  0: "푸른",   // 갑 - 木양
+  1: "푸른",   // 을 - 木음
+  2: "붉은",   // 병 - 火양
+  3: "붉은",   // 정 - 火음
+  4: "황금",   // 무 - 土양
+  5: "황금",   // 기 - 土음
+  6: "하얀",   // 경 - 金양
+  7: "하얀",   // 신 - 金음
+  8: "검은",   // 임 - 水양
+  9: "검은",   // 계 - 水음
+};
+
+export function getChineseZodiacRich(yearPillar: Pillar): {
+  animal: string;
+  branchIndex: number;
+  colorName: string;
+  stemHanja: string;
+  branchHanja: string;
+  displayText: string;
+} {
+  const animal = CHINESE_ZODIAC_ANIMALS[yearPillar.branchIndex];
+  const colorName = STEM_COLOR_NAMES[yearPillar.stemIndex] || "";
+  return {
+    animal,
+    branchIndex: yearPillar.branchIndex,
+    colorName,
+    stemHanja: yearPillar.stemHanja,
+    branchHanja: yearPillar.branchHanja,
+    displayText: `${colorName} ${animal}의 해 (${yearPillar.stemHanja}${yearPillar.branchHanja})`,
+  };
+}
+
 export function calculateFullSaju(
   birthDate: string,
   birthTime: string,
@@ -549,7 +586,19 @@ export function calculateFullSaju(
   const dayPillar = calculateDayPillar(year, month, day);
   const hourPillar = calculateHourPillar(hour, minute, dayPillar.stemIndex);
 
-  const zodiac = getChineseZodiac(year);
+  const zodiacRich = getChineseZodiacRich(yearPillar);
+
+  let lunarDateStr = "";
+  try {
+    const solar = Solar.fromYmd(year, month, day);
+    const lunar = solar.getLunar();
+    const lunarMonth = lunar.getMonth();
+    const lunarDay = lunar.getDay();
+    const isLeapMonth = typeof lunar.isLeap === "function" && lunar.isLeap();
+    lunarDateStr = `음력 ${isLeapMonth ? "윤" : ""}${Math.abs(lunarMonth)}월 ${lunarDay}일`;
+  } catch {
+    lunarDateStr = "";
+  }
 
   const yearTenGod: TenGod = { name: getTenGodName(dayPillar.stemIndex, yearPillar.stemIndex) };
   const monthTenGod: TenGod = { name: getTenGodName(dayPillar.stemIndex, monthPillar.stemIndex) };
@@ -572,8 +621,10 @@ export function calculateFullSaju(
     monthPillar,
     dayPillar,
     hourPillar,
-    chineseZodiac: zodiac.animal,
-    chineseZodiacBranch: EARTHLY_BRANCHES[zodiac.branchIndex],
+    chineseZodiac: zodiacRich.animal,
+    chineseZodiacBranch: EARTHLY_BRANCHES[zodiacRich.branchIndex],
+    chineseZodiacDisplay: zodiacRich.displayText,
+    lunarDate: lunarDateStr,
     yearTenGod,
     monthTenGod,
     hourTenGod,

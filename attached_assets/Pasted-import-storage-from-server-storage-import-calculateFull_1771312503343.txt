@@ -1,0 +1,60 @@
+import { storage } from "./server/storage";
+import { calculateFullSaju } from "./shared/saju";
+
+async function seedRickyData() {
+  console.log("Seeding Ricky data...");
+
+  // 1. Check if user exists, or create him
+  let user = await storage.getUserByUsername("ricky");
+  if (!user) {
+    console.log("User 'ricky' not found. Creating...");
+    user = await storage.createUser({
+      username: "ricky",
+      password: "password123", // Dummy password
+      name: "Ricky",
+      birthDate: "1975-06-10",
+      birthTime: "14:30",
+      gender: "male",
+      mbti: "INTP"
+    });
+  }
+
+  // 2. Calculate base Saju data
+  // Note: 1975-06-10 is Eul-Myo (Wood Rabbit) year
+  const baseSaju = calculateFullSaju("1975-06-10", "14:30", "male");
+
+  // 3. Inject the specific display fields you requested
+  // 1975 is the Year of the Blue Rabbit (乙卯)
+  const enrichedSajuChart = {
+    ...baseSaju,
+    chineseZodiacDisplay: "푸른 토끼의 해 (을묘)", 
+    lunarDate: "음력 5월 1일" // Approx conversion for June 10, 1975
+  };
+
+  // 4. Update the user with the enriched chart
+  // Assuming 'updateUserSaju' or a similar method exists, or directly updating the record
+  // If storage doesn't have a direct update method, we might need to rely on the implementation details.
+  // Here we assume standard storage update capability:
+  
+  // Since we are in the server context, we can try to update directly if supported,
+  // or re-save the user if the ORM allows. 
+  // For this test, let's assume we can update the 'saju_chart' column.
+  
+  // *If you are using the 'updateUser' or specific saju update method defined in your storage:*
+  try {
+     // Force update the saju column for this user
+     // You might need to adjust this call based on your exact storage.ts interface
+     // This is a generic representation of the fix:
+     await storage.updateUser(user.id, { 
+       ...user,
+       sajuChart: enrichedSajuChart 
+     });
+     console.log("Success: Ricky's saju data updated with chineseZodiacDisplay and lunarDate.");
+  } catch (err) {
+     console.error("Failed to update Ricky:", err);
+  }
+}
+
+seedRickyData().then(() => {
+  console.log("Seed script finished.");
+}).catch(console.error);

@@ -77,7 +77,8 @@ export function SajuInfoCard({ chart, birthDate, birthTime, userName }: Props) {
         <h4 className="text-sm font-serif text-primary" data-testid="text-saju-title">사주 팔자</h4>
         <p className="text-xs text-muted-foreground">
           양력 {(() => { const [y, m, d] = birthDate.split("-"); return `${y}년 ${parseInt(m)}월 ${parseInt(d)}일`; })()} {birthTime}생
-          {" · "}{chart.chineseZodiac}띠 ({chart.chineseZodiacBranch})
+          {chart.lunarDate ? ` (${chart.lunarDate})` : ""}
+          {" · "}{chart.chineseZodiacDisplay || `${chart.chineseZodiac}띠`}
         </p>
       </div>
 

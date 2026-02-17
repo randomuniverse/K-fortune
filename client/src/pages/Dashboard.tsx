@@ -137,7 +137,7 @@ export default function Dashboard() {
     });
   };
 
-  const chineseZodiacAnimal = sajuData?.sajuChart?.chineseZodiac ? `${sajuData.sajuChart.chineseZodiac}띠` : "";
+  const chineseZodiacAnimal = sajuData?.sajuChart?.chineseZodiacDisplay || (sajuData?.sajuChart?.chineseZodiac ? `${sajuData.sajuChart.chineseZodiac}띠` : "");
   const infoItems = [
     `${user.birthDate} ${user.birthTime}생`,
     zodiacSign,

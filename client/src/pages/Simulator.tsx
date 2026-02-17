@@ -416,7 +416,7 @@ function SajuDisplay({ chart, personality }: { chart: any; personality: any }) {
             ))}
           </div>
           {chart.chineseZodiac && (
-            <div className="text-center mt-3 text-xs text-white/40">띠: {chart.chineseZodiac} ({chart.chineseZodiacBranch})</div>
+            <div className="text-center mt-3 text-xs text-white/40">{chart.chineseZodiacDisplay || `${chart.chineseZodiac}띠 (${chart.chineseZodiacBranch})`}</div>
           )}
         </CardContent>
       </Card>
