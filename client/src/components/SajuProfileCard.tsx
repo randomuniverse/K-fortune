@@ -5,7 +5,8 @@ import type { SajuChart } from "@shared/saju";
 import type { ZodiacInfo } from "@shared/schema";
 import { analyzeSajuPersonality } from "@shared/saju";
 import { calculateZiWei, generateDestinyInsight } from "@shared/ziwei";
-import type { SajuPersonality, SpecialSal, StructurePattern, YongShinRemedy } from "@shared/saju";
+import type { SajuPersonality, SpecialSal, StructurePattern, YongShinRemedy, DynamicDaewoonStar } from "@shared/saju";
+import { calculateDaewoonDynamicStars } from "@shared/saju";
 import { SajuInfoCard } from "./SajuInfoCard";
 import { ZodiacInfoCard } from "./ZodiacInfoCard";
 
@@ -136,6 +137,47 @@ export function SajuDeepAnalysis({ chart, birthDate, birthTime, userName }: Saju
           </div>
         </Section>
       )}
+
+      {(() => {
+        const currentYear = new Date().getFullYear();
+        const dynamicStars = calculateDaewoonDynamicStars(chart, currentYear);
+        if (dynamicStars.length === 0) return null;
+        const staticSalNames = personality.specialSals.map(s => s.name);
+        return (
+          <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.18, duration: 0.4 }}>
+            <Card className="relative overflow-visible border-0 p-0" data-testid="section-active-buffs">
+              <div className="absolute -inset-[1px] rounded-xl bg-gradient-to-r from-violet-500/40 via-fuchsia-500/40 to-amber-500/40 animate-pulse" style={{ animationDuration: "3s" }} />
+              <div className="relative bg-[hsl(270,30%,8%)] rounded-xl p-5 space-y-3">
+                <div className="flex items-center gap-2">
+                  <Sparkles className="w-4 h-4 text-fuchsia-400" />
+                  <h4 className="text-sm font-serif text-fuchsia-300" data-testid="text-dynamic-stars-title">현재 대운에서 발동 중인 힘 (Level Up!)</h4>
+                </div>
+                <div className="space-y-3">
+                  {dynamicStars.map((star, i) => {
+                    const isDouble = staticSalNames.includes(star.name);
+                    return (
+                      <div key={i} className="relative bg-gradient-to-r from-violet-500/15 to-fuchsia-500/15 border border-violet-400/25 rounded-xl p-4" data-testid={`card-dynamic-star-${i}`}>
+                        <div className="flex flex-wrap items-center gap-2 mb-2">
+                          <Zap className="w-4 h-4 text-violet-300" />
+                          <span className="text-sm font-bold text-violet-200" data-testid={`text-dynamic-star-name-${i}`}>{star.name} ({star.hanja})</span>
+                          {isDouble && (
+                            <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30 font-bold whitespace-nowrap" data-testid={`badge-double-${i}`}>x2 이중 활성화</span>
+                          )}
+                        </div>
+                        <div className="flex flex-wrap items-center gap-2 mb-2">
+                          <span className="text-[10px] px-2 py-0.5 rounded-full bg-violet-500/20 text-violet-300 border border-violet-500/30 whitespace-nowrap" data-testid={`badge-source-${i}`}>{star.source} 한정</span>
+                          <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 whitespace-nowrap" data-testid={`badge-active-${i}`}>발동 중</span>
+                        </div>
+                        <p className="text-xs text-white/70 leading-relaxed" data-testid={`text-dynamic-star-desc-${i}`}>{star.description}</p>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </Card>
+          </motion.div>
+        );
+      })()}
 
       <Section icon={Sparkles} title="하늘이 부여한 재능 & 구조" delay={0.2}>
         <p className="text-sm text-white/80 leading-relaxed mb-3">{personality.heavenlyGift}</p>
