@@ -649,6 +649,15 @@ export function calculateFullSaju(
 
 // ---- 연운 / 월운 분석 ----
 
+export interface DaeunClash {
+  daeunAge: number;
+  daeunYear: number;
+  daeunPillar: string;
+  yearPillar: string;
+  clashType: string;
+  description: string;
+}
+
 export interface YearlyFortune {
   year: number;
   yearPillar: Pillar;
@@ -660,6 +669,7 @@ export interface YearlyFortune {
   advice: string;
   luckyMonths: number[];
   cautiousMonths: number[];
+  daeunClash?: DaeunClash;
 }
 
 export interface MonthlyFortune {
@@ -915,7 +925,7 @@ function detectSpecialSal(chart: SajuChart): SpecialSal[] {
     });
   }
 
-  // 5. 홍염살 (紅艶殺) - 강렬한 이성 매력, 색정/구설수
+  // 5. 홍염살 (紅艶殺) - 강렬한 이성 매력 (년간 기준)
   const HONGYEOM_MAP: Record<number, number> = {
     0: 6,  // 갑 -> 오(午)
     1: 8,  // 을 -> 신(申)
@@ -930,13 +940,31 @@ function detectSpecialSal(chart: SajuChart): SpecialSal[] {
   };
   const yearStemIdx = chart.yearPillar.stemIndex;
   const hongyeomTarget = HONGYEOM_MAP[yearStemIdx];
-  const hasHongyeom = branches.some(b => b === hongyeomTarget);
-  if (hasHongyeom) {
+  const hasHongyeomYear = branches.some(b => b === hongyeomTarget);
+
+  // 홍염살 (일간 기준) - 일간이 보는 지지
+  const HONGYEOM_DAY_MAP: Record<number, number> = {
+    0: 6,  // 갑 -> 오(午)
+    1: 8,  // 을 -> 신(申)
+    2: 2,  // 병 -> 인(寅)
+    3: 7,  // 정 -> 미(未)
+    4: 6,  // 무 -> 오(午)
+    5: 6,  // 기 -> 오(午)
+    6: 10, // 경 -> 술(戌)
+    7: 9,  // 신 -> 유(酉)
+    8: 0,  // 임 -> 자(子)
+    9: 8,  // 계 -> 신(申)
+  };
+  const dayStemIdx = chart.dayPillar.stemIndex;
+  const hongyeomDayTarget = HONGYEOM_DAY_MAP[dayStemIdx];
+  const hasHongyeomDay = branches.some(b => b === hongyeomDayTarget);
+
+  if (hasHongyeomYear || hasHongyeomDay) {
     sals.push({
       name: "홍염살",
       hanja: "紅艶殺",
-      description: "이성에게 강렬한 매력을 발산하는 별입니다. 뛰어난 외모나 분위기로 이목을 끌며, 연애나 사교 방면에서 활발합니다. 다만 이성 관계에서 구설수나 감정적 파도에 휘말릴 수 있으니, 스스로 감정 관리를 잘하는 것이 열쇠입니다.",
-      personality: "불꽃 같은 매력 — 이성을 끌어당기는 자석",
+      description: "도화살보다 깊고 강렬한 매력의 살입니다. 이성에게 강렬한 끌림을 발산하며, 뛰어난 외모나 분위기로 이목을 끌어 연애나 사교 방면에서 활발합니다. 다만 이성 관계에서 구설수나 감정적 파도에 휘말릴 수 있으니, 스스로 감정 관리를 잘하는 것이 열쇠입니다.",
+      personality: "불꽃 같은 매력 — 도화보다 깊고 강렬한 이성 자석",
     });
   }
 
@@ -962,6 +990,99 @@ function detectSpecialSal(chart: SajuChart): SpecialSal[] {
       description: "백호(흰 호랑이)의 강인하고 날카로운 기운을 품고 있습니다. 결단력과 추진력이 뛰어나지만, 너무 강한 에너지가 대인관계에서 충돌을 일으킬 수 있습니다. 배우자 관계에서 주도권 싸움이 생기기 쉬우며, 본인의 기운이 센 만큼 부드러운 커뮤니케이션이 중요합니다.",
       personality: "흰 호랑이의 카리스마 — 강인하지만 날카로운 기운",
     });
+  }
+
+  // 7. 양인살 (羊刃殺) - 위기에 빛나는 칼날 같은 리더십
+  const YANGIN_MAP: Record<number, number> = {
+    0: 3,  // 갑 -> 묘(卯) 제왕지
+    2: 6,  // 병 -> 오(午) 제왕지
+    4: 6,  // 무 -> 오(午) 제왕지
+    6: 9,  // 경 -> 유(酉) 제왕지
+    8: 0,  // 임 -> 자(子) 제왕지
+  };
+  let hasYangin = false;
+  if (STEM_ELEMENTS[dayStemIdx].polarity === "양" && YANGIN_MAP[dayStemIdx] !== undefined) {
+    hasYangin = branches.some(b => b === YANGIN_MAP[dayStemIdx]);
+  }
+  if (dayStemIdx === 3 && chart.monthPillar.branchIndex === 6) {
+    hasYangin = true;
+  }
+  if (hasYangin) {
+    sals.push({
+      name: "양인살",
+      hanja: "羊刃殺",
+      description: "위기에 빛나는 칼날 같은 리더십을 가진 살입니다. 평소에는 잔잔하지만, 결정적인 순간에 폭발적인 추진력과 결단력을 발휘합니다. 군인, 경찰, 외과의, 기업가 등 강한 리더십이 필요한 분야에서 크게 빛납니다. 다만 에너지가 과도하면 주변과 충돌할 수 있으니 절제가 필요합니다.",
+      personality: "위기에 빛나는 칼날 — 폭발적 리더십의 소유자",
+    });
+  }
+
+  // 8. 천을귀인 (天乙貴人) - 절체절명의 순간 돕는 귀인의 기운
+  const CHEON_EUL_MAP: Record<number, number[]> = {
+    0: [1, 7],   // 갑 -> 축, 미
+    1: [0, 8],   // 을 -> 자, 신
+    2: [11, 9],  // 병 -> 해, 유
+    3: [11, 9],  // 정 -> 해, 유
+    4: [1, 7],   // 무 -> 축, 미
+    5: [0, 8],   // 기 -> 자, 신
+    6: [1, 7],   // 경 -> 축, 미 (일부 학파: 인, 오)
+    7: [6, 2],   // 신 -> 오, 인
+    8: [5, 3],   // 임 -> 사, 묘
+    9: [5, 3],   // 계 -> 사, 묘
+  };
+  const cheonEulTargets = CHEON_EUL_MAP[dayStemIdx] || [];
+  const hasCheonEul = branches.some(b => cheonEulTargets.includes(b));
+  if (hasCheonEul) {
+    sals.push({
+      name: "천을귀인",
+      hanja: "天乙貴人",
+      description: "절체절명의 순간에 도움을 주는 귀인의 기운입니다. 하늘이 보낸 귀인이 위기 때마다 나타나 화를 복으로 바꿔주는 최고의 길신(吉神)입니다. 사회적 인맥이 넓고 어디서든 귀인을 만나는 복이 있으며, 큰 사고나 재난을 비켜가는 행운이 따릅니다.",
+      personality: "귀인의 별 — 절체절명의 순간 하늘이 돕는 운명",
+    });
+  }
+
+  // 9. 천덕귀인 (天德貴人) - 하늘이 내린 덕으로 재앙을 피함
+  const CHEON_DEOK_MAP: Record<number, number> = {
+    2: 3,   // 인월 -> 정(丁) stemIdx=3
+    3: 8,   // 묘월 -> 임(壬) (신=辛 stemIdx=7 일부 학파)... 갑(甲)=0 일부학파. 정통: 신(辛)=7
+    4: 8,   // 진월 -> 임(壬) stemIdx=8
+    5: 7,   // 사월 -> 신(辛) stemIdx=7
+    6: 0,   // 오월 -> 갑(甲) stemIdx=0... 정통법: 임(壬)=8
+    7: 9,   // 미월 -> 계(癸) stemIdx=9
+    8: 8,   // 신월 -> 임(壬) stemIdx=8... 일부학파: 임
+    9: 2,   // 유월 -> 병(丙) stemIdx=2
+    10: 0,  // 술월 -> 갑(甲) stemIdx=0
+    11: 1,  // 해월 -> 을(乙) stemIdx=1
+    0: 2,   // 자월 -> 병(丙) stemIdx=2
+    1: 3,   // 축월 -> 정(丁) stemIdx=3
+  };
+  const monthBranchIdx = chart.monthPillar.branchIndex;
+  const cheonDeokStemTarget = CHEON_DEOK_MAP[monthBranchIdx];
+  const allStemIndices = [
+    chart.yearPillar.stemIndex,
+    chart.monthPillar.stemIndex,
+    chart.dayPillar.stemIndex,
+    chart.hourPillar.stemIndex,
+  ];
+  if (cheonDeokStemTarget !== undefined) {
+    const hasCheonDeok = allStemIndices.some(s => s === cheonDeokStemTarget);
+    if (monthBranchIdx === 6) {
+      const hasCheonDeokAlt = allStemIndices.some(s => s === 8);
+      if (hasCheonDeok || hasCheonDeokAlt) {
+        sals.push({
+          name: "천덕귀인",
+          hanja: "天德貴人",
+          description: "하늘이 내린 덕으로 재앙을 피하는 길신입니다. 도덕적이고 인자한 성품을 타고났으며, 남모르는 음덕(陰德)으로 흉한 일이 자연스럽게 소멸됩니다. 관재구설, 질병, 사고 등 위험에서 무사히 빠져나오는 천복이 있습니다.",
+          personality: "하늘의 덕 — 재앙을 피하고 복을 부르는 천복의 기운",
+        });
+      }
+    } else if (hasCheonDeok) {
+      sals.push({
+        name: "천덕귀인",
+        hanja: "天德貴人",
+        description: "하늘이 내린 덕으로 재앙을 피하는 길신입니다. 도덕적이고 인자한 성품을 타고났으며, 남모르는 음덕(陰德)으로 흉한 일이 자연스럽게 소멸됩니다. 관재구설, 질병, 사고 등 위험에서 무사히 빠져나오는 천복이 있습니다.",
+        personality: "하늘의 덕 — 재앙을 피하고 복을 부르는 천복의 기운",
+      });
+    }
   }
 
   return sals;
@@ -1059,6 +1180,49 @@ function detectStructurePatterns(chart: SajuChart): StructurePattern[] {
         businessTrait: "기회는 넘치나 선택과 집중이 필요한 타입 — 파트너십이 성공 열쇠",
       });
     }
+  }
+
+  // 삼합(三合) 감지 - 지지 4개 중 삼합 완성 여부
+  const branchSet = new Set([
+    chart.yearPillar.branchIndex,
+    chart.monthPillar.branchIndex,
+    chart.dayPillar.branchIndex,
+    chart.hourPillar.branchIndex,
+  ]);
+  const SAMHAP_GROUPS: { branches: [number, number, number]; element: string; name: string; desc: string }[] = [
+    { branches: [8, 0, 4], element: "수국", name: "신자진 삼합 수국", desc: "물의 기운이 하나로 모여 지혜와 유연함이 인생의 거대한 뿌리가 되는 구조입니다. 깊은 통찰력과 적응력으로 어떤 환경에서도 길을 찾습니다." },
+    { branches: [2, 6, 10], element: "화국", name: "인오술 삼합 화국", desc: "불의 기운이 하나로 모여 열정과 에너지가 인생을 관통하는 구조입니다. 강렬한 추진력과 카리스마로 주변을 밝히며 이끕니다." },
+    { branches: [11, 3, 7], element: "목국", name: "해묘미 삼합 목국", desc: "나무의 기운이 하나로 모여 배움과 사상이 인생의 거대한 뿌리가 되는 구조입니다. 성장, 교육, 창작의 에너지가 넘치며 사상가적 기질이 있습니다." },
+    { branches: [5, 9, 1], element: "금국", name: "사유축 삼합 금국", desc: "금속의 기운이 하나로 모여 결단력과 의리가 인생의 중심축이 되는 구조입니다. 날카로운 판단력과 정의감으로 조직의 핵심이 됩니다." },
+  ];
+  for (const group of SAMHAP_GROUPS) {
+    const [a, b, c] = group.branches;
+    if (branchSet.has(a) && branchSet.has(b) && branchSet.has(c)) {
+      patterns.push({
+        name: group.name,
+        hanja: "三合",
+        description: group.desc,
+        businessTrait: `삼합 ${group.element}의 조화로운 에너지가 모든 분야에서 시너지를 만듭니다`,
+      });
+    }
+  }
+
+  // 무재(無財) 사주 감지 - 오행 분포에서 재성 오행이 0%인 경우
+  const dayElIdx = STEM_ELEMENTS[chart.dayPillar.stemIndex].element;
+  const wealthElIdx = (dayElIdx + 2) % 5;
+  const wealthRatio = chart.fiveElementRatios.find(r => {
+    const elIdx = FIVE_ELEMENTS.indexOf(r.element as typeof FIVE_ELEMENTS[number]);
+    return elIdx === wealthElIdx;
+  });
+  if (wealthRatio && wealthRatio.weight === 0) {
+    const wealthElName = FIVE_ELEMENTS[wealthElIdx];
+    const wealthElHanja = FIVE_ELEMENTS_HANJA[wealthElIdx];
+    patterns.push({
+      name: "무재 사주",
+      hanja: "無財",
+      description: `오행에서 재성(${wealthElHanja}/${wealthElName})의 기운이 전혀 없는 구조입니다. 역설적으로 돈을 쫓지 않을 때 돈이 따르는 운명이며, 물질보다 정신적 가치나 자기 분야의 전문성을 추구할 때 결과적으로 큰 부가 따라옵니다. 무재 사주는 사업가보다 전문가, 예술가, 학자에게 더 강한 성취를 가져다줍니다.`,
+      businessTrait: "돈을 쫓지 않을 때 돈이 따르는 구조 — 전문성 기반의 성공",
+    });
   }
 
   return patterns;
@@ -1316,12 +1480,42 @@ export function calculateYearlyFortune(chart: SajuChart, year: number): YearlyFo
     if (mScore <= 45) cautiousMonths.push(month);
   }
 
+  // 대운-세운 충돌 감지
+  let daeunClash: DaeunClash | undefined;
+  for (const dw of chart.daeun) {
+    if (year >= dw.year && year < dw.year + 10) {
+      const dwBranchIdx = EARTHLY_BRANCHES.indexOf(dw.branch as typeof EARTHLY_BRANCHES[number]);
+      const yearBranchIdx = yearPillar.branchIndex;
+      if (dwBranchIdx >= 0) {
+        const CHONG_PAIRS: [number, number][] = [[0, 6], [1, 7], [2, 8], [3, 9], [4, 10], [5, 11]];
+        for (const [a, b] of CHONG_PAIRS) {
+          if ((dwBranchIdx === a && yearBranchIdx === b) || (dwBranchIdx === b && yearBranchIdx === a)) {
+            const dwBranchH = EARTHLY_BRANCHES_HANJA[dwBranchIdx];
+            const yrBranchH = yearPillar.branchHanja;
+            const clashName = `${dwBranchH}${yrBranchH}충(${dw.branch}${yearPillar.branch}沖)`;
+            daeunClash = {
+              daeunAge: dw.age,
+              daeunYear: dw.year,
+              daeunPillar: `${dw.stemHanja}${dw.branchHanja}(${dw.stem}${dw.branch})`,
+              yearPillar: `${yearPillar.stemHanja}${yearPillar.branchHanja}(${yearPillar.stem}${yearPillar.branch})`,
+              clashType: clashName,
+              description: `${dw.age}세 대운 ${dw.stemHanja}${dw.branchHanja}과 ${year}년 세운 ${yearPillar.stemHanja}${yearPillar.branchHanja}이 ${clashName}을 형성합니다. 대운과 세운의 충돌은 삶의 큰 전환점을 의미합니다. 직장, 거주지, 인간관계에서 급격한 변화가 올 수 있으니 미리 대비하고 유연하게 대응하는 것이 중요합니다.`,
+            };
+            break;
+          }
+        }
+      }
+      break;
+    }
+  }
+
   return {
     year, yearPillar,
     yearElement: FIVE_ELEMENTS[yearElIdx],
     yearElementHanja: FIVE_ELEMENTS_HANJA[yearElIdx],
     relationship: stemRelation.relation,
     overallScore, summary, advice, luckyMonths, cautiousMonths,
+    daeunClash,
   };
 }
 
