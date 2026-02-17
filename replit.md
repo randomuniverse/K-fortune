@@ -24,7 +24,7 @@
 - **AI Integration**: OpenAI SDK (GPT-4o) for fortune generation.
 - **Telegram Integration**: Bot API for user communication and webhooks.
 - **Build Process**: Custom script using Vite for client and esbuild for server.
-- **Resilience**: `p-retry` for API calls, `Promise.allSettled` for graceful degradation of fortune generation.
+- **Resilience**: `p-retry` for API calls. Guardian Report uses single-call architecture with few-shot examples for cost efficiency.
 
 ### Data Storage
 - **Database**: PostgreSQL.
@@ -34,7 +34,7 @@
 ### Fortune Engine Logic
 - **Graceful Degradation**: Fortune generation uses `Promise.allSettled`; if one or two systems fail, partial results are still provided.
 - **Daily Fortune**: Generates a daily reading by combining Saju, Zodiac, and Ziwei Doushu analyses, then synthesizes them with a Guardian AI.
-- **Guardian Report**: Provides a deep destiny analysis with businessAdvice, loveAdvice (gender-aware: 재성/관성 + 신살 + 간여지동 기반 동적 분석), and healthAdvice (질액궁 + 오행 장부 mapping). Uses gender parameter for sex-specific saju love analysis.
+- **Guardian Report**: Single-call architecture (refactored from 4-call: 3-parallel + synthesis) with few-shot examples for 75% API cost reduction. Provides deep destiny analysis with businessAdvice, loveAdvice (gender-aware: 재성/관성 + 신살 + 간여지동 기반 동적 분석), and healthAdvice (질액궁 + 오행 장부 mapping). Uses gender parameter for sex-specific saju love analysis. System prompt includes 丁火 example for pastInference/currentState/bottleneck/solution sections.
 - **Yearly Fortune**: Offers annual forecasts from each system, cross-validated and synthesized by the Guardian AI, including monthly flow predictions.
 
 ### Core Calculation Engines
