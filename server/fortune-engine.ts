@@ -1,6 +1,6 @@
 import { storage } from "./storage";
 import { getZodiacSign, getZodiacInfo, type FortuneData } from "@shared/schema";
-import { calculateFullSaju, checkGanYeoJiDong } from "@shared/saju";
+import { calculateFullSaju, checkGanYeoJiDong, calculateDaewoonDynamicStars } from "@shared/saju";
 import { calculateZiWei } from "@shared/ziwei";
 import OpenAI from "openai";
 import { z } from "zod";
@@ -499,7 +499,13 @@ export async function generateGuardianReport(data: {
 3. **무재(No Wealth) 구조:** 재성이 없을 경우, "재물이 없는 것"이 아니라 "돈을 버는 방식이 특수한 것(전문성, 명예 기반)"임을 강조하세요. 돈을 쫓지 않을 때 오히려 돈이 따르는 역설을 서술하세요.
 4. **홍염살 + 도화살 조합:** 두 개의 매력 관련 살이 동시에 있으면 "이중 매력 구조"로 해석. 단순 매력이 아니라 사람의 마음을 사로잡는 전략적 자산으로 풀이하세요.
 
-**[작성 제 7원칙: 대운과 세운의 충돌 분석]**
+**[작성 제 7원칙: 대운 동적 신살 해석]**
+- '활성 대운 신살'은 태어날 때부터 가진 원국 신살과 다르게, **현재 대운이 가져온 시기적 기운**입니다.
+- 원국에 없던 도화살이 대운에서 들어오면 "태어날 때는 조용했지만, 이 대운에 접어들면서 갑자기 매력이 폭발하는 시기"로 해석하세요.
+- 원국에 이미 같은 살이 있고, 대운에서도 같은 살이 들어오면 "이중 활성화"로 에너지가 극대화된 것으로 해석하세요.
+- 활성 대운 신살이 "특이사항 없음"이면 이 항목은 언급하지 마세요.
+
+**[작성 제 8원칙: 대운과 세운의 충돌 분석]**
 - 현재 대운과 세운이 충(沖)을 일으키는 경우(예: 자오충, 축미충 등), 이를 "인생의 거대한 변곡점"으로 묘사하세요.
 - 단순히 "조심하세요"라고 끝내지 말고, 충돌이 만드는 구체적 변화의 영역(직장, 거주지, 인간관계)과 대비책을 서술하세요.
 - 충돌이 없는 경우에는 이 항목을 굳이 언급하지 마세요.
@@ -601,6 +607,9 @@ export async function generateGuardianReport(data: {
   let isGanYeoJiDong = false;
   try { isGanYeoJiDong = checkGanYeoJiDong(sc); } catch {}
 
+  const currentYear = new Date().getFullYear();
+  const activeDaewoonStars = calculateDaewoonDynamicStars(sc, currentYear);
+
   const loveAnalysisBlock = `
 ━━━━ 4. 이성운/결혼운 전용 분석 데이터 ━━━━
 ■ 성별: ${isMale ? "남성" : "여성"}
@@ -649,6 +658,10 @@ ${sc.fiveElementRatios?.map((r: any) => `  - ${r.element}(${r.elementHanja}): ${
 
 ■ 구조 패턴: ${sp.structurePatterns?.map((p: any) => `${p.name}(${p.hanja}) — ${p.description}`).join("\n  ") || "없음"}
 
+■ ${currentYear}년 활성 대운 신살 (Dynamic Stars): ${activeDaewoonStars.length > 0
+  ? activeDaewoonStars.map((s: any) => `${s.name}(${s.hanja}) — [${s.source}] ${s.description}`).join("\n  ")
+  : "특이사항 없음"}
+
 ■ 용신 보완법: ${sp.yongShinRemedy ? `방향: ${sp.yongShinRemedy.luckyDirection}, 색상: ${sp.yongShinRemedy.luckyColor}, 활동: ${sp.yongShinRemedy.luckyActivity}` : "없음"}
 
 ■ 대운 흐름 (10년 단위):
@@ -694,7 +707,7 @@ ${sc.daeun?.slice(0, 6).map((d: any) => `  - ${d.age}세(${d.year}년): ${d.stem
 ${loveAnalysisBlock}
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-위의 사주 원국, 십성 배치, 오행 분포, 특수살, 구조 패턴, 대운-세운 충돌 분석, 자미두수 각 궁의 성진, 별자리 데이터를 근거로
+위의 사주 원국, 십성 배치, 오행 분포, 특수살, 활성 대운 신살, 구조 패턴, 대운-세운 충돌 분석, 자미두수 각 궁의 성진, 별자리 데이터를 근거로
 이 사람의 운명을 **스토리텔링**으로 풀어주세요. 키워드를 나열하지 말고, **인과관계(Why → How)**의 흐름으로 이야기하세요.
 4단계 화술(Fact → Interpretation → Phenomenon → Advantage)을 모든 섹션에 적용하세요.
 각 분석에서 반드시 위 데이터의 구체적 요소(간지, 십성, 오행, 성진 이름 등)를 자연스럽게 이야기 속에 녹이세요.

@@ -1228,6 +1228,97 @@ function detectStructurePatterns(chart: SajuChart): StructurePattern[] {
   return patterns;
 }
 
+// ---- 대운 동적 신살 (Dynamic Daewoon Stars) ----
+
+export interface DynamicDaewoonStar {
+  name: string;
+  hanja: string;
+  type: "dynamic";
+  source: string;
+  description: string;
+}
+
+export function calculateDaewoonDynamicStars(chart: SajuChart, targetYear: number): DynamicDaewoonStar[] {
+  const stars: DynamicDaewoonStar[] = [];
+  if (!chart.daeun || chart.daeun.length === 0) return stars;
+
+  const activeDaeun = chart.daeun.find(d => targetYear >= d.year && targetYear < d.year + 10);
+  if (!activeDaeun) return stars;
+
+  const dwBranchIdx = EARTHLY_BRANCHES.indexOf(activeDaeun.branch as typeof EARTHLY_BRANCHES[number]);
+  if (dwBranchIdx < 0) return stars;
+
+  const sourceLabel = `${activeDaeun.age}세 ${activeDaeun.stemHanja}${activeDaeun.branchHanja}대운`;
+  const yearBranch = chart.yearPillar.branchIndex;
+  const dayBranch = chart.dayPillar.branchIndex;
+
+  const DOHWA_MAP: Record<number, number> = {};
+  [8, 0, 4].forEach(b => DOHWA_MAP[b] = 9);
+  [2, 6, 10].forEach(b => DOHWA_MAP[b] = 3);
+  [5, 9, 1].forEach(b => DOHWA_MAP[b] = 6);
+  [11, 3, 7].forEach(b => DOHWA_MAP[b] = 0);
+
+  if (DOHWA_MAP[yearBranch] === dwBranchIdx || DOHWA_MAP[dayBranch] === dwBranchIdx) {
+    stars.push({
+      name: "도화살",
+      hanja: "桃花殺",
+      type: "dynamic",
+      source: sourceLabel,
+      description: `${sourceLabel}에서 도화(桃花)의 기운이 들어옵니다. 이 시기에 대인관계가 활발해지고 이성의 관심을 받기 쉬우며, 사교성과 매력이 극대화됩니다.`,
+    });
+  }
+
+  const YEOKMA_MAP: Record<number, number> = {};
+  [2, 6, 10].forEach(b => YEOKMA_MAP[b] = 8);
+  [8, 0, 4].forEach(b => YEOKMA_MAP[b] = 2);
+  [5, 9, 1].forEach(b => YEOKMA_MAP[b] = 11);
+  [11, 3, 7].forEach(b => YEOKMA_MAP[b] = 5);
+
+  if (YEOKMA_MAP[yearBranch] === dwBranchIdx || YEOKMA_MAP[dayBranch] === dwBranchIdx) {
+    stars.push({
+      name: "역마살",
+      hanja: "驛馬殺",
+      type: "dynamic",
+      source: sourceLabel,
+      description: `${sourceLabel}에서 역마(驛馬)의 기운이 활성화됩니다. 이 시기에 이사, 해외, 전직, 출장 등 큰 이동과 변화가 일어나며, 활동 반경이 넓어질수록 운이 트입니다.`,
+    });
+  }
+
+  const HWAGAE_MAP: Record<number, number> = {};
+  [2, 6, 10].forEach(b => HWAGAE_MAP[b] = 10);
+  [8, 0, 4].forEach(b => HWAGAE_MAP[b] = 4);
+  [5, 9, 1].forEach(b => HWAGAE_MAP[b] = 1);
+  [11, 3, 7].forEach(b => HWAGAE_MAP[b] = 7);
+
+  if (HWAGAE_MAP[yearBranch] === dwBranchIdx || HWAGAE_MAP[dayBranch] === dwBranchIdx) {
+    stars.push({
+      name: "화개살",
+      hanja: "華蓋殺",
+      type: "dynamic",
+      source: sourceLabel,
+      description: `${sourceLabel}에서 화개(華蓋)의 기운이 열립니다. 이 시기에 종교·철학·예술에 대한 관심이 깊어지며, 내면의 세계를 탐구하고 정신적 성장을 이루는 시기입니다.`,
+    });
+  }
+
+  const CHEON_EUL_MAP: Record<number, number[]> = {
+    0: [1, 7], 1: [0, 8], 2: [11, 9], 3: [11, 9], 4: [1, 7],
+    5: [0, 8], 6: [1, 7], 7: [6, 2], 8: [5, 3], 9: [5, 3],
+  };
+  const dayStemIdx = chart.dayPillar.stemIndex;
+  const cheonEulTargets = CHEON_EUL_MAP[dayStemIdx] || [];
+  if (cheonEulTargets.includes(dwBranchIdx)) {
+    stars.push({
+      name: "천을귀인",
+      hanja: "天乙貴人",
+      type: "dynamic",
+      source: sourceLabel,
+      description: `${sourceLabel}에서 천을귀인(天乙貴人)이 활성화됩니다. 이 대운 기간 동안 위기 때마다 귀인이 나타나 도움을 주며, 사회적 인맥이 확장되고 큰 사고를 비켜가는 행운이 따릅니다.`,
+    });
+  }
+
+  return stars;
+}
+
 // ---- 용신 개운법 (用神 開運法) ----
 
 export interface YongShinRemedy {
