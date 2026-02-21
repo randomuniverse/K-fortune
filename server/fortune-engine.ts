@@ -48,46 +48,30 @@ export async function sendTelegramMessage(chatId: string, text: string): Promise
 
 // 텔레그램 메시지 포맷팅 함수 (3자 교차 검증 반영)
 export function formatFortuneForTelegram(data: FortuneData, userName: string, dateStr: string, zodiacSign: string): string {
-  const scoreEmoji = data.combinedScore >= 80 ? "🔥" : data.combinedScore >= 60 ? "✨" : data.combinedScore >= 40 ? "🌤" : "🌧";
+  const keywords = data.commonKeywords && data.commonKeywords.length > 0
+    ? data.commonKeywords.join(", ")
+    : "";
 
-  let deltaText = "";
-  if (data.scoreDelta !== undefined && data.scoreDelta !== null) {
-    if (data.scoreDelta > 0) deltaText = ` (▲ +${data.scoreDelta})`;
-    else if (data.scoreDelta < 0) deltaText = ` (▼ ${data.scoreDelta})`;
-    else deltaText = " (→ 변동없음)";
+  let msg = `<b>[오늘의 운세] ${dateStr}</b>\n`;
+  msg += `${userName}님\n\n`;
+
+  if (keywords) {
+    msg += `🔗 공통 키워드: ${keywords}`;
+    if (data.coherenceScore != null) msg += `(일치도: ${data.coherenceScore}%)`;
+    msg += `\n\n`;
   }
 
-  let timeBest = "";
-  if (data.timeGuide) {
-    const { morning, afternoon, evening } = data.timeGuide;
-    if (morning.score >= afternoon.score && morning.score >= evening.score) timeBest = "🌅 오전";
-    else if (afternoon.score >= evening.score) timeBest = "☀️ 오후";
-    else timeBest = "🌙 저녁";
+  if (data.coreMessage) {
+    msg += `💎 <b>오늘의 핵심 메시지:</b>\n${data.coreMessage}\n\n`;
   }
 
-  let msg = `<b>☽ ${dateStr} — ${userName}님의 운세</b>\n\n`;
-
-  if (data.oracleLine) {
-    msg += `<i>"${data.oracleLine}"</i>\n\n`;
+  if (data.sajuCaution) {
+    msg += `⚠️ 주의: ${data.sajuCaution}\n\n`;
   }
 
-  msg += `${scoreEmoji} <b>${data.combinedScore}점</b>${deltaText}\n`;
-  msg += `사주 ${data.sajuScore} · 별자리 ${data.zodiacScore} · 자미두수 ${data.ziweiScore || "—"} · 일치도 ${data.coherenceScore}%\n\n`;
-
-  msg += `💎 ${data.coreMessage}\n\n`;
-
-  if (data.todayPrescription) {
-    msg += `💡 <b>오늘의 처방:</b> ${data.todayPrescription}\n\n`;
-  }
-
-  if (data.sajuInsight) {
-    msg += `🔮 ${data.sajuInsight}\n\n`;
-  }
-
-  msg += `🧭 방향 ${data.sajuDirection}`;
-  if (data.luckyColor) msg += ` · 색상 ${data.luckyColor}`;
-  msg += ` · 숫자 ${data.luckyNumbers.join(",")}`;
-  if (timeBest) msg += ` · 최적 ${timeBest}`;
+  msg += `-- 행운 가이드\n`;
+  msg += `방향: ${data.sajuDirection} | 숫자: ${data.luckyNumbers.join(", ")}`;
+  if (data.luckyColor) msg += ` | 색상: ${data.luckyColor}`;
 
   return msg;
 }
