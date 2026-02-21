@@ -33,7 +33,7 @@
 
 ### Fortune Engine Logic
 - **Graceful Degradation**: Fortune generation uses `Promise.allSettled`; if one or two systems fail, partial results are still provided.
-- **Daily Fortune**: Generates a daily reading by combining Saju, Zodiac, and Ziwei Doushu analyses, then synthesizes them with a Guardian AI.
+- **Daily Fortune (v2.0)**: Generates a daily reading by combining Saju, Zodiac, and Ziwei Doushu analyses, then synthesizes them with a Guardian AI. V2.0 enhancements include: oracle-style one-liner (oracleLine), today's prescription (todayPrescription), time-based guidance (morning/afternoon/evening scores+messages via calculateTimeGuide), daily saju insight (generateDailySajuInsight — pure logic, no API calls), score delta from previous day, lucky color/time. GPT prompts enforce assertive Korean tone (no "~할 수 있습니다" weak expressions). Telegram messages redesigned to oracle-style compact format. Web UI features oracle line card, time guide grid, prescription section, and accordion-style detail sections.
 - **Guardian Report**: Single-call architecture (refactored from 4-call: 3-parallel + synthesis) with few-shot examples for 75% API cost reduction. Provides deep destiny analysis with businessAdvice, loveAdvice (gender-aware: 재성/관성 + 신살 + 간여지동 기반 동적 분석), and healthAdvice (질액궁 + 오행 장부 mapping). Uses gender parameter for sex-specific saju love analysis. System prompt includes 丁火 example for pastInference/currentState/bottleneck/solution sections.
 - **Yearly Fortune**: Offers annual forecasts from each system, cross-validated and synthesized by the Guardian AI, including monthly flow predictions.
 
