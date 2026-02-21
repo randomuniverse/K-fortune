@@ -1,6 +1,5 @@
 import { motion } from "framer-motion";
-import { useState } from "react";
-import { Compass, Hash, Heart, Wallet, Activity, Briefcase, Star, Link, Target, Clock, ChevronDown, ChevronUp, Zap } from "lucide-react";
+import { Compass, Hash, Heart, Wallet, Activity, Briefcase, Star, Link, Target, Clock, Zap } from "lucide-react";
 import type { FortuneData } from "@shared/schema";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -57,9 +56,6 @@ function InfoRow({ icon: Icon, label, value }: { icon: typeof Compass; label: st
 }
 
 export function FortuneScoreCard({ data, zodiacSign }: Props) {
-  const [showSajuDetail, setShowSajuDetail] = useState(false);
-  const [showZodiacDetail, setShowZodiacDetail] = useState(false);
-
   const deltaText = data.scoreDelta !== undefined && data.scoreDelta !== null
     ? data.scoreDelta > 0 ? `▲ +${data.scoreDelta}` : data.scoreDelta < 0 ? `▼ ${data.scoreDelta}` : "→ 변동없음"
     : null;
@@ -180,34 +176,20 @@ export function FortuneScoreCard({ data, zodiacSign }: Props) {
       )}
 
       <div className="grid gap-4 md:grid-cols-2">
-        <Card className="bg-white/[0.03] border-white/10">
-          <button className="w-full p-5 flex items-center justify-between text-left" onClick={() => setShowSajuDetail(!showSajuDetail)} data-testid="button-toggle-saju">
-            <h4 className="text-sm font-serif text-primary">사주팔자 운세</h4>
-            {showSajuDetail ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
-          </button>
-          {showSajuDetail && (
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="px-5 pb-5 space-y-1 border-t border-white/5 pt-3">
-              <p className="text-sm text-white/80 leading-relaxed mb-3">{data.sajuSummary}</p>
-              <InfoRow icon={Star} label="조심할 점" value={data.sajuCaution} />
-              <InfoRow icon={Star} label="특이사항" value={data.sajuSpecial} />
-            </motion.div>
-          )}
+        <Card className="bg-white/[0.03] border-white/10 p-5">
+          <h4 className="text-sm font-serif text-primary mb-1">사주팔자 운세</h4>
+          <p className="text-sm text-white/80 leading-relaxed mb-4">{data.sajuSummary}</p>
+          <InfoRow icon={Star} label="조심할 점" value={data.sajuCaution} />
+          <InfoRow icon={Star} label="특이사항" value={data.sajuSpecial} />
         </Card>
 
-        <Card className="bg-white/[0.03] border-white/10">
-          <button className="w-full p-5 flex items-center justify-between text-left" onClick={() => setShowZodiacDetail(!showZodiacDetail)} data-testid="button-toggle-zodiac">
-            <h4 className="text-sm font-serif text-primary">별자리 운세 ({zodiacSign})</h4>
-            {showZodiacDetail ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
-          </button>
-          {showZodiacDetail && (
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="px-5 pb-5 space-y-1 border-t border-white/5 pt-3">
-              <p className="text-sm text-white/80 leading-relaxed mb-3">{data.zodiacSummary}</p>
-              <InfoRow icon={Heart} label="연애운" value={data.zodiacLove} />
-              <InfoRow icon={Wallet} label="재물운" value={data.zodiacMoney} />
-              <InfoRow icon={Activity} label="건강운" value={data.zodiacHealth} />
-              <InfoRow icon={Briefcase} label="직장운" value={data.zodiacWork} />
-            </motion.div>
-          )}
+        <Card className="bg-white/[0.03] border-white/10 p-5">
+          <h4 className="text-sm font-serif text-primary mb-1">별자리 운세 ({zodiacSign})</h4>
+          <p className="text-sm text-white/80 leading-relaxed mb-4">{data.zodiacSummary}</p>
+          <InfoRow icon={Heart} label="연애운" value={data.zodiacLove} />
+          <InfoRow icon={Wallet} label="재물운" value={data.zodiacMoney} />
+          <InfoRow icon={Activity} label="건강운" value={data.zodiacHealth} />
+          <InfoRow icon={Briefcase} label="직장운" value={data.zodiacWork} />
         </Card>
       </div>
     </motion.div>
