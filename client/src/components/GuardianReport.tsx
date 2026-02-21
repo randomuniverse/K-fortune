@@ -9,7 +9,7 @@ export interface GuardianReportData {
   coreEnergy: string;
   coherenceScore: number;
   keywords: string[];
-  pastInference: string;
+  pastInference: string | null;
   currentState: string;
   bottleneck: string;
   solution: string;
@@ -35,8 +35,9 @@ export function GuardianReport({ telegramId, userName }: { telegramId: string; u
       const res = await apiRequest("POST", "/api/fortunes/guardian-report", { telegramId, regenerate });
       return res.json();
     },
-    onSuccess: (data: GuardianReportData) => {
+    onSuccess: (data: GuardianReportData & { yearlyFortuneRegenerated?: boolean }) => {
       queryClient.setQueryData(['/api/guardian-report', telegramId], data);
+      queryClient.invalidateQueries({ queryKey: ['/api/yearly-fortune', telegramId] });
     },
   });
 
@@ -110,7 +111,7 @@ export function GuardianReport({ telegramId, userName }: { telegramId: string; u
           <div className="space-y-2">
             <h4 className="text-lg font-bold text-violet-200">운명의 추적 (Past Inference)</h4>
             <p className="text-sm text-white/80 leading-loose whitespace-pre-line italic">
-              &ldquo;{report.pastInference}&rdquo;
+              &ldquo;{report.pastInference || "분석 데이터를 불러오는 중입니다."}&rdquo;
             </p>
           </div>
         </div>
@@ -150,34 +151,34 @@ export function GuardianReport({ telegramId, userName }: { telegramId: string; u
 
       <div>
         <h3 className="text-sm font-bold text-white/40 uppercase tracking-widest mb-4 ml-1">Guardian's Compass</h3>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4" data-testid="advice-grid">
+        <div className="space-y-4" data-testid="advice-grid">
 
-          <Card className="bg-gradient-to-b from-amber-500/10 to-transparent border-amber-500/20 p-5" data-testid="card-business-advice">
+          <Card className="bg-gradient-to-r from-amber-500/10 to-transparent border-amber-500/20 p-5" data-testid="card-business-advice">
             <div className="flex items-center gap-2 mb-3">
               <Briefcase className="w-4 h-4 text-amber-400" />
               <span className="text-amber-200 font-bold text-sm">재물/비즈니스</span>
             </div>
-            <p className="text-xs text-white/80 leading-relaxed whitespace-pre-line">
+            <p className="text-sm text-white/80 leading-7 whitespace-pre-line">
               {report.businessAdvice || "데이터 수집 중..."}
             </p>
           </Card>
 
-          <Card className={`p-5 ${report.loveAdvice ? "bg-gradient-to-b from-pink-500/10 to-transparent border-pink-500/20" : "bg-white/[0.02] border-white/5"}`} data-testid="card-love-advice">
+          <Card className={`p-5 ${report.loveAdvice ? "bg-gradient-to-r from-pink-500/10 to-transparent border-pink-500/20" : "bg-white/[0.02] border-white/5"}`} data-testid="card-love-advice">
             <div className="flex items-center gap-2 mb-3">
               <Heart className="w-4 h-4 text-pink-400" />
               <span className="text-pink-200 font-bold text-sm">연애/인간관계</span>
             </div>
-            <p className="text-xs text-white/80 leading-relaxed whitespace-pre-line">
+            <p className="text-sm text-white/80 leading-7 whitespace-pre-line">
               {report.loveAdvice || "리포트를 다시 생성하면 연애/인간관계 분석이 활성화됩니다."}
             </p>
           </Card>
 
-          <Card className={`p-5 ${report.healthAdvice ? "bg-gradient-to-b from-emerald-500/10 to-transparent border-emerald-500/20" : "bg-white/[0.02] border-white/5"}`} data-testid="card-health-advice">
+          <Card className={`p-5 ${report.healthAdvice ? "bg-gradient-to-r from-emerald-500/10 to-transparent border-emerald-500/20" : "bg-white/[0.02] border-white/5"}`} data-testid="card-health-advice">
             <div className="flex items-center gap-2 mb-3">
               <Stethoscope className="w-4 h-4 text-green-400" />
               <span className="text-green-200 font-bold text-sm">건강/컨디션</span>
             </div>
-            <p className="text-xs text-white/80 leading-relaxed whitespace-pre-line">
+            <p className="text-sm text-white/80 leading-7 whitespace-pre-line">
               {report.healthAdvice || "리포트를 다시 생성하면 건강/컨디션 분석이 활성화됩니다."}
             </p>
           </Card>

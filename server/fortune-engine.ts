@@ -836,6 +836,18 @@ export async function generateYearlyFortune(data: {
   sajuPersonality: any;
   ziwei: any;
   zodiac: any;
+  guardianReport?: {
+    coreEnergy: string;
+    coherenceScore: number;
+    keywords: string[];
+    pastInference: string | null;
+    currentState: string;
+    bottleneck: string;
+    solution: string;
+    businessAdvice: string | null;
+    loveAdvice: string | null;
+    healthAdvice: string | null;
+  } | null;
 }) {
   const sc = data.sajuChart;
   const sp = data.sajuPersonality;
@@ -1053,14 +1065,44 @@ ${monthlyFlowFormat}`;
       avgScore: Math.round(scores.reduce((a, b) => a + b, 0) / scores.length),
     }));
 
+    const gr = data.guardianReport;
+    const grKeywords = (gr?.keywords || []);
+    const guardianBlock = gr ? `
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+**[가디언 리포트 (운명 종합 분석) — 반드시 참고 + 검증]**
+이 사용자에 대해 이미 생성된 운명 종합 분석(Guardian Report)입니다.
+연간 운세는 이 분석을 **기반(foundation)**으로 작성하되, 아래 원본 사주 데이터와 대조하여 **검증**하세요.
+
+■ 핵심 에너지(Core Energy): ${gr.coreEnergy || "분석 없음"}
+■ 데이터 일치도: ${gr.coherenceScore || 0}%
+■ 키워드: ${grKeywords.length > 0 ? grKeywords.join(", ") : "없음"}
+■ 운명 추적(Past Inference): ${gr.pastInference || "분석 없음"}
+■ 현재 딜레마: ${gr.currentState || "분석 없음"}
+■ 결정적 병목: ${gr.bottleneck || "분석 없음"}
+■ 해결책: ${gr.solution || "분석 없음"}
+■ 재물/비즈니스 조언: ${gr.businessAdvice || "없음"}
+■ 연애/인간관계 조언: ${gr.loveAdvice || "없음"}
+■ 건강/컨디션 조언: ${gr.healthAdvice || "없음"}
+
+**[검증 지침 — 매우 중요]**
+1. 위 Guardian Report의 용신, 오행 분석, 격국 판단이 아래 원본 사주 데이터와 일치하는지 교차 확인하세요.
+2. 불일치 발견 시: Guardian Report가 아닌 **원본 사주 데이터 기준**으로 수정하세요.
+3. Guardian Report의 병목(bottleneck)과 해결책(solution)을 연간 운세의 방향성에 반영하세요.
+4. businessFortune은 Guardian의 재물 조언을 연간 흐름에 맞게 확장하세요.
+5. loveFortune은 Guardian의 연애 조언을 연간 흐름에 맞게 확장하세요.
+6. healthFortune은 Guardian의 건강 조언을 연간 흐름에 맞게 확장하세요.
+7. 응답에 "guardianValidation" 필드를 추가하여 검증 결과를 기록하세요.
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+` : "";
+
     const synthesisPrompt = `
 당신은 '운명 데이터 융합 전문가'이자 최종 검증관입니다.
 동양의 명리학(사주팔자), 동양의 자미두수(紫微斗數), 서양의 점성술(별자리) — 3개의 **완전히 독립된 체계**로 분석한 결과를 교차 검증하여 종합합니다.
-
+${data.guardianReport ? "\n또한, 이미 생성된 **운명 종합 분석(Guardian Report)**을 기반으로 연간 운세를 작성하되, 원본 사주 데이터와 대조하여 Guardian Report의 정확성을 검증합니다.\n" : ""}
 **[종합 원칙]**
 1. **3체계 교차 검증:** 2개 이상의 체계에서 공통적으로 언급하는 내용만 채택하세요. 1개 체계에서만 독자적으로 주장한 내용은 제거합니다.
 2. **대운 강조:** 사주 분석의 대운 흐름을 overallSummary 맨 앞에 배치하세요.
-3. **분량:**
+${data.guardianReport ? "2-1. **Guardian 연계:** Guardian Report의 핵심 에너지와 병목/해결책을 overallSummary에 자연스럽게 녹여내세요.\n" : ""}3. **분량:**
    - overallSummary: 1000자 내외 (3체계가 공통으로 가리키는 핵심 메시지 중심)
    - business/love/health: 각 500자 내외
    - monthlyFlow: 각 월별 3문장 이상, 3체계 점수 평균 사용
@@ -1068,8 +1110,11 @@ ${monthlyFlowFormat}`;
 5. 공통 키워드: [${commonKeywords.join(", ")}]
 6. 월별 summary는 **"O월은 OO(간지)의 기운입니다."**로 시작
 7. 각 체계의 고유한 강점을 살려 종합하되, 모순되는 부분은 명확히 밝히세요.
-
+${guardianBlock}
 ${yearlyFailed.length > 0 ? `\n[참고: ${yearlyFailed.join(", ")} 분석이 일시적으로 불가하여 ${yearlySuccess.join(", ")} 기반으로 분석합니다.]\n` : ""}
+**[원본 사주 데이터 (검증용)]**
+${sajuDataBlock}
+
 **[사주팔자 분석 결과]**
 ${sajuReport ? JSON.stringify(sajuReport, null, 2) : "(분석 실패 — 이 체계 결과 없이 나머지 체계 기반으로 종합하세요)"}
 
@@ -1081,12 +1126,12 @@ ${zodiacReport ? JSON.stringify(zodiacReport, null, 2) : "(분석 실패 — 이
 
 **[출력 형식 (JSON)]**
 {
-  "overallSummary": "3체계 교차 검증 기반 1000자 분량의 심층 총평",
+  "overallSummary": "3체계 교차 검증 기반 1000자 분량의 심층 총평${data.guardianReport ? " (Guardian Report 기반, 검증 완료)" : ""}",
   "coherenceScore": 70~95,
-  "businessFortune": "500자 이상 사업/재물 전략 (3체계 종합)",
-  "loveFortune": "500자 이상 연애/인간관계 조언 (3체계 종합)",
-  "healthFortune": "500자 이상 건강 관리법 (3체계 종합)",
-  "keywords": ["공통키워드1", "공통키워드2", ...],
+  "businessFortune": "500자 이상 사업/재물 전략 (3체계 종합${data.guardianReport ? " + Guardian 재물 조언 확장" : ""})",
+  "loveFortune": "500자 이상 연애/인간관계 조언 (3체계 종합${data.guardianReport ? " + Guardian 연애 조언 확장" : ""})",
+  "healthFortune": "500자 이상 건강 관리법 (3체계 종합${data.guardianReport ? " + Guardian 건강 조언 확장" : ""})",
+  "keywords": ["공통키워드1", "공통키워드2", ...],${data.guardianReport ? '\n  "guardianValidation": {\n    "isConsistent": true/false,\n    "notes": "Guardian Report와 원본 데이터 대조 결과 요약 (불일치 사항이 있으면 구체적으로 명시)"\n  },' : ""}
   "monthlyFlow": [
     {"month": 1, "score": 평균점수, "keyword": "대표키워드", "keywords": ["키워드1", "키워드2", "키워드3"], "summary": "1월은 OO(간지)의 기운입니다. 3문장 이상"},
     ... (1~12월 전체)
@@ -1111,6 +1156,10 @@ ${zodiacReport ? JSON.stringify(zodiacReport, null, 2) : "(분석 실패 — 이
       loveFortune: z.string().nullable().default(null),
       healthFortune: z.string().nullable().default(null),
       keywords: z.array(z.string()).default([]),
+      guardianValidation: z.object({
+        isConsistent: z.boolean(),
+        notes: z.string(),
+      }).optional(),
       monthlyFlow: z.array(z.object({
         month: z.number().int().min(1).max(12),
         score: z.number().min(0).max(100),
@@ -1161,6 +1210,10 @@ ${zodiacReport ? JSON.stringify(zodiacReport, null, 2) : "(분석 실패 — 이
     const ziweiParsed = ziweiReport ? parseSingleFlow(ziweiReport) : emptyFlow;
     const zodiacParsed = zodiacReport ? parseSingleFlow(zodiacReport) : emptyFlow;
 
+    const gv = rawResult.guardianValidation;
+    if (gv) {
+      console.log(`[Yearly] Guardian 검증 결과: ${gv.isConsistent ? "일치" : "불일치 발견"} — ${gv.notes}`);
+    }
     console.log(`[Yearly] ${data.year}년 운세 3체계 교차 검증 완료. 일치도: ${finalResult.coherenceScore}%`);
 
     return {

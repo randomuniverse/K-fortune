@@ -338,18 +338,7 @@ export function YearlyFortuneCard({ chart, userName, telegramId, yearlySubTab, z
     </>
   );
 
-  const regenerateButton = aiYearly && (
-    <div className="text-center pt-2">
-      <Button
-        variant="mystical"
-        onClick={() => generateYearly.mutate(true)}
-        disabled={generateYearly.isPending}
-        data-testid="button-regenerate-yearly"
-      >
-        <BrainCircuit className="mr-2 h-4 w-4" /> AI 분석 다시 생성
-      </Button>
-    </div>
-  );
+  const regenerateButton = null;
 
   if (yearlySubTab === "guardian") {
     return (
