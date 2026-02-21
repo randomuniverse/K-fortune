@@ -1647,3 +1647,138 @@ export function calculateMonthlyFortunes(chart: SajuChart, year: number): Monthl
     };
   });
 }
+
+// ================================================================
+// [v2.0] 시간대별 행운 가이드 (API 호출 없음 — 순수 로직)
+// ================================================================
+
+export interface TimeGuide {
+  morning: { score: number; message: string };
+  afternoon: { score: number; message: string };
+  evening: { score: number; message: string };
+}
+
+export function calculateTimeGuide(chart: SajuChart, todayStemIdx: number, todayBranchIdx: number): TimeGuide {
+  const yongShinEl = FIVE_ELEMENTS.indexOf(chart.yongShin.element as typeof FIVE_ELEMENTS[number]);
+
+  function getTimeScore(timeElements: number[]): number {
+    let score = 60;
+    for (const el of timeElements) {
+      if (el === yongShinEl) score += 15;
+      else if ((el + 1) % 5 === yongShinEl) score += 10;
+      else if ((yongShinEl + 1) % 5 === el) score += 5;
+      else if ((el + 2) % 5 === yongShinEl) score -= 10;
+      else if ((yongShinEl + 2) % 5 === el) score -= 5;
+    }
+
+    const todayStemEl = STEM_ELEMENTS[todayStemIdx].element;
+    if (todayStemEl === yongShinEl) score += 5;
+    else if ((todayStemEl + 2) % 5 === yongShinEl) score -= 5;
+
+    return Math.max(20, Math.min(95, score));
+  }
+
+  const morningScore = getTimeScore([0, 2, 1]);
+  const afternoonScore = getTimeScore([1, 2, 3]);
+  const eveningScore = getTimeScore([3, 2, 4]);
+
+  const yongShinMessages: Record<string, { morning: string; afternoon: string; evening: string }> = {
+    "목": {
+      morning: "이른 아침의 나무 기운이 용신과 함께합니다. 새로운 시작에 좋은 시간.",
+      afternoon: "오후의 불 기운이 에너지를 끌어올립니다. 활동적인 일에 적합합니다.",
+      evening: "금 기운이 강해지는 저녁은 신중함이 필요합니다. 큰 결정은 피하세요.",
+    },
+    "화": {
+      morning: "목 기운이 불을 살려주는 아침. 열정적인 활동에 적합합니다.",
+      afternoon: "한낮의 화 기운이 최고조. 중요한 미팅이나 발표에 좋은 시간.",
+      evening: "수 기운이 감도는 저녁은 휴식에 집중하세요. 감정 조절이 필요합니다.",
+    },
+    "토": {
+      morning: "아침의 활기찬 에너지가 안정감을 줍니다. 계획 정리에 좋은 시간.",
+      afternoon: "오후의 토 기운이 안정적. 실무와 정리에 최적의 시간입니다.",
+      evening: "저녁은 무난하게 흘러갑니다. 가벼운 정리와 내일 준비에 적합합니다.",
+    },
+    "금": {
+      morning: "아침의 목 기운과 갈등이 있을 수 있습니다. 급한 결정은 피하세요.",
+      afternoon: "금 기운이 살아나는 오후가 핵심 시간. 결단이 필요한 일을 처리하세요.",
+      evening: "저녁의 금·수 기운이 조화롭습니다. 마무리 작업과 복기에 좋습니다.",
+    },
+    "수": {
+      morning: "아침은 보통입니다. 가볍게 준비하며 에너지를 비축하세요.",
+      afternoon: "화 기운이 강한 오후는 신중하게. 감정적 충돌을 조심하세요.",
+      evening: "수 기운이 살아나는 밤이 당신의 시간. 창의적 작업에 최적입니다.",
+    },
+  };
+
+  const messages = yongShinMessages[chart.yongShin.element] || yongShinMessages["토"];
+
+  return {
+    morning: { score: morningScore, message: messages.morning },
+    afternoon: { score: afternoonScore, message: messages.afternoon },
+    evening: { score: eveningScore, message: messages.evening },
+  };
+}
+
+export function generateDailySajuInsight(
+  chart: SajuChart,
+  personality: SajuPersonality,
+  todayStemIdx: number,
+  todayBranchIdx: number
+): string {
+  const insights: string[] = [];
+  const todayStemEl = STEM_ELEMENTS[todayStemIdx].element;
+  const yongShinEl = FIVE_ELEMENTS.indexOf(chart.yongShin.element as typeof FIVE_ELEMENTS[number]);
+
+  if (todayStemEl === yongShinEl) {
+    insights.push(`오늘 일진의 천간이 용신(${chart.yongShin.elementHanja})과 같은 기운입니다. 하늘이 당신 편인 날 — 중요한 일을 밀어붙이세요.`);
+  } else if ((todayStemEl + 1) % 5 === yongShinEl) {
+    insights.push(`오늘 일진이 용신(${chart.yongShin.elementHanja})을 살려주는 기운입니다. 순풍을 타는 흐름이니 적극적으로 움직이세요.`);
+  } else if ((todayStemEl + 2) % 5 === yongShinEl) {
+    insights.push(`오늘 일진이 용신(${chart.yongShin.elementHanja})을 누르는 기운입니다. 무리하지 말고 수비 위주로 하루를 보내세요.`);
+  }
+
+  for (const sal of personality.specialSals) {
+    if (sal.name === "괴강살") {
+      const dayBranchIdx = chart.dayPillar.branchIndex;
+      const isChung = (todayBranchIdx + 6) % 12 === dayBranchIdx || (dayBranchIdx + 6) % 12 === todayBranchIdx;
+      if (isChung) {
+        insights.push("괴강의 기운이 오늘 일진과 충돌합니다. 폭발적 에너지가 솟구치는 날 — 이 에너지를 결단이나 추진력으로 전환하세요.");
+      } else {
+        insights.push("괴강살 보유자인 당신은 오늘 리더십을 발휘할 기회가 있습니다. 주저하지 말고 앞장서세요.");
+      }
+      break;
+    }
+    if (sal.name === "도화살") {
+      insights.push("도화살의 매력이 오늘 빛을 발합니다. 대인관계나 프레젠테이션에서 좋은 인상을 남길 수 있는 날.");
+      break;
+    }
+    if (sal.name === "역마살") {
+      insights.push("역마살의 기운이 활성화되는 날입니다. 움직이면 좋은 소식이 따라옵니다. 밖으로 나가세요.");
+      break;
+    }
+    if (sal.name === "천을귀인") {
+      insights.push("천을귀인의 별이 오늘을 비추고 있습니다. 뜻밖의 도움이나 좋은 만남이 예상됩니다.");
+      break;
+    }
+  }
+
+  if (insights.length < 2) {
+    for (const pattern of personality.structurePatterns) {
+      if (pattern.name === "식상생재" && (todayStemEl === yongShinEl || (todayStemEl + 1) % 5 === yongShinEl)) {
+        insights.push("식상생재의 구조가 오늘 활성화됩니다. 아이디어가 돈이 되는 날 — 떠오르는 생각을 메모하세요.");
+        break;
+      }
+      if (pattern.name === "관인상생") {
+        insights.push("관인상생의 흐름이 오늘 작동합니다. 윗사람이나 멘토의 조언에 귀 기울이면 좋은 결과가 있습니다.");
+        break;
+      }
+    }
+  }
+
+  if (insights.length === 0) {
+    const remedy = personality.yongShinRemedy;
+    insights.push(`오늘은 용신(${chart.yongShin.elementHanja}) 기운을 의식적으로 가까이 하세요. ${remedy.luckyColor.split("계열")[0]}계열 의상이 기운을 끌어올립니다.`);
+  }
+
+  return insights.join(" ");
+}

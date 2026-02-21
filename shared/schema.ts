@@ -124,11 +124,23 @@ export interface FortuneData {
   zodiacWork: string;
   zodiacSummary: string;
   luckyNumbers: number[];
+  ziweiScore: number;
   ziweiMessage: string;
   combinedScore: number;
   coherenceScore: number;
   commonKeywords: string[];
   coreMessage: string;
+  oracleLine?: string;
+  todayPrescription?: string;
+  luckyColor?: string;
+  luckyTime?: string;
+  timeGuide?: {
+    morning: { score: number; message: string };
+    afternoon: { score: number; message: string };
+    evening: { score: number; message: string };
+  };
+  sajuInsight?: string;
+  scoreDelta?: number;
 }
 
 export const guardianReports = pgTable("guardian_reports", {

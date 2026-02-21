@@ -1,6 +1,6 @@
 import { storage } from "./storage";
 import { getZodiacSign, getZodiacInfo, type FortuneData } from "@shared/schema";
-import { calculateFullSaju, checkGanYeoJiDong, calculateDaewoonDynamicStars } from "@shared/saju";
+import { calculateFullSaju, checkGanYeoJiDong, calculateDaewoonDynamicStars, analyzeSajuPersonality, calculateTimeGuide, generateDailySajuInsight } from "@shared/saju";
 import { calculateZiWei } from "@shared/ziwei";
 import OpenAI from "openai";
 import { z } from "zod";
@@ -48,44 +48,48 @@ export async function sendTelegramMessage(chatId: string, text: string): Promise
 
 // 텔레그램 메시지 포맷팅 함수 (3자 교차 검증 반영)
 export function formatFortuneForTelegram(data: FortuneData, userName: string, dateStr: string, zodiacSign: string): string {
-  let coherenceEmoji = "🤔";
-  let coherenceText = "복합적인 하루";
-  if (data.coherenceScore >= 85) {
-    coherenceEmoji = "🌟";
-    coherenceText = "운명적 일치 (강력 추천)";
-  } else if (data.coherenceScore >= 70) {
-    coherenceEmoji = "⚖️";
-    coherenceText = "대체로 일치";
+  const scoreEmoji = data.combinedScore >= 80 ? "🔥" : data.combinedScore >= 60 ? "✨" : data.combinedScore >= 40 ? "🌤" : "🌧";
+
+  let deltaText = "";
+  if (data.scoreDelta !== undefined && data.scoreDelta !== null) {
+    if (data.scoreDelta > 0) deltaText = ` (▲ +${data.scoreDelta})`;
+    else if (data.scoreDelta < 0) deltaText = ` (▼ ${data.scoreDelta})`;
+    else deltaText = " (→ 변동없음)";
   }
 
-  return `<b>[오늘의 운세] ${dateStr}</b>
-<b>${userName}님</b> (${zodiacSign})
+  let timeBest = "";
+  if (data.timeGuide) {
+    const { morning, afternoon, evening } = data.timeGuide;
+    if (morning.score >= afternoon.score && morning.score >= evening.score) timeBest = "🌅 오전";
+    else if (afternoon.score >= evening.score) timeBest = "☀️ 오후";
+    else timeBest = "🌙 저녁";
+  }
 
-<b>${coherenceEmoji} 운세 일치도: ${data.coherenceScore}%</b>
-(${coherenceText})
-"사주, 별자리, 자미두수가 공통적으로 가리키는 메시지입니다."
+  let msg = `<b>☽ ${dateStr} — ${userName}님의 운세</b>\n\n`;
 
-<b>💎 오늘의 핵심 메시지:</b>
-${data.coreMessage}
+  if (data.oracleLine) {
+    msg += `<i>"${data.oracleLine}"</i>\n\n`;
+  }
 
-<b>🔗 공통 키워드:</b> ${data.commonKeywords.join(", ")}
+  msg += `${scoreEmoji} <b>${data.combinedScore}점</b>${deltaText}\n`;
+  msg += `사주 ${data.sajuScore} · 별자리 ${data.zodiacScore} · 자미두수 ${data.ziweiScore || "—"} · 일치도 ${data.coherenceScore}%\n\n`;
 
-<b>-- 종합 점수: ${data.combinedScore}점</b>
-  사주: ${data.sajuScore}점 | 별자리: ${data.zodiacScore}점
+  msg += `💎 ${data.coreMessage}\n\n`;
 
-<b>-- 행운 가이드</b>
-방향: ${data.sajuDirection} | 숫자: ${data.luckyNumbers.join(", ")}
+  if (data.todayPrescription) {
+    msg += `💡 <b>오늘의 처방:</b> ${data.todayPrescription}\n\n`;
+  }
 
-<b>-- 📜 사주팔자 (Time)</b>
-${data.sajuSummary}
-<b>⚠️ 주의:</b> ${data.sajuCaution}
+  if (data.sajuInsight) {
+    msg += `🔮 ${data.sajuInsight}\n\n`;
+  }
 
-<b>-- 🔭 별자리 (Space)</b>
-${data.zodiacSummary}
-<b>💡 팁:</b> ${data.zodiacWork}
+  msg += `🧭 방향 ${data.sajuDirection}`;
+  if (data.luckyColor) msg += ` · 색상 ${data.luckyColor}`;
+  msg += ` · 숫자 ${data.luckyNumbers.join(",")}`;
+  if (timeBest) msg += ` · 최적 ${timeBest}`;
 
-<b>-- 🔮 자미두수 (Stars)</b>
-${data.ziweiMessage}`;
+  return msg;
 }
 
 function getKoreaTime() {
@@ -144,6 +148,8 @@ const synthesisSchema = z.object({
   coherenceScore: z.number().min(0).max(100).describe("3가지 운세(사주, 별자리, 자미두수)의 일치도 점수"),
   commonKeywords: z.array(z.string()).describe("3가지 운세에서 공통적으로 발견된 키워드 3~5개"),
   coreMessage: z.string().describe("3가지 운세가 만장일치로 가리키는 오늘의 핵심 메시지"),
+  oracleLine: z.string().describe("시적이고 비유적인 한 줄 신탁. 반드시 자연/계절/동물/원소의 은유를 포함. 예: '봄 얼음 아래 흐르는 물처럼 — 겉은 고요하나 속에서는 이미 변화가 시작되었다.' ~할 수 있습니다 같은 상투어 금지."),
+  todayPrescription: z.string().describe("오늘 당장 실행할 수 있는 구체적 행동 처방 1가지. 장소/시간/행동이 구체적이어야 함. 예: '오후 3시에 창가에서 따뜻한 차를 마시며 5분간 멍 때리세요.' 추상적 조언 금지."),
   luckyNumbers: z.array(z.number()).min(1).max(5).describe("오늘의 행운의 숫자 3개"),
   sajuCaution: z.string(),
   sajuSpecial: z.string(),
@@ -217,6 +223,12 @@ export async function generateFortuneForUser(user: {
   const todayStem = STEMS_H[todayStemIdx];
   const todayBranch = BRANCHES_H[todayBranchIdx];
 
+  // === v2.0: 사주 로직 기반 데이터 생성 (GPT 호출 없음) ===
+  const sajuPersonality = analyzeSajuPersonality(sajuChart);
+  const timeGuide = calculateTimeGuide(sajuChart, todayStemIdx, todayBranchIdx);
+  const sajuInsight = generateDailySajuInsight(sajuChart, sajuPersonality, todayStemIdx, todayBranchIdx);
+  const yongShinRemedy = sajuPersonality.yongShinRemedy;
+
   // 1. 사주 프롬프트
   const sajuSystemPrompt = `당신은 60년 경력의 정통 명리학자입니다.
 아래 사주 원국과 오늘의 일진을 대조하여 정확한 일일 운세를 분석하세요.
@@ -230,6 +242,10 @@ export async function generateFortuneForUser(user: {
 1. 오늘 일진(${todayStem}${todayBranch})이 일주(${sajuChart.dayPillar.stemHanja}${sajuChart.dayPillar.branchHanja})에 미치는 형/충/회/합/원진 관계를 분석하세요.
 2. 용신(${sajuChart.yongShin.elementHanja})이 오늘 힘을 받는지, 극을 당하는지 확인하세요.
 3. 이를 바탕으로 재물, 직장, 대인관계의 유불리를 명확히 판단하세요.
+4. "~할 수 있습니다", "~일 수 있습니다" 같은 약한 표현은 절대 금지.
+   - 나쁜 예: "좋은 결과를 얻을 수 있습니다" → 좋은 예: "오늘은 결과가 따르는 날이다"
+   - 나쁜 예: "주의가 필요합니다" → 좋은 예: "오후에 날카로운 말이 독이 된다"
+5. 365일 아무 날에나 붙일 수 있는 일반적 문장 금지. 반드시 오늘 일진(${todayStem}${todayBranch})과 일주의 구체적 관계(합/충/생/극)를 근거로 서술하세요.
 
 JSON 형식 응답:
 {
@@ -258,6 +274,8 @@ JSON 형식 응답:
    - "세미섹스타일", "트라인", "스퀘어" 같은 영어/외래어 용어 사용 금지.
 3. 구체적인 행성의 움직임을 언급하되, 한국어로 자연스럽게 풀어서 서술하세요.
 4. 사용자의 이름을 절대 사용하지 마세요. 반드시 "당신"으로만 지칭하세요.
+5. "~할 수 있습니다", "~일 수 있습니다" 같은 약한 표현은 절대 금지. "~하는 날이다", "~하라" 같은 단정형을 사용하세요.
+6. 365일 아무 날에나 붙일 수 있는 일반적 문장 금지. 반드시 오늘 날짜의 행성 배치를 근거로 구체적으로 서술하세요.
 
 JSON 형식 응답:
 {
@@ -295,6 +313,7 @@ ${todayStem}${todayBranch} (천간:${STEMS_H[todayStemIdx]}/지지:${BRANCHES_H[
 2. 재백궁과 부처궁의 별도 오늘의 기운과 어떻게 상호작용하는지 판단하세요.
 3. 명궁 주성의 특성(성격, 재물 스타일)이 오늘 강화되는지, 약화되는지 설명하세요.
 4. 따뜻하고 격려하는 톤을 유지하세요.
+5. "~할 수 있습니다" 같은 약한 표현 금지. 단정적이고 구체적으로 서술하세요.
 
 이모지를 사용하지 말고, 반드시 아래 정확한 JSON 형식으로만 응답하세요:
 {
@@ -374,10 +393,12 @@ ${partialNotice}
    - 3가지가 모두 길(吉)하거나 흉(凶)하면 90점 이상.
    - 서로 엇갈리면 점수를 낮추세요.
 2. **공통 키워드 추출:** 3가지 분석에서 공통으로 발견되는 주제(예: "이동", "사람 조심", "계약 성사")를 찾아내세요.
-3. **핵심 메시지:** 3가지 운세가 만장일치로 합의한 '오늘의 가장 확실한 운명'을 한 문장으로 정의하세요. 따뜻하고 격려하는 톤을 유지하세요.
+3. **핵심 메시지:** 3가지 운세가 만장일치로 합의한 '오늘의 가장 확실한 운명'을 한 문장으로 정의하세요. "~할 수 있습니다" 같은 약한 표현 대신 "~하는 날이다", "~하라" 같은 단정형을 사용하세요.
 4. 만약 운세가 상충한다면, "사주와 별자리의 기운은 좋으나 자미두수의 명궁은 신중함을 권합니다" 처럼 구체적으로 서술하세요.
 5. **행운의 숫자:** 사주의 오행(五行)과 자미두수의 국(局)을 참조하여 오늘에 어울리는 행운의 숫자 3개를 제시하세요.
 6. **자미두수 메시지:** 자미두수의 분석 결과를 자연스럽게 다듬어서 "명궁의 [별이름]이 오늘..." 형태로 작성하세요.
+7. **한 줄 신탁(oracleLine):** 오늘의 운세를 관통하는 시적이고 비유적인 한 문장을 작성하세요. 반드시 자연, 계절, 동물, 원소 등의 은유를 포함해야 합니다. 예: "봄 얼음 아래 흐르는 물처럼 — 겉은 고요하나 속에서는 이미 변화가 시작되었다." 매일 다른 이미지를 사용하세요. 절대로 "~할 수 있습니다" 같은 상투적 표현 금지.
+8. **오늘의 처방(todayPrescription):** 오늘 당장 실행할 수 있는 구체적이고 독특한 행동 1가지를 처방하세요. "긍정적으로 생각하세요" 같은 추상적 조언 금지. 반드시 장소/시간/행동이 구체적이어야 합니다. 예: "점심에 평소 안 가던 카페를 가보세요. 뜻밖의 영감이 옵니다."
 
 중요: 각 원본 필드(sajuSummary, zodiacLove 등)는 위의 원본 내용을 그대로 가져와서 자연스럽게 다듬어 주세요.
 
@@ -395,7 +416,9 @@ ${partialNotice}
   "zodiacHealth": "별자리 원본 유지",
   "zodiacWork": "별자리 원본 유지",
   "zodiacSummary": "별자리 원본 요약 유지",
-  "ziweiMessage": "자미두수 원본 분석을 자연스럽게 다듬은 메시지"
+  "ziweiMessage": "자미두수 원본 분석을 자연스럽게 다듬은 메시지",
+  "oracleLine": "시적이고 비유적인 한 줄 신탁 (은유/비유 필수, 상투어 금지)",
+  "todayPrescription": "오늘 당장 실행 가능한 구체적 행동 1가지 (장소/시간/행동 포함)"
 }`;
 
   const synthesisRaw = await generateWithRetry(
@@ -415,6 +438,21 @@ ${partialNotice}
   const finalCombinedScore = synthesis.coherenceScore >= 80 
     ? Math.min(100, baseScore + 5)
     : baseScore;
+
+  // === v2.0: 어제 대비 점수 변화 ===
+  let scoreDelta: number | undefined;
+  try {
+    const yesterdayFortunes = await storage.getFortunesByUserId(user.id);
+    if (yesterdayFortunes && yesterdayFortunes.length > 0) {
+      const yesterday = yesterdayFortunes[0];
+      if (yesterday.fortuneData) {
+        const prevData = JSON.parse(yesterday.fortuneData);
+        scoreDelta = finalCombinedScore - (prevData.combinedScore || 0);
+      }
+    }
+  } catch (e) {
+    console.warn("[FORTUNE] 어제 점수 비교 실패:", e);
+  }
 
   const fortuneData: FortuneData = {
     sajuScore: saju.score,
@@ -436,6 +474,14 @@ ${partialNotice}
     coherenceScore: synthesis.coherenceScore,
     commonKeywords: synthesis.commonKeywords,
     coreMessage: synthesis.coreMessage,
+    ziweiScore: ziwei.score,
+    oracleLine: synthesis.oracleLine || undefined,
+    todayPrescription: synthesis.todayPrescription || undefined,
+    luckyColor: yongShinRemedy.luckyColor.split("계열")[0] + "계열",
+    luckyTime: yongShinRemedy.luckyTime.split("에")[0],
+    timeGuide,
+    sajuInsight,
+    scoreDelta,
   };
 
   const displayContent = formatFortuneForTelegram(fortuneData, user.name, dateStr, zodiacSign);
