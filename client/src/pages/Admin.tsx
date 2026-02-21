@@ -172,11 +172,6 @@ export default function Admin() {
       <div className="max-w-7xl mx-auto">
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center gap-4">
-            <Link href="/">
-              <Button variant="ghost" size="icon" className="text-purple-400 hover:text-purple-300" data-testid="link-admin-home">
-                <ArrowLeft className="w-5 h-5" />
-              </Button>
-            </Link>
             <div>
               <h1 className="text-2xl font-bold text-purple-100" style={{ fontFamily: "Cinzel" }}>
                 관리자 대시보드
