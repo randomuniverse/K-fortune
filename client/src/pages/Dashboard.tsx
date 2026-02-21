@@ -1,10 +1,10 @@
-import { useRoute, useLocation } from "wouter";
+import { useRoute, useLocation, Link } from "wouter";
 import { useUser, useGenerateFortune, useFortunes, useSajuAnalysis } from "@/hooks/use-fortune";
 import { Layout } from "@/components/Layout";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { FortuneCard } from "@/components/FortuneCard";
-import { Loader2, Sparkles, AlertCircle, Send, Sun, CalendarDays, Compass, Star, Moon, User, LayoutDashboard, MessageCircle, ExternalLink } from "lucide-react";
+import { Loader2, Sparkles, AlertCircle, Send, Sun, CalendarDays, Compass, Star, Moon, User, LayoutDashboard, MessageCircle, ExternalLink, ArrowLeft, Users } from "lucide-react";
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useToast } from "@/hooks/use-toast";
@@ -45,6 +45,8 @@ export default function Dashboard() {
   const [match, params] = useRoute("/dashboard/:telegramId");
   const [, setLocation] = useLocation();
   const telegramId = params?.telegramId || "";
+
+  const isFromAdmin = typeof window !== "undefined" && window.location.search.includes("from=admin");
 
   const { data: user, isLoading: isUserLoading, error: userError } = useUser(telegramId);
   const { data: fortunes } = useFortunes(telegramId);
@@ -154,6 +156,23 @@ export default function Dashboard() {
   return (
     <Layout telegramId={telegramId}>
       <div className="space-y-6">
+        {isFromAdmin && (
+          <div className="flex items-center gap-2 pb-2 border-b border-purple-800/30">
+            <Link href="/admin">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-purple-400 hover:text-purple-200 gap-2"
+                data-testid="button-back-to-admin"
+              >
+                <ArrowLeft className="w-4 h-4" />
+                <Users className="w-4 h-4" />
+                회원 리스트
+              </Button>
+            </Link>
+            <span className="text-purple-600 text-xs">관리자 모드</span>
+          </div>
+        )}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div>
             <h2 className="text-3xl md:text-4xl font-serif text-white mb-1">

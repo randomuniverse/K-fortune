@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Shield, Eye, EyeOff, Users, Calendar, Clock, MapPin, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -35,6 +35,22 @@ export default function Admin() {
   const [sessionToken, setSessionToken] = useState("");
   const { toast } = useToast();
 
+  useEffect(() => {
+    const savedToken = sessionStorage.getItem("admin_token");
+    if (savedToken) {
+      setSessionToken(savedToken);
+      setAuthenticated(true);
+      fetch("/api/admin/users", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token: savedToken }),
+      }).then(res => res.ok ? res.json() : Promise.reject()).then(data => setUsers(data)).catch(() => {
+        sessionStorage.removeItem("admin_token");
+        setAuthenticated(false);
+      });
+    }
+  }, []);
+
   const handleLogin = async () => {
     setLoading(true);
     try {
@@ -50,6 +66,7 @@ export default function Admin() {
       }
       const data = await res.json();
       setSessionToken(data.token);
+      sessionStorage.setItem("admin_token", data.token);
       setAuthenticated(true);
       await fetchUsers(data.token);
     } catch {
@@ -248,7 +265,7 @@ export default function Admin() {
                         </div>
                       </div>
                       <div className="flex gap-2 md:flex-col">
-                        <Link href={`/dashboard/${user.telegramHandle || user.telegramId}`}>
+                        <Link href={`/dashboard/${user.telegramHandle || user.telegramId}?from=admin`}>
                           <Button
                             variant="ghost"
                             size="sm"
