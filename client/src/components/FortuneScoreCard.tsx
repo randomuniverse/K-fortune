@@ -168,13 +168,6 @@ export function FortuneScoreCard({ data, zodiacSign }: Props) {
         </Card>
       )}
 
-      {data.ziweiMessage && (
-        <Card className="bg-white/[0.03] border-white/10 p-5">
-          <h4 className="text-xs font-serif text-purple-400 mb-2">자미두수 메시지</h4>
-          <p className="text-sm text-white/80 leading-relaxed" data-testid="text-ziwei-message">{data.ziweiMessage}</p>
-        </Card>
-      )}
-
       <div className="grid gap-4 md:grid-cols-2">
         <Card className="bg-white/[0.03] border-white/10 p-5">
           <h4 className="text-sm font-serif text-primary mb-1">사주팔자 운세</h4>
@@ -192,6 +185,13 @@ export function FortuneScoreCard({ data, zodiacSign }: Props) {
           <InfoRow icon={Briefcase} label="직장운" value={data.zodiacWork} />
         </Card>
       </div>
+
+      {data.ziweiMessage && (
+        <Card className="bg-white/[0.03] border-white/10 p-5">
+          <h4 className="text-xs font-serif text-purple-400 mb-2">자미두수 분석</h4>
+          <p className="text-sm text-white/80 leading-relaxed" data-testid="text-ziwei-message">{data.ziweiMessage}</p>
+        </Card>
+      )}
     </motion.div>
   );
 }
