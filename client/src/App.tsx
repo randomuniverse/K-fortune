@@ -9,6 +9,7 @@ import Register from "@/pages/Register";
 import Dashboard from "@/pages/Dashboard";
 import Settings from "@/pages/Settings";
 import Simulator from "@/pages/Simulator";
+import Admin from "@/pages/Admin";
 
 function Router() {
   return (
@@ -19,6 +20,7 @@ function Router() {
       <Route path="/settings/:telegramId" component={Settings} />
       <Route path="/simulator" component={Simulator} />
       <Route path="/test" component={Simulator} />
+      <Route path="/admin" component={Admin} />
       <Route component={NotFound} />
     </Switch>
   );

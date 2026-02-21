@@ -29,7 +29,8 @@ export const fortunes = pgTable("fortunes", {
 
 export const insertUserSchema = createInsertSchema(users).omit({ 
   id: true, 
-  createdAt: true 
+  createdAt: true,
+  lastLoginAt: true,
 });
 
 export const insertFortuneSchema = createInsertSchema(fortunes).omit({ 

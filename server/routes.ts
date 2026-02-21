@@ -53,6 +53,7 @@ export async function registerRoutes(
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
+    storage.updateLastLogin(user.id).catch(() => {});
     res.json(user);
   });
 
@@ -458,6 +459,83 @@ export async function registerRoutes(
     } catch (error) {
       console.error("[Simulate Guardian] Error:", error);
       res.status(500).json({ message: "Simulation failed" });
+    }
+  });
+
+  const adminTokens = new Set<string>();
+
+  app.post("/api/admin/login", async (req, res) => {
+    const { password } = req.body;
+    const adminPassword = process.env.SESSION_SECRET;
+    if (!adminPassword) {
+      return res.status(500).json({ message: "관리자 인증이 설정되지 않았습니다." });
+    }
+    if (password !== adminPassword) {
+      return res.status(401).json({ message: "비밀번호가 올바르지 않습니다." });
+    }
+    const token = crypto.randomUUID();
+    adminTokens.add(token);
+    res.json({ success: true, token });
+  });
+
+  app.post("/api/admin/users", async (req, res) => {
+    const { token } = req.body;
+    if (!token || !adminTokens.has(token)) {
+      return res.status(401).json({ message: "인증 실패" });
+    }
+
+    try {
+      const allUsers = await storage.getAllUsers();
+
+      const usersWithSaju = allUsers.map(user => {
+        try {
+          const gender = (user.gender === "female" || user.gender === "여" || user.gender === "woman") ? "female" : "male" as "male" | "female";
+          const sajuChart = calculateFullSaju(user.birthDate, user.birthTime, gender);
+          const zodiacSign = getZodiacSign(user.birthDate);
+          return {
+            id: user.id,
+            name: user.name,
+            telegramId: user.telegramId,
+            telegramHandle: user.telegramHandle,
+            telegramChatId: user.telegramChatId,
+            birthDate: user.birthDate,
+            birthTime: user.birthTime,
+            gender: user.gender,
+            mbti: user.mbti,
+            birthCountry: user.birthCountry,
+            birthCity: user.birthCity,
+            lastLoginAt: user.lastLoginAt,
+            createdAt: user.createdAt,
+            dayMaster: sajuChart.dayPillar?.stem || "-",
+            fiveElementBalance: sajuChart.fiveElementRatios || [],
+            zodiacSign,
+          };
+        } catch {
+          return {
+            id: user.id,
+            name: user.name,
+            telegramId: user.telegramId,
+            telegramHandle: user.telegramHandle,
+            telegramChatId: user.telegramChatId,
+            birthDate: user.birthDate,
+            birthTime: user.birthTime,
+            gender: user.gender,
+            mbti: user.mbti,
+            birthCountry: user.birthCountry,
+            birthCity: user.birthCity,
+            lastLoginAt: user.lastLoginAt,
+            createdAt: user.createdAt,
+            dayMaster: "-",
+            fiveElementBalance: [],
+            zodiacSign: "-",
+          };
+        }
+      });
+
+      res.json(usersWithSaju);
+    } catch (error) {
+      console.error("[Admin] Error fetching users:", error);
+      res.status(500).json({ message: "사용자 목록 조회 실패" });
     }
   });
 

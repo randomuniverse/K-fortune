@@ -17,6 +17,7 @@ export interface IStorage {
   createYearlyFortune(fortune: InsertYearlyFortune): Promise<YearlyFortune>;
   getYearlyFortuneByUserId(userId: number, year: number): Promise<YearlyFortune | undefined>;
   deleteYearlyFortuneByUserId(userId: number, year: number): Promise<void>;
+  updateLastLogin(userId: number): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -123,6 +124,10 @@ export class DatabaseStorage implements IStorage {
 
   async deleteYearlyFortuneByUserId(userId: number, year: number): Promise<void> {
     await db.delete(yearlyFortunes).where(and(eq(yearlyFortunes.userId, userId), eq(yearlyFortunes.year, year)));
+  }
+
+  async updateLastLogin(userId: number): Promise<void> {
+    await db.update(users).set({ lastLoginAt: new Date() }).where(eq(users.id, userId));
   }
 }
 
