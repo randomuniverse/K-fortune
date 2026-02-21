@@ -466,7 +466,7 @@ export async function registerRoutes(
 
   app.post("/api/admin/login", async (req, res) => {
     const { password } = req.body;
-    const adminPassword = process.env.SESSION_SECRET;
+    const adminPassword = process.env.ADMIN_PASSWORD;
     if (!adminPassword) {
       return res.status(500).json({ message: "관리자 인증이 설정되지 않았습니다." });
     }
