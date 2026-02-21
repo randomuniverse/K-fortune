@@ -1088,7 +1088,7 @@ ${zodiacReport ? JSON.stringify(zodiacReport, null, 2) : "(분석 실패 — 이
   "healthFortune": "500자 이상 건강 관리법 (3체계 종합)",
   "keywords": ["공통키워드1", "공통키워드2", ...],
   "monthlyFlow": [
-    {"month": 1, "score": 평균점수, "keyword": "공통키워드", "summary": "1월은 OO(간지)의 기운입니다. 3문장 이상"},
+    {"month": 1, "score": 평균점수, "keyword": "대표키워드", "keywords": ["키워드1", "키워드2", "키워드3"], "summary": "1월은 OO(간지)의 기운입니다. 3문장 이상"},
     ... (1~12월 전체)
   ]
 }
@@ -1115,6 +1115,7 @@ ${zodiacReport ? JSON.stringify(zodiacReport, null, 2) : "(분석 실패 — 이
         month: z.number().int().min(1).max(12),
         score: z.number().min(0).max(100),
         keyword: z.string(),
+        keywords: z.array(z.string()).optional(),
         summary: z.string(),
       })).default([]),
     });
@@ -1123,6 +1124,7 @@ ${zodiacReport ? JSON.stringify(zodiacReport, null, 2) : "(분석 실패 — 이
       month: z.number().int().min(1).max(12),
       score: z.number().min(0).max(100),
       keyword: z.string(),
+      keywords: z.array(z.string()).optional(),
       summary: z.string(),
     }));
 

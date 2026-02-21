@@ -142,11 +142,13 @@ function AIMonthlyFlowCard({ item, index }: { item: MonthlyFlowItem; index: numb
       }`}>
         <CardContent className="p-4">
           <div className="flex items-center justify-between mb-2 flex-wrap gap-1">
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
               <span className="text-lg font-bold text-white">{item.month}월</span>
-              <Badge variant={isGood ? "default" : isBad ? "destructive" : "secondary"} className="text-[10px]">
-                {item.keyword}
-              </Badge>
+              {(item.keywords && item.keywords.length > 0 ? item.keywords : [item.keyword]).map((kw, ki) => (
+                <Badge key={ki} variant={ki === 0 ? (isGood ? "default" : isBad ? "destructive" : "secondary") : "secondary"} className="text-[10px]">
+                  {kw}
+                </Badge>
+              ))}
             </div>
             <Badge variant={
               item.score >= 75 ? "default" :
@@ -222,12 +224,6 @@ export function YearlyFortuneCard({ chart, userName, telegramId, yearlySubTab, z
     },
   });
 
-  const scoreColor =
-    yearlyFortune.overallScore >= 75 ? "text-emerald-400" :
-    yearlyFortune.overallScore >= 60 ? "text-primary" :
-    yearlyFortune.overallScore >= 45 ? "text-amber-400" :
-    "text-red-400";
-
   const bestMonth = [...monthlyFortunes].sort((a, b) => b.score - a.score)[0];
   const worstMonth = [...monthlyFortunes].sort((a, b) => a.score - b.score)[0];
 
@@ -244,13 +240,9 @@ export function YearlyFortuneCard({ chart, userName, telegramId, yearlySubTab, z
       <div className="flex flex-col md:flex-row items-start gap-6">
         <div className="text-center md:text-left">
           <h3 className="text-xl font-serif text-white mb-1">{year}년 운세 총평</h3>
-          <p className="text-xs text-muted-foreground mb-3">
+          <p className="text-xs text-muted-foreground">
             {yearlyFortune.yearPillar.stemHanja}{yearlyFortune.yearPillar.branchHanja}년 ({yearlyFortune.yearElement})
           </p>
-          <div className="flex items-baseline gap-2 justify-center md:justify-start">
-            <span className={`text-4xl font-bold ${scoreColor}`} data-testid="text-yearly-score">{yearlyFortune.overallScore}</span>
-            <span className="text-sm text-muted-foreground">/ 100점</span>
-          </div>
         </div>
 
         <div className="flex-1 space-y-3">
@@ -393,8 +385,8 @@ export function YearlyFortuneCard({ chart, userName, telegramId, yearlySubTab, z
               )}
             </Card>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4" data-testid="yearly-category-grid">
-              <Card className="bg-gradient-to-b from-amber-500/10 to-transparent border-amber-500/20 p-5" data-testid="card-yearly-business">
+            <div className="space-y-4" data-testid="yearly-category-grid">
+              <Card className="bg-gradient-to-r from-amber-500/10 to-transparent border-amber-500/20 p-5" data-testid="card-yearly-business">
                 <div className="flex items-center gap-2 mb-3">
                   <Briefcase className="w-4 h-4 text-amber-400" />
                   <span className="text-amber-200 font-bold text-sm">사업/재물운</span>
@@ -404,7 +396,7 @@ export function YearlyFortuneCard({ chart, userName, telegramId, yearlySubTab, z
                 </p>
               </Card>
 
-              <Card className="bg-gradient-to-b from-pink-500/10 to-transparent border-pink-500/20 p-5" data-testid="card-yearly-love">
+              <Card className="bg-gradient-to-r from-pink-500/10 to-transparent border-pink-500/20 p-5" data-testid="card-yearly-love">
                 <div className="flex items-center gap-2 mb-3">
                   <Heart className="w-4 h-4 text-pink-400" />
                   <span className="text-pink-200 font-bold text-sm">연애/인간관계운</span>
@@ -414,7 +406,7 @@ export function YearlyFortuneCard({ chart, userName, telegramId, yearlySubTab, z
                 </p>
               </Card>
 
-              <Card className="bg-gradient-to-b from-cyan-500/10 to-transparent border-cyan-500/20 p-5" data-testid="card-yearly-health">
+              <Card className="bg-gradient-to-r from-cyan-500/10 to-transparent border-cyan-500/20 p-5" data-testid="card-yearly-health">
                 <div className="flex items-center gap-2 mb-3">
                   <HeartPulse className="w-4 h-4 text-cyan-400" />
                   <span className="text-cyan-200 font-bold text-sm">건강/웰니스운</span>

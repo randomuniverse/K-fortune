@@ -221,5 +221,6 @@ export interface MonthlyFlowItem {
   month: number;
   score: number;
   keyword: string;
+  keywords?: string[];
   summary: string;
 }
