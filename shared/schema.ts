@@ -15,6 +15,7 @@ export const users = pgTable("users", {
   birthCountry: text("birth_country"),
   birthCity: text("birth_city"),
   preferredDeliveryTime: text("preferred_delivery_time").default("07:00").notNull(),
+  lastLoginAt: timestamp("last_login_at"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
