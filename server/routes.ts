@@ -6,7 +6,7 @@ import { z } from "zod";
 import { getZodiacInfo, getZodiacSign } from "@shared/schema";
 import { calculateFullSaju, analyzeSajuPersonality } from "@shared/saju";
 import { calculateZiWei } from "@shared/ziwei";
-import { generateFortuneForUser, sendTelegramMessage, generateGuardianReport, generateYearlyFortune } from "./fortune-engine";
+import { generateFortuneForUser, sendTelegramMessage, formatFortuneForTelegram, generateGuardianReport, generateYearlyFortune } from "./fortune-engine";
 
 export async function registerRoutes(
   httpServer: Server,
@@ -375,7 +375,17 @@ export async function registerRoutes(
       const latestFortune = fortunes[0];
 
       let textToSend: string;
-      if (latestFortune) {
+      if (latestFortune && latestFortune.fortuneData) {
+        try {
+          const fortuneData = JSON.parse(latestFortune.fortuneData);
+          const koreaTime = new Date(new Date().getTime() + 9 * 60 * 60 * 1000);
+          const dateStr = `${koreaTime.getFullYear()}년 ${koreaTime.getMonth() + 1}월 ${koreaTime.getDate()}일`;
+          const zodiacSign = getZodiacSign(user.birthDate);
+          textToSend = formatFortuneForTelegram(fortuneData, user.name, dateStr, zodiacSign);
+        } catch {
+          textToSend = latestFortune.content;
+        }
+      } else if (latestFortune) {
         textToSend = latestFortune.content;
       } else {
         textToSend = `[테스트] ${user.name}님, 텔레그램 연동이 정상적으로 작동합니다! Chat ID: ${chatIdToUse}`;
