@@ -851,11 +851,7 @@ const SAMHAP_SALS: SamhapSalDef[] = [
   {name:"역마",hanja:"驛馬",category:"중성",description:"이동, 변화, 해외 인연. 역마가 길신이면 해외에서 성공하고, 흉신이면 떠돌이 신세다.",personality:"영원한 나그네 — 변화와 이동이 생명력인 자유로운 영혼",groups:[2,8,5,11]},
   {name:"도화",hanja:"桃花",category:"중성",description:"이성을 끌어당기는 매력성. 예술, 연예, 접객업에 유리하나 주색에 빠질 수 있다.",personality:"인간 자석 — 거부할 수 없는 매력으로 세상을 홀리는 자",groups:[9,3,0,6]},
   {name:"겁살",hanja:"劫煞",category:"흉신",description:"강탈, 도둑, 사고, 재액. 예상치 못한 손실이나 사고가 발생한다.",personality:"위기의 매개자 — 예측 불가능한 상황에 늘 휘말리는 운명",groups:[5,11,8,2]},
-  {name:"망신살",hanja:"亡身煞",category:"흉신",description:"명예 손상, 수치, 관재구설. 충동적 행동으로 체면을 잃는다.",personality:"위험한 충동 — 한순간의 실수로 모든 것을 잃는 아킬레스건",groups:[2,8,5,11]},
   {name:"재살",hanja:"災煞",category:"흉신",description:"천재지변, 사고, 갑작스러운 재액. 물과 불로 인한 재난에 주의해야 한다.",personality:"재앙의 그림자 — 평온 속에 숨어있는 돌발 재액",groups:[6,0,9,3]},
-  {name:"천살",hanja:"天煞",category:"흉신",description:"하늘의 재앙. 천재지변, 불가항력적인 사고나 사건이 발생한다.",personality:"하늘의 시험 — 인간의 의지를 넘어선 운명의 도전",groups:[4,10,7,1]},
-  {name:"지살",hanja:"地煞",category:"흉신",description:"지상의 재앙. 사고, 부상, 지진 등 물리적 위험이 따른다.",personality:"땅의 시련 — 발 디딘 현실에서 오는 물리적 위협",groups:[0,6,3,9]},
-  {name:"년살",hanja:"年煞",category:"흉신",description:"도화살과 같은 지지에 해당. 이성 관계로 인한 구설, 음란함, 관계의 혼란.",personality:"유혹의 늪 — 이성 문제로 자신을 잃어가는 위험한 매력",groups:[9,3,0,6]},
   {name:"월살",hanja:"月煞",category:"흉신",description:"공망에 준하는 흉살. 고민, 우울, 좌절, 노력이 수포로 돌아간다.",personality:"사라지는 노력 — 아무리 애써도 결실이 흩어지는 허무의 살",groups:[10,4,1,7]},
   {name:"반안살",hanja:"攀鞍煞",category:"길신",description:"말안장에 올라타는 기상. 승진, 진급, 지위 상승에 유리하다.",personality:"승마하는 자 — 끊임없이 위를 향해 도약하는 상승의 화신",groups:[1,7,4,10]},
   {name:"육해살",hanja:"六害煞",category:"흉신",description:"관계에서 오는 해로움. 배신, 중상모략, 인간관계로 인한 피해.",personality:"관계의 칼날 — 믿는 자에게 상처받는 배신의 굴레",groups:[11,5,2,8]},
@@ -892,7 +888,6 @@ const DAY_PILLAR_SALS: DayPillarSalDef[] = [
   {name:"괴강살",hanja:"魁罡煞",category:"중성",description:"강렬하고 단호한 성격. 군인, 법관, 의사에 유리. 남성은 권세, 여성은 克夫(극부) 우려.",personality:"강철의 의지 — 타협 없는 강단과 날카로운 판단력의 소유자",keys:["경진","경술","임진","무술"]},
   {name:"십악대패",hanja:"十惡大敗",category:"흉신",description:"열 가지 악이 모인 일주. 패배, 실패, 좌절이 많다. 단, 능력이 출중하면 극복 가능.",personality:"역경의 도가니 — 수많은 실패 속에서 단련되어 결국 빛나는 자",keys:["갑진","을사","병신","정해","무술","기축","경진","신사","임신","계해"]},
   {name:"진신",hanja:"進神",category:"길신",description:"나아가는 신. 전진, 발전, 승진의 기운이 강하다. 목표를 향해 지속적으로 나아간다.",personality:"불굴의 전진자 — 멈추지 않고 목표를 향해 나아가는 추진력의 화신",keys:["갑자","갑오","기묘","기유"]},
-  {name:"퇴신",hanja:"退神",category:"흉신",description:"물러나는 신. 퇴보, 실직, 하락의 기운. 확장보다 수성에 집중해야 한다.",personality:"현명한 후퇴자 — 때로는 물러서는 것이 더 큰 지혜임을 아는 자",keys:["갑오","갑자","기유","기묘"]},
   {name:"복신",hanja:"伏神",category:"중성",description:"숨어있는 신. 잠재된 능력, 내면의 강인함. 겉으로는 드러나지 않지만 내실이 탄탄하다.",personality:"침잠의 강자 — 드러내지 않지만 내면에 거대한 힘을 품은 자",keys:["갑자","을묘","병오","정미","무오","기미","경유","신유","임자","계해"]},
 ];
 
@@ -945,28 +940,23 @@ function detectComprehensiveSals(chart: SajuChart): SpecialSal[] {
   }
 
   const yearGroup = getSamhapGroup(chart.yearPillar.branchIndex);
-  const dayGroup = getSamhapGroup(chart.dayPillar.branchIndex);
+  const nonYearBranches = [chart.monthPillar.branchIndex, chart.dayPillar.branchIndex, chart.hourPillar.branchIndex];
   for (const sal of SAMHAP_SALS) {
-    const targetYear = sal.groups[yearGroup];
-    const targetDay = sal.groups[dayGroup];
-    if (branches.includes(targetYear) || branches.includes(targetDay)) {
+    const target = sal.groups[yearGroup];
+    if (nonYearBranches.includes(target)) {
       sals.push({name:sal.name,hanja:sal.hanja,category:sal.category,description:sal.description,personality:sal.personality});
     }
   }
 
+  const nonDayBranches = [chart.yearPillar.branchIndex, chart.monthPillar.branchIndex, chart.hourPillar.branchIndex];
   for (const sal of INDIVIDUAL_BRANCH_SALS) {
-    const isJangsung = sal.name === "장성";
     let detected = false;
 
     if (sal.basis === "년지" || sal.basis === "년지 또는 일지" || sal.basis === "일지 또는 년지") {
       const targets = sal.map[yearBranch];
       if (targets) {
         const targetIndices = targets.map(t => B2I[t]);
-        if (isJangsung) {
-          detected = [chart.monthPillar.branchIndex, chart.dayPillar.branchIndex, chart.hourPillar.branchIndex].some(b => targetIndices.includes(b));
-        } else {
-          detected = branches.some(b => targetIndices.includes(b));
-        }
+        detected = nonYearBranches.some(b => targetIndices.includes(b));
       }
     }
 
@@ -974,11 +964,7 @@ function detectComprehensiveSals(chart: SajuChart): SpecialSal[] {
       const targets = sal.map[dayBranch];
       if (targets) {
         const targetIndices = targets.map(t => B2I[t]);
-        if (isJangsung) {
-          detected = [chart.yearPillar.branchIndex, chart.monthPillar.branchIndex, chart.hourPillar.branchIndex].some(b => targetIndices.includes(b));
-        } else {
-          detected = branches.some(b => targetIndices.includes(b));
-        }
+        detected = nonDayBranches.some(b => targetIndices.includes(b));
       }
     }
 
