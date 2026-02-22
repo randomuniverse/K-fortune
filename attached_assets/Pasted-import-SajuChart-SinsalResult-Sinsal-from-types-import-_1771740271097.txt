@@ -1,0 +1,108 @@
+import { SajuChart, SinsalResult, Sinsal } from './types';
+import { ALL_SINSAL } from '../data/sinsal_data';
+
+/**
+ * Layer 1: 원국 고정 신살 계산
+ * 사용자 가입 시 1회 실행, 결과를 DB에 저장
+ */
+export function calculateStaticSinsal(chart: SajuChart): SinsalResult[] {
+  const results: SinsalResult[] = [];
+  
+  // 원국의 모든 천간/지지 추출
+  const pillars = {
+    '년간': chart.year.stem,
+    '년지': chart.year.branch,
+    '월간': chart.month.stem,
+    '월지': chart.month.branch,
+    '일간': chart.day.stem,
+    '일지': chart.day.branch,
+    '일주': `${chart.day.stem}${chart.day.branch}`,
+    ...(chart.hour && {
+      '시간': chart.hour.stem,
+      '시지': chart.hour.branch,
+    })
+  };
+
+  // 삼합 그룹 계산 (역마, 도화, 겁살 등에 필요)
+  const allBranches = [
+    chart.year.branch,
+    chart.month.branch,
+    chart.day.branch,
+    chart.hour?.branch,
+  ].filter(Boolean) as string[];
+  
+  const triGroup = getTriGroup(allBranches);
+
+  for (const sinsal of ALL_SINSAL) {
+    let basisValue: string | undefined;
+
+    // basis에 따라 기준값 추출
+    switch (sinsal.basis) {
+      case '일간':
+        basisValue = pillars['일간'];
+        break;
+      case '년지':
+        basisValue = pillars['년지'];
+        break;
+      case '일지':
+        basisValue = pillars['일지'];
+        break;
+      case '월지':
+        basisValue = pillars['월지'];
+        break;
+      case '일주':
+        basisValue = pillars['일주'];
+        break;
+      case '삼합':
+        basisValue = triGroup;
+        break;
+    }
+
+    if (!basisValue) continue;
+
+    // 매핑 테이블에서 해당 신살 지지 찾기
+    const targetBranches = sinsal.mappingTable[basisValue];
+    if (!targetBranches) continue;
+
+    // 원국 내 해당 지지가 있는지 확인
+    for (const target of targetBranches) {
+      const foundPillar = findInChart(chart, target);
+      if (foundPillar) {
+        results.push({
+          sinsal,
+          foundIn: foundPillar,
+          isActive: true,
+        });
+        break; // 하나 찾으면 중복 방지
+      }
+    }
+  }
+
+  return results;
+}
+
+// 원국에서 특정 지지 찾기
+function findInChart(chart: SajuChart, branch: string): string | null {
+  if (chart.year.branch === branch) return '년지';
+  if (chart.month.branch === branch) return '월지';
+  if (chart.day.branch === branch) return '일지';
+  if (chart.hour?.branch === branch) return '시지';
+  return null;
+}
+
+// 삼합 그룹 판별 (인오술, 신자진, 해묘미, 사유축)
+function getTriGroup(branches: string[]): string {
+  const groups: Record<string, string[]> = {
+    '인오술': ['인', '오', '술'],
+    '신자진': ['신', '자', '진'],
+    '해묘미': ['해', '묘', '미'],
+    '사유축': ['사', '유', '축'],
+  };
+  
+  for (const [group, members] of Object.entries(groups)) {
+    if (members.some(m => branches.includes(m))) {
+      return group;
+    }
+  }
+  return '';
+}
