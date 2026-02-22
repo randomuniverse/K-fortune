@@ -402,7 +402,8 @@ export default function Dashboard() {
                       chart={sajuData.sajuChart} 
                       birthDate={user.birthDate} 
                       birthTime={user.birthTime} 
-                      userName={user.name} 
+                      userName={user.name}
+                      gender={user.gender}
                     />
                   )}
 

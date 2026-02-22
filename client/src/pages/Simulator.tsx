@@ -199,6 +199,7 @@ export default function Simulator() {
               <SajuDisplay
                 chart={resultGuardian?.sajuChart || resultYearly?.sajuChart}
                 personality={resultGuardian?.sajuPersonality || resultYearly?.sajuPersonality}
+                gender={form.gender}
               />
             ) : (
               <div className="text-center p-10 text-white/20" data-testid="text-saju-empty">
@@ -369,7 +370,7 @@ export default function Simulator() {
   );
 }
 
-function SajuDisplay({ chart, personality }: { chart: any; personality: any }) {
+function SajuDisplay({ chart, personality, gender }: { chart: any; personality: any; gender?: string }) {
   if (!chart) return null;
 
   const yp = chart.yearPillar || {};
@@ -507,7 +508,8 @@ function SajuDisplay({ chart, personality }: { chart: any; personality: any }) {
                   </div>
                 )}
                 {personality.specialSals && personality.specialSals.length > 0 && (() => {
-                  const sinsalData: SinsalAnalysis | null = chart ? analyzeSinsalIntegrated(chart, new Date().getFullYear()) : null;
+                  const genderVal = (gender === "여" || gender === "female") ? "female" : "male" as "male" | "female" | undefined;
+                  const sinsalData: SinsalAnalysis | null = chart ? analyzeSinsalIntegrated(chart, new Date().getFullYear(), genderVal) : null;
                   return (
                     <div className="mt-2 space-y-3">
                       <div className="text-white/40 text-[11px] font-bold">원국 신살 ({personality.specialSals.length}개)</div>

@@ -202,7 +202,7 @@ export async function registerRoutes(
 
       const gender = (user.gender === "female" || user.gender === "여" || user.gender === "woman") ? "female" : "male" as "male" | "female";
       const sajuChart = calculateFullSaju(user.birthDate, user.birthTime, gender);
-      const sajuPersonality = analyzeSajuPersonality(sajuChart);
+      const sajuPersonality = analyzeSajuPersonality(sajuChart, gender);
 
       const [year, month, day] = user.birthDate.split('-').map(Number);
       const hour = parseInt(user.birthTime.split(':')[0]);
@@ -333,7 +333,7 @@ export async function registerRoutes(
 
       const gender = (user.gender === "female" || user.gender === "여" || user.gender === "woman") ? "female" : "male" as "male" | "female";
       const sajuChart = calculateFullSaju(user.birthDate, user.birthTime, gender);
-      const sajuPersonality = analyzeSajuPersonality(sajuChart);
+      const sajuPersonality = analyzeSajuPersonality(sajuChart, gender);
 
       const [yearVal, monthVal, dayVal] = user.birthDate.split('-').map(Number);
       const hourVal = parseInt(user.birthTime.split(':')[0]);
@@ -414,13 +414,13 @@ export async function registerRoutes(
       }
       const gender = user.gender === "male" ? "male" : "female" as "male" | "female";
       const sajuChart = calculateFullSaju(user.birthDate, user.birthTime, gender);
-      const personality = analyzeSajuPersonality(sajuChart);
+      const personality = analyzeSajuPersonality(sajuChart, gender);
       const zodiacInfo = getZodiacInfo(user.birthDate);
       const [bYear, bMonth, bDay] = user.birthDate.split('-').map(Number);
       const bHour = parseInt(user.birthTime.split(':')[0]);
       const ziweiData = calculateZiWei(bYear, bMonth, bDay, bHour, gender);
       const targetYear = req.query.year ? parseInt(req.query.year as string) : new Date().getFullYear();
-      const sinsalAnalysis = analyzeSinsalIntegrated(sajuChart, targetYear);
+      const sinsalAnalysis = analyzeSinsalIntegrated(sajuChart, targetYear, gender);
       res.json({ sajuChart, personality, zodiacInfo, ziweiData, sinsalAnalysis });
     } catch (error) {
       console.error("Error calculating saju:", error);
@@ -510,7 +510,7 @@ export async function registerRoutes(
 
       const genderVal = (gender === "여" || gender === "female") ? "female" : "male" as "male" | "female";
       const sajuChart = calculateFullSaju(birthDate, birthTime, genderVal);
-      const sajuPersonality = analyzeSajuPersonality(sajuChart);
+      const sajuPersonality = analyzeSajuPersonality(sajuChart, genderVal);
 
       const [y, m, d] = birthDate.split('-').map(Number);
       const h = parseInt(birthTime.split(':')[0]);
@@ -528,7 +528,7 @@ export async function registerRoutes(
         gender: genderVal,
       });
 
-      const sinsalAnalysis = analyzeSinsalIntegrated(sajuChart);
+      const sinsalAnalysis = analyzeSinsalIntegrated(sajuChart, undefined, genderVal);
 
       res.json({
         ...result,
@@ -630,7 +630,7 @@ export async function registerRoutes(
 
       const genderVal = (gender === "여" || gender === "female") ? "female" : "male" as "male" | "female";
       const sajuChart = calculateFullSaju(birthDate, birthTime, genderVal);
-      const sajuPersonality = analyzeSajuPersonality(sajuChart);
+      const sajuPersonality = analyzeSajuPersonality(sajuChart, genderVal);
 
       const [y, m, d] = birthDate.split('-').map(Number);
       const h = parseInt(birthTime.split(':')[0]);

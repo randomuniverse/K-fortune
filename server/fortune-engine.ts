@@ -208,7 +208,7 @@ export async function generateFortuneForUser(user: {
   const todayBranch = BRANCHES_H[todayBranchIdx];
 
   // === v2.0: 사주 로직 기반 데이터 생성 (GPT 호출 없음) ===
-  const sajuPersonality = analyzeSajuPersonality(sajuChart);
+  const sajuPersonality = analyzeSajuPersonality(sajuChart, genderVal);
   const timeGuide = calculateTimeGuide(sajuChart, todayStemIdx, todayBranchIdx);
   const sajuInsight = generateDailySajuInsight(sajuChart, sajuPersonality, todayStemIdx, todayBranchIdx);
   const yongShinRemedy = sajuPersonality.yongShinRemedy;

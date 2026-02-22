@@ -24,6 +24,7 @@ interface SajuProps {
   birthDate: string;
   birthTime: string;
   userName: string;
+  gender?: string;
 }
 
 interface ZiweiProps {
@@ -65,8 +66,9 @@ function Section({ icon: Icon, title, children, delay = 0 }: { icon: any; title:
   );
 }
 
-export function SajuDeepAnalysis({ chart, birthDate, birthTime, userName }: SajuProps) {
-  const personality = analyzeSajuPersonality(chart);
+export function SajuDeepAnalysis({ chart, birthDate, birthTime, userName, gender }: SajuProps) {
+  const genderVal = (gender === "여" || gender === "female") ? "female" : "male" as "male" | "female" | undefined;
+  const personality = analyzeSajuPersonality(chart, genderVal);
   const dayElement = ["목", "화", "토", "금", "수"][[0, 0, 1, 1, 2, 2, 3, 3, 4, 4][chart.dayPillar.stemIndex]];
   const ElIcon = ELEMENT_ICONS[dayElement] || Sparkles;
   const elColor = ELEMENT_COLORS[dayElement] || "text-primary";
@@ -122,7 +124,7 @@ export function SajuDeepAnalysis({ chart, birthDate, birthTime, userName }: Saju
       </Section>
 
       {personality.specialSals.length > 0 && (() => {
-        const sinsalData: SinsalAnalysis = analyzeSinsalIntegrated(chart, new Date().getFullYear());
+        const sinsalData: SinsalAnalysis = analyzeSinsalIntegrated(chart, new Date().getFullYear(), genderVal);
         const overlappingNames = new Set(sinsalData.overlapping.map(o => o.name));
         return (
           <>

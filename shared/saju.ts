@@ -820,16 +820,9 @@ type SalDef = { name: string; hanja: string; category: "길신"|"흉신"|"중성
 const DAY_STEM_BRANCH_SALS: (SalDef & { map: Record<string, string[]> })[] = [
   {name:"천을귀인",hanja:"天乙貴人",category:"길신",description:"하늘이 내린 최고의 귀인성. 귀인의 도움을 받고 위기에서 구원받는다. 관록, 명예, 인덕이 따른다.",personality:"귀인의 빛 — 위기를 기회로 바꾸는 천운의 소유자",map:{"갑":["축","미"],"을":["자","신"],"병":["해","유"],"정":["해","유"],"무":["축","미"],"기":["자","신"],"경":["축","미"],"신":["인","오"],"임":["묘","사"],"계":["묘","사"]}},
   {name:"문창귀인",hanja:"文昌貴人",category:"길신",description:"학문, 문장, 시험 운이 뛰어나다. 총명하고 언변이 좋으며 예술적 감각이 탁월하다.",personality:"타고난 학자 — 지적 탐구와 글재주의 달인",map:{"갑":["사"],"을":["오"],"병":["신"],"정":["유"],"무":["신"],"기":["유"],"경":["해"],"신":["자"],"임":["인"],"계":["묘"]}},
-  {name:"학당귀인",hanja:"學堂貴人",category:"길신",description:"학문적 재능이 탁월하고 교육과 인연이 깊다. 스승의 가르침을 잘 받아들인다.",personality:"평생의 학습자 — 배움을 삶의 원동력으로 삼는 자",map:{"갑":["해"],"을":["오"],"병":["인"],"정":["유"],"무":["인"],"기":["유"],"경":["사"],"신":["자"],"임":["신"],"계":["묘"]}},
-  {name:"복성귀인",hanja:"福星貴人",category:"길신",description:"복록과 재물이 따르는 길성. 삶에 풍요와 행복이 깃든다.",personality:"복의 씨앗 — 풍요와 행복을 자연스럽게 끌어당기는 자",map:{"갑":["인"],"을":["축"],"병":["자"],"정":["해"],"무":["술"],"기":["유"],"경":["신"],"신":["미"],"임":["오"],"계":["사"]}},
   {name:"금여록",hanja:"金輿祿",category:"길신",description:"황금 수레를 타는 귀인성. 배우자 복이 있고 이성의 도움을 받는다. 풍요롭고 안락한 생활을 누린다.",personality:"황금 마차의 주인 — 품위와 안락함이 자연스러운 귀족적 기질",map:{"갑":["진"],"을":["사"],"병":["미"],"정":["신"],"무":["미"],"기":["신"],"경":["술"],"신":["해"],"임":["축"],"계":["인"]}},
   {name:"천록",hanja:"天祿",category:"길신",description:"하늘이 내린 복록. 자신의 능력으로 먹고살 수 있는 자립 능력이 있다.",personality:"자립의 달인 — 스스로의 힘으로 풍요를 창조하는 자",map:{"갑":["인"],"을":["묘"],"병":["사"],"정":["오"],"무":["사"],"기":["오"],"경":["신"],"신":["유"],"임":["해"],"계":["자"]}},
-  {name:"암록",hanja:"暗祿",category:"길신",description:"숨겨진 복록. 위기의 순간에 보이지 않는 도움이 나타나 구제받는다.",personality:"그림자 속의 행운아 — 알 수 없는 힘이 돕는 신비로운 존재",map:{"갑":["해"],"을":["술"],"병":["인"],"정":["축"],"무":["인"],"기":["축"],"경":["사"],"신":["진"],"임":["신"],"계":["미"]}},
   {name:"양인살",hanja:"羊刃煞",category:"흉신",description:"양의 칼날. 폭력, 다혈질, 재물 손실, 극부극처. 무관, 의사에게는 오히려 필요한 살.",personality:"예리한 칼날 — 날카롭고 강렬하지만 통제 못하면 자해하는 양날검",map:{"갑":["묘"],"을":["인"],"병":["오"],"정":["사"],"무":["오"],"기":["사"],"경":["유"],"신":["신"],"임":["자"],"계":["해"]}},
-  {name:"천주귀인",hanja:"天廚貴人",category:"길신",description:"하늘의 주방. 식복이 있고 의식주가 풍족하다. 미식가 기질이 있다.",personality:"식복의 주인 — 먹고 즐기는 복이 타고난 풍요의 화신",map:{"갑":["사"],"을":["오"],"병":["인"],"정":["묘"],"무":["사"],"기":["오"],"경":["인"],"신":["묘"],"임":["사"],"계":["유"]}},
-  {name:"천관귀인",hanja:"天官貴人",category:"길신",description:"하늘의 관직. 관록이 있고 공직이나 단체에서 인정받는다. 명예와 지위를 얻는다.",personality:"하늘의 관리 — 조직에서 빛나는 공직자 기질",map:{"갑":["미"],"을":["진"],"병":["술"],"정":["해"],"무":["축"],"기":["자"],"경":["진"],"신":["인"],"임":["묘"],"계":["사"]}},
-  {name:"천복귀인",hanja:"天福貴人",category:"길신",description:"하늘의 복. 복록이 자연스럽게 따르고 귀인의 도움으로 풍요를 누린다.",personality:"복록의 자석 — 애쓰지 않아도 복이 따르는 하늘의 총애를 받은 자",map:{"갑":["술"],"을":["해"],"병":["자"],"정":["축"],"무":["자"],"기":["축"],"경":["인"],"신":["묘"],"임":["인"],"계":["사"]}},
-  {name:"국인귀인",hanja:"國印貴人",category:"길신",description:"나라의 도장을 가진 귀인. 권력, 명예, 인감권. 인수에 해당하는 귀인성.",personality:"도장의 주인 — 권위와 신뢰를 상징하는 공적인 힘의 소유자",map:{"갑":["술"],"을":["해"],"병":["자"],"정":["축"],"무":["인"],"기":["묘"],"경":["진"],"신":["사"],"임":["미"],"계":["신"]}},
   {name:"비인",hanja:"飛刃",category:"흉신",description:"날아오는 칼날. 양인살과 쌍을 이루어 혈광지재를 암시. 외부의 폭력적 위협.",personality:"날선 경계인 — 항상 외부의 위협을 감지하며 긴장을 늦추지 않는 자",map:{"갑":["유"],"을":["신"],"병":["자"],"정":["해"],"무":["자"],"기":["해"],"경":["묘"],"신":["인"],"임":["오"],"계":["사"]}},
 ];
 
@@ -867,20 +860,21 @@ function getSamhapGroup(branchIdx: number): number {
   return 0;
 }
 
-type IndivBranchSalDef = SalDef & { map: Record<string, string[]>; basis: string };
+type IndivBranchSalDef = SalDef & { map: Record<string, string[]>; basis: string; genderFilter?: "male" | "female" };
 const INDIVIDUAL_BRANCH_SALS: IndivBranchSalDef[] = [
-  {name:"장성",hanja:"將星",category:"길신",description:"장군성. 통솔력, 지도력, 카리스마가 있다. 군인, 경찰, 무관직에 적합하다.",personality:"타고난 지휘관 — 무리를 이끄는 카리스마의 화신",basis:"년지 또는 일지",map:{"자":["자"],"축":["축"],"인":["인"],"묘":["묘"],"진":["진"],"사":["사"],"오":["오"],"미":["미"],"신":["신"],"유":["유"],"술":["술"],"해":["해"]}},
   {name:"원진살",hanja:"怨嗔煞",category:"흉신",description:"원한과 미움의 살. 만나면 서로 끌리지만 결국 원망과 증오로 끝난다.",personality:"달콤한 독약 — 처음엔 끌리지만 결국 서로를 갉아먹는 관계의 마그네트",basis:"년지 또는 일지",map:{"자":["미"],"축":["오"],"인":["유"],"묘":["신"],"진":["해"],"사":["술"],"오":["축"],"미":["자"],"신":["묘"],"유":["인"],"술":["사"],"해":["진"]}},
   {name:"천형살",hanja:"天刑煞",category:"흉신",description:"하늘의 형벌. 관재구설, 법적 분쟁, 억울한 누명. 법조계 종사자에게는 오히려 유리.",personality:"법의 칼날 — 정의와 형벌 사이에서 균형을 잡는 냉철한 심판자",basis:"년지 또는 일지",map:{"자":["유"],"축":["술"],"인":["해"],"묘":["자"],"진":["축"],"사":["인"],"오":["묘"],"미":["진"],"신":["사"],"유":["오"],"술":["미"],"해":["신"]}},
-  {name:"고신",hanja:"孤辰",category:"흉신",description:"고독한 신. 주로 남성에게 적용하며 혼자 지내는 시간이 많다.",personality:"고독한 나침반 — 혼자서도 방향을 잃지 않는 내면의 강자",basis:"년지 또는 일지",map:{"인":["사"],"묘":["사"],"진":["사"],"사":["신"],"오":["신"],"미":["신"],"신":["해"],"유":["해"],"술":["해"],"해":["인"],"자":["인"],"축":["인"]}},
-  {name:"과숙",hanja:"寡宿",category:"흉신",description:"과부의 기숙. 주로 여성에게 적용하며 이별, 사별, 독거의 기운이 있다.",personality:"스스로 피어나는 꽃 — 홀로서기를 운명으로 받아들인 꿋꿋한 독립자",basis:"년지 또는 일지",map:{"인":["축"],"묘":["축"],"진":["축"],"사":["진"],"오":["진"],"미":["진"],"신":["미"],"유":["미"],"술":["미"],"해":["술"],"자":["술"],"축":["술"]}},
+  {name:"고신",hanja:"孤辰",category:"흉신",description:"고독한 신. 남성에게 적용하며 혼자 지내는 시간이 많다.",personality:"고독한 나침반 — 혼자서도 방향을 잃지 않는 내면의 강자",basis:"년지 또는 일지",map:{"인":["사"],"묘":["사"],"진":["사"],"사":["신"],"오":["신"],"미":["신"],"신":["해"],"유":["해"],"술":["해"],"해":["인"],"자":["인"],"축":["인"]},genderFilter:"male"},
+  {name:"과숙",hanja:"寡宿",category:"흉신",description:"과부의 기숙. 여성에게 적용하며 이별, 사별, 독거의 기운이 있다.",personality:"스스로 피어나는 꽃 — 홀로서기를 운명으로 받아들인 꿋꿋한 독립자",basis:"년지 또는 일지",map:{"인":["축"],"묘":["축"],"진":["축"],"사":["진"],"오":["진"],"미":["진"],"신":["미"],"유":["미"],"술":["미"],"해":["술"],"자":["술"],"축":["술"]},genderFilter:"female"},
   {name:"귀문관살",hanja:"鬼門關煞",category:"흉신",description:"귀신의 문. 신경과민, 정신적 불안정, 영적 예민함. 무속인이나 종교인에게는 오히려 능력.",personality:"두 세계의 경계인 — 현실과 영계 사이에서 감지하는 초감각의 소유자",basis:"일지",map:{"자":["유"],"축":["오"],"인":["미"],"묘":["신"],"진":["해"],"사":["술"],"오":["축"],"미":["인"],"신":["묘"],"유":["자"],"술":["사"],"해":["진"]}},
   {name:"탕화살",hanja:"湯火煞",category:"흉신",description:"끓는 물과 불의 재앙. 화상, 폭발, 화재, 중독사고 등 급격한 사고를 암시한다.",personality:"불꽃 속의 무모함 — 강렬함에 이끌려 위험에 뛰어드는 열정의 역설",basis:"일지 또는 년지",map:{"자":["유"],"오":["묘"],"묘":["오"],"유":["자"],"인":["사"],"사":["인"],"신":["해"],"해":["신"],"진":["술"],"술":["진"],"축":["미"],"미":["축"]}},
-  {name:"급각살",hanja:"急脚煞",category:"흉신",description:"갑작스러운 다리 부상, 교통사고. 하체나 이동 중 사고를 암시한다.",personality:"질주하는 위험 — 빠른 움직임 속에 도사린 돌발 사고의 그림자",basis:"일지 또는 년지",map:{"자":["신"],"축":["인"],"인":["자"],"묘":["신"],"진":["인"],"사":["자"],"오":["신"],"미":["인"],"신":["자"],"유":["신"],"술":["인"],"해":["자"]}},
+  {name:"천전살",hanja:"穿箭煞",category:"흉신",description:"화살에 뚫리는 살. 충극(沖剋)이 심해 갑작스러운 사고나 분쟁이 생긴다.",personality:"충돌의 중심 — 피할 수 없는 마찰과 대립을 부르는 자",basis:"년지",map:{"자":["오"],"축":["미"],"인":["신"],"묘":["유"],"진":["술"],"사":["해"],"오":["자"],"미":["축"],"신":["인"],"유":["묘"],"술":["진"],"해":["사"]}},
+];
+
+const DYNAMIC_ONLY_BRANCH_SALS: IndivBranchSalDef[] = [
   {name:"상문살",hanja:"喪門煞",category:"흉신",description:"상가와 관련된 살. 주변에 상을 당하거나 장례 관련 일이 생긴다.",personality:"죽음의 목격자 — 삶과 죽음의 경계에서 서는 깊은 성찰의 자",basis:"년지",map:{"자":["인"],"축":["묘"],"인":["진"],"묘":["사"],"진":["오"],"사":["미"],"오":["신"],"미":["유"],"신":["술"],"유":["해"],"술":["자"],"해":["축"]}},
   {name:"조객살",hanja:"弔客煞",category:"흉신",description:"조문을 다니는 살. 슬픔, 이별, 손실의 기운이 따른다.",personality:"이별의 동반자 — 만남보다 헤어짐에 더 익숙한 슬픔의 학자",basis:"년지",map:{"자":["술"],"축":["해"],"인":["자"],"묘":["축"],"진":["인"],"사":["묘"],"오":["진"],"미":["사"],"신":["오"],"유":["미"],"술":["신"],"해":["유"]}},
   {name:"낙정관살",hanja:"落井關煞",category:"흉신",description:"우물에 빠지는 살. 익사, 수해, 추락 사고. 물가나 높은 곳을 주의해야 한다.",personality:"심연의 탐험가 — 깊은 곳으로 빠져드는 위험한 호기심",basis:"년지",map:{"자":["자"],"축":["유"],"인":["오"],"묘":["묘"],"진":["오"],"사":["오"],"오":["자"],"미":["묘"],"신":["자"],"유":["자"],"술":["묘"],"해":["묘"]}},
-  {name:"천전살",hanja:"穿箭煞",category:"흉신",description:"화살에 뚫리는 살. 충극(沖剋)이 심해 갑작스러운 사고나 분쟁이 생긴다.",personality:"충돌의 중심 — 피할 수 없는 마찰과 대립을 부르는 자",basis:"년지",map:{"자":["오"],"축":["미"],"인":["신"],"묘":["유"],"진":["술"],"사":["해"],"오":["자"],"미":["축"],"신":["인"],"유":["묘"],"술":["진"],"해":["사"]}},
 ];
 
 type DayPillarSalDef = SalDef & { keys: string[] };
@@ -915,7 +909,7 @@ function stemIdxToPillar(stemIdx: number, stems: number[]): string {
   return idx >= 0 ? STEM_PILLAR_NAMES[idx] : "원국";
 }
 
-function detectComprehensiveSals(chart: SajuChart): SpecialSal[] {
+function detectComprehensiveSals(chart: SajuChart, gender?: "male" | "female"): SpecialSal[] {
   const sals: SpecialSal[] = [];
   const branches = [chart.yearPillar.branchIndex, chart.monthPillar.branchIndex, chart.dayPillar.branchIndex, chart.hourPillar.branchIndex];
   const stems = [chart.yearPillar.stemIndex, chart.monthPillar.stemIndex, chart.dayPillar.stemIndex, chart.hourPillar.stemIndex];
@@ -982,6 +976,7 @@ function detectComprehensiveSals(chart: SajuChart): SpecialSal[] {
   const nonDayBranches = [chart.yearPillar.branchIndex, chart.monthPillar.branchIndex, chart.hourPillar.branchIndex];
   const nonDayPillarNames = ["년지", "월지", "시지"];
   for (const sal of INDIVIDUAL_BRANCH_SALS) {
+    if (sal.genderFilter && gender && sal.genderFilter !== gender) continue;
     let detected = false;
     let foundPillar = "원국";
 
@@ -1127,7 +1122,8 @@ export function calculateDynamicSinsal(chart: SajuChart, targetYear: number = ne
     }
   }
 
-  for (const sal of INDIVIDUAL_BRANCH_SALS) {
+  const allBranchSals = [...INDIVIDUAL_BRANCH_SALS, ...DYNAMIC_ONLY_BRANCH_SALS];
+  for (const sal of allBranchSals) {
     if (sal.basis === "년지" || sal.basis === "년지 또는 일지" || sal.basis === "일지 또는 년지") {
       const targets = sal.map[birthYearBranch];
       if (targets?.some(t => B2I[t] === yearBranchIdx)) {
@@ -1156,8 +1152,8 @@ export function calculateDynamicSinsal(chart: SajuChart, targetYear: number = ne
   return results;
 }
 
-export function analyzeSinsalIntegrated(chart: SajuChart, targetYear: number = new Date().getFullYear()): SinsalAnalysis {
-  const staticSinsal = detectComprehensiveSals(chart);
+export function analyzeSinsalIntegrated(chart: SajuChart, targetYear: number = new Date().getFullYear(), gender?: "male" | "female"): SinsalAnalysis {
+  const staticSinsal = detectComprehensiveSals(chart, gender);
   const dynamicSinsal = calculateDynamicSinsal(chart, targetYear);
 
   const staticNames = new Set(staticSinsal.map(s => s.name));
@@ -1519,13 +1515,13 @@ const ELEMENT_TALENT: Record<number, string> = {
   4: "수(水) — 연구/학문, 철학, 무역/물류, 여행/관광, 영적/심리 분야에 천부적 재능",
 };
 
-export function analyzeSajuPersonality(chart: SajuChart): SajuPersonality {
+export function analyzeSajuPersonality(chart: SajuChart, gender?: "male" | "female"): SajuPersonality {
   const dayStem = chart.dayPillar.stem;
   const dayStemInfo = DAY_STEM_PERSONALITY[dayStem] || { trait: "", description: "" };
   const dayElIdx = STEM_ELEMENTS[chart.dayPillar.stemIndex].element;
 
   // 특수살 감지
-  const specialSals = detectComprehensiveSals(chart);
+  const specialSals = detectComprehensiveSals(chart, gender);
   // 구조 패턴 감지
   const structurePatterns = detectStructurePatterns(chart);
   // 용신 개운법
@@ -1553,7 +1549,7 @@ export function analyzeSajuPersonality(chart: SajuChart): SajuPersonality {
 
   const salNames = new Set(specialSals.map(s => s.name));
   const salGifts: string[] = [];
-  if (salNames.has("문창귀인") || salNames.has("학당귀인")) salGifts.push("학문과 시험에 탁월한 재능이 더해져 지적 분야에서 두각을 나타냅니다");
+  if (salNames.has("문창귀인")) salGifts.push("학문과 시험에 탁월한 재능이 더해져 지적 분야에서 두각을 나타냅니다");
   if (salNames.has("천을귀인")) salGifts.push("위기마다 귀인이 나타나 도움을 주는 특별한 운명입니다");
   if (salNames.has("도화")) salGifts.push("사람을 끌어당기는 천부적 매력이 있어 대인관계와 예술 방면에 빛납니다");
   if (salNames.has("역마")) salGifts.push("해외나 이동 관련 분야에서 확장의 기회가 큽니다");
@@ -1562,10 +1558,7 @@ export function analyzeSajuPersonality(chart: SajuChart): SajuPersonality {
   if (salNames.has("괴강살")) salGifts.push("위기 상황에서 폭발하는 카리스마와 결단력을 타고났습니다");
   if (salNames.has("금여록")) salGifts.push("풍요와 안락이 자연스럽게 따르는 복록의 기운이 있습니다");
   if (salNames.has("천록")) salGifts.push("자립으로 성공하는 자수성가형 복록이 있습니다");
-  if (salNames.has("천주귀인")) salGifts.push("식복이 풍성하고 의식주가 풍족한 운명입니다");
-  if (salNames.has("장성")) salGifts.push("통솔력과 지도력이 뛰어난 리더 기질을 가지고 있습니다");
   if (salNames.has("복신")) salGifts.push("겉으로 드러나지 않는 잠재된 내면의 강인함이 있습니다");
-  if (salNames.has("국인귀인")) salGifts.push("공적인 권위와 조직 내 인정받는 기운이 있습니다");
   if (salGifts.length > 0) {
     heavenlyGift += ". 특히 " + salGifts.slice(0, 3).join(", ");
   }
