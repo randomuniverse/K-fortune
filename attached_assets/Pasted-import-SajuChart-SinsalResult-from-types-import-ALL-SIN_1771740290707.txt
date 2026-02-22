@@ -1,0 +1,125 @@
+import { SajuChart, SinsalResult } from './types';
+import { ALL_SINSAL } from '../data/sinsal_data';
+import { getSajuPillarForYear } from '../saju/pillar_calculator'; // 기존 사주 계산 모듈
+
+/**
+ * Layer 2: 운의 신살 계산
+ * 매년 1월 1일 자동 갱신 (세운 기준)
+ */
+export function calculateDynamicSinsal(
+  chart: SajuChart,
+  targetYear: number = new Date().getFullYear()
+): SinsalResult[] {
+  const results: SinsalResult[] = [];
+
+  // 해당 년도의 세운(歲運) 정보 가져오기
+  const yearPillar = getSajuPillarForYear(targetYear);
+  const yearStem = yearPillar.stem;   // 예: 2024년 → 갑(甲)
+  const yearBranch = yearPillar.branch; // 예: 2024년 → 진(辰)
+
+  // 세운을 원국과 합친 임시 차트로 계산
+  const dynamicChart = {
+    ...chart,
+    // 세운을 추가 기둥으로 처리
+    fortune: yearPillar
+  };
+
+  for (const sinsal of ALL_SINSAL) {
+    let basisValue: string | undefined;
+
+    switch (sinsal.basis) {
+      case '일간':
+        // 일간 기준은 세운에서 해당 지지가 오는지 확인
+        basisValue = chart.day.stem;
+        const targets = sinsal.mappingTable[basisValue];
+        if (targets?.includes(yearBranch)) {
+          results.push({
+            sinsal,
+            foundIn: `${targetYear}년 세운`,
+            isActive: true,
+          });
+        }
+        continue;
+
+      case '년지':
+        // 년지 기준: 원국 년지를 키로, 세운 지지가 타겟인지 확인
+        basisValue = chart.year.branch;
+        break;
+
+      case '삼합':
+        basisValue = getTriGroupFromBranch(chart.year.branch);
+        break;
+    }
+
+    if (!basisValue) continue;
+
+    const targetBranches = sinsal.mappingTable[basisValue];
+    if (!targetBranches) continue;
+
+    // 세운의 지지가 신살 타겟과 일치하는지 확인
+    if (targetBranches.includes(yearBranch)) {
+      results.push({
+        sinsal,
+        foundIn: `${targetYear}년 세운 (${yearStem}${yearBranch}년)`,
+        isActive: true,
+      });
+    }
+  }
+
+  // 삼재 별도 처리 (3년 지속)
+  const samjae = checkSamjae(chart.year.branch, targetYear);
+  if (samjae) results.push(samjae);
+
+  return results;
+}
+
+// 삼재 계산 (3년 지속 흉살)
+function checkSamjae(birthYearBranch: string, targetYear: number): SinsalResult | null {
+  const yearBranch = getSajuPillarForYear(targetYear).branch;
+  
+  const samjaeMap: Record<string, string[]> = {
+    '신': ['인', '묘', '진'], // 신자진 생 → 인묘진년 삼재
+    '자': ['인', '묘', '진'],
+    '진': ['인', '묘', '진'],
+    '인': ['신', '유', '술'], // 인오술 생 → 신유술년 삼재
+    '오': ['신', '유', '술'],
+    '술': ['신', '유', '술'],
+    '해': ['사', '오', '미'], // 해묘미 생 → 사오미년 삼재
+    '묘': ['사', '오', '미'],
+    '미': ['사', '오', '미'],
+    '사': ['해', '자', '축'], // 사유축 생 → 해자축년 삼재
+    '유': ['해', '자', '축'],
+    '축': ['해', '자', '축'],
+  };
+
+  const samjaeYears = samjaeMap[birthYearBranch];
+  if (!samjaeYears?.includes(yearBranch)) return null;
+
+  // 들삼재/눌삼재/날삼재 구분
+  const idx = samjaeYears.indexOf(yearBranch);
+  const types = ['들삼재 (입삼재)', '눌삼재 (중삼재)', '날삼재 (출삼재)'];
+
+  return {
+    sinsal: {
+      name: `삼재 - ${types[idx]}`,
+      hanja: '三災',
+      category: '흉신',
+      basis: '년지',
+      mappingTable: {},
+      description: `${types[idx]}: ${idx === 0 ? '삼재가 시작되는 해. 특히 주의 필요.' : idx === 1 ? '삼재의 가장 강한 해. 매사 신중하게.' : '삼재가 끝나가는 해. 서서히 회복.'}`,
+      personality: '긴 시련의 여정 — 3년의 담금질을 통해 단단해지는 불굴의 정신'
+    },
+    foundIn: `${targetYear}년 세운`,
+    isActive: true,
+  };
+}
+
+function getTriGroupFromBranch(branch: string): string {
+  const groups: Record<string, string> = {
+    '인': '인오술', '오': '인오술', '술': '인오술',
+    '신': '신자진', '자': '신자진', '진': '신자진',
+    '해': '해묘미', '묘': '해묘미', '미': '해묘미',
+    '사': '사유축', '유': '사유축', '축': '사유축',
+  };
+  return groups[branch] || '';
+}
