@@ -122,18 +122,39 @@ export function SajuDeepAnalysis({ chart, birthDate, birthTime, userName }: Saju
       </Section>
 
       {personality.specialSals.length > 0 && (
-        <Section icon={Zap} title="특수살(特殊煞) - 숨겨진 힘" delay={0.15}>
-          <div className="space-y-3">
-            {personality.specialSals.map((sal, i) => (
-              <div key={i} className="bg-gradient-to-r from-amber-500/10 to-red-500/10 border border-amber-500/20 rounded-xl p-4">
-                <div className="flex items-center gap-2 mb-2">
-                  <Zap className="w-4 h-4 text-amber-400" />
-                  <span className="text-sm font-bold text-amber-300">{sal.name} ({sal.hanja})</span>
-                </div>
-                <p className="text-xs text-amber-200/70 mb-2 font-medium">{sal.personality}</p>
-                <p className="text-xs text-white/70 leading-relaxed">{sal.description}</p>
-              </div>
-            ))}
+        <Section icon={Zap} title={`특수살(特殊煞) - 숨겨진 힘 (${personality.specialSals.length}개 감지)`} delay={0.15}>
+          <div className="space-y-4">
+            {(() => {
+              const gilSals = personality.specialSals.filter((s: any) => s.category === "길신");
+              const hyungSals = personality.specialSals.filter((s: any) => s.category === "흉신");
+              const neutralSals = personality.specialSals.filter((s: any) => s.category === "중성" || !s.category);
+              const categoryConfig = {
+                길신: { label: "길신(吉神) — 하늘이 준 축복", sals: gilSals, gradient: "from-emerald-500/10 to-teal-500/10", border: "border-emerald-500/20", iconColor: "text-emerald-400", textColor: "text-emerald-300", subColor: "text-emerald-200/70", badge: "bg-emerald-500/20 text-emerald-300" },
+                흉신: { label: "흉신(凶神) — 시련 속 성장의 열쇠", sals: hyungSals, gradient: "from-red-500/10 to-orange-500/10", border: "border-red-500/20", iconColor: "text-red-400", textColor: "text-red-300", subColor: "text-red-200/70", badge: "bg-red-500/20 text-red-300" },
+                중성: { label: "중성(中性) — 양면의 가능성", sals: neutralSals, gradient: "from-amber-500/10 to-yellow-500/10", border: "border-amber-500/20", iconColor: "text-amber-400", textColor: "text-amber-300", subColor: "text-amber-200/70", badge: "bg-amber-500/20 text-amber-300" },
+              };
+              return Object.entries(categoryConfig).map(([key, cfg]) => {
+                if (cfg.sals.length === 0) return null;
+                return (
+                  <div key={key} className="space-y-2">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${cfg.badge}`}>{cfg.label}</span>
+                      <span className="text-[10px] text-white/30">{cfg.sals.length}개</span>
+                    </div>
+                    {cfg.sals.map((sal: any, i: number) => (
+                      <div key={i} className={`bg-gradient-to-r ${cfg.gradient} border ${cfg.border} rounded-xl p-4`}>
+                        <div className="flex items-center gap-2 mb-2">
+                          <Zap className={`w-4 h-4 ${cfg.iconColor}`} />
+                          <span className={`text-sm font-bold ${cfg.textColor}`}>{sal.name} ({sal.hanja})</span>
+                        </div>
+                        <p className={`text-xs ${cfg.subColor} mb-2 font-medium`}>{sal.personality}</p>
+                        <p className="text-xs text-white/70 leading-relaxed">{sal.description}</p>
+                      </div>
+                    ))}
+                  </div>
+                );
+              });
+            })()}
           </div>
         </Section>
       )}

@@ -506,14 +506,27 @@ function SajuDisplay({ chart, personality }: { chart: any; personality: any }) {
                 )}
                 {personality.specialSals && personality.specialSals.length > 0 && (
                   <div className="mt-2 space-y-2">
-                    <div className="text-white/40 text-[11px] font-bold">특수 신살</div>
-                    {personality.specialSals.map((s: any, i: number) => (
-                      <div key={i} className="bg-black/20 rounded p-2">
-                        <div className="text-amber-300 text-[11px] font-bold">{s.name} ({s.hanja})</div>
-                        <div className="text-white/50 text-[10px] mt-0.5">{s.personality}</div>
-                        <div className="text-white/40 text-[10px] mt-0.5">{s.description}</div>
-                      </div>
-                    ))}
+                    <div className="text-white/40 text-[11px] font-bold">특수 신살 ({personality.specialSals.length}개)</div>
+                    {[
+                      { cat: "길신", color: "text-emerald-300", bg: "bg-emerald-500/10" },
+                      { cat: "흉신", color: "text-red-300", bg: "bg-red-500/10" },
+                      { cat: "중성", color: "text-amber-300", bg: "bg-amber-500/10" },
+                    ].map(({ cat, color, bg }) => {
+                      const filtered = personality.specialSals.filter((s: any) => (s.category || "중성") === cat);
+                      if (filtered.length === 0) return null;
+                      return (
+                        <div key={cat}>
+                          <div className={`${color} text-[10px] font-bold mb-1`}>[{cat}]</div>
+                          {filtered.map((s: any, i: number) => (
+                            <div key={i} className={`${bg} rounded p-2 mb-1`}>
+                              <div className={`${color} text-[11px] font-bold`}>{s.name} ({s.hanja})</div>
+                              <div className="text-white/50 text-[10px] mt-0.5">{s.personality}</div>
+                              <div className="text-white/40 text-[10px] mt-0.5">{s.description}</div>
+                            </div>
+                          ))}
+                        </div>
+                      );
+                    })}
                   </div>
                 )}
                 {personality.structurePatterns && personality.structurePatterns.length > 0 && (

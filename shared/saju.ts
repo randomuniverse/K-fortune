@@ -803,285 +803,218 @@ function getMonthlyPillarsForYear(year: number): { month: number; pillar: Pillar
   return result;
 }
 
-// ---- 특수살(特殊煞) 감지 ----
-
 export interface SpecialSal {
   name: string;
   hanja: string;
+  category: "길신" | "흉신" | "중성";
   description: string;
   personality: string;
 }
 
-function detectSpecialSal(chart: SajuChart): SpecialSal[] {
+const B2I: Record<string, number> = {"자":0,"축":1,"인":2,"묘":3,"진":4,"사":5,"오":6,"미":7,"신":8,"유":9,"술":10,"해":11};
+const S2I: Record<string, number> = {"갑":0,"을":1,"병":2,"정":3,"무":4,"기":5,"경":6,"신":7,"임":8,"계":9};
+
+type SalDef = { name: string; hanja: string; category: "길신"|"흉신"|"중성"; description: string; personality: string };
+
+const DAY_STEM_BRANCH_SALS: (SalDef & { map: Record<string, string[]> })[] = [
+  {name:"천을귀인",hanja:"天乙貴人",category:"길신",description:"하늘이 내린 최고의 귀인성. 귀인의 도움을 받고 위기에서 구원받는다. 관록, 명예, 인덕이 따른다.",personality:"귀인의 빛 — 위기를 기회로 바꾸는 천운의 소유자",map:{"갑":["축","미"],"을":["자","신"],"병":["해","유"],"정":["해","유"],"무":["축","미"],"기":["자","신"],"경":["축","미"],"신":["인","오"],"임":["묘","사"],"계":["묘","사"]}},
+  {name:"문창귀인",hanja:"文昌貴人",category:"길신",description:"학문, 문장, 시험 운이 뛰어나다. 총명하고 언변이 좋으며 예술적 감각이 탁월하다.",personality:"타고난 학자 — 지적 탐구와 글재주의 달인",map:{"갑":["사"],"을":["오"],"병":["신"],"정":["유"],"무":["신"],"기":["유"],"경":["해"],"신":["자"],"임":["인"],"계":["묘"]}},
+  {name:"학당귀인",hanja:"學堂貴人",category:"길신",description:"학문적 재능이 탁월하고 교육과 인연이 깊다. 스승의 가르침을 잘 받아들인다.",personality:"평생의 학습자 — 배움을 삶의 원동력으로 삼는 자",map:{"갑":["해"],"을":["오"],"병":["인"],"정":["유"],"무":["인"],"기":["유"],"경":["사"],"신":["자"],"임":["신"],"계":["묘"]}},
+  {name:"복성귀인",hanja:"福星貴人",category:"길신",description:"복록과 재물이 따르는 길성. 삶에 풍요와 행복이 깃든다.",personality:"복의 씨앗 — 풍요와 행복을 자연스럽게 끌어당기는 자",map:{"갑":["인"],"을":["축"],"병":["자"],"정":["해"],"무":["술"],"기":["유"],"경":["신"],"신":["미"],"임":["오"],"계":["사"]}},
+  {name:"금여록",hanja:"金輿祿",category:"길신",description:"황금 수레를 타는 귀인성. 배우자 복이 있고 이성의 도움을 받는다. 풍요롭고 안락한 생활을 누린다.",personality:"황금 마차의 주인 — 품위와 안락함이 자연스러운 귀족적 기질",map:{"갑":["진"],"을":["사"],"병":["미"],"정":["신"],"무":["미"],"기":["신"],"경":["술"],"신":["해"],"임":["축"],"계":["인"]}},
+  {name:"천록",hanja:"天祿",category:"길신",description:"하늘이 내린 복록. 자신의 능력으로 먹고살 수 있는 자립 능력이 있다.",personality:"자립의 달인 — 스스로의 힘으로 풍요를 창조하는 자",map:{"갑":["인"],"을":["묘"],"병":["사"],"정":["오"],"무":["사"],"기":["오"],"경":["신"],"신":["유"],"임":["해"],"계":["자"]}},
+  {name:"암록",hanja:"暗祿",category:"길신",description:"숨겨진 복록. 위기의 순간에 보이지 않는 도움이 나타나 구제받는다.",personality:"그림자 속의 행운아 — 알 수 없는 힘이 돕는 신비로운 존재",map:{"갑":["해"],"을":["술"],"병":["인"],"정":["축"],"무":["인"],"기":["축"],"경":["사"],"신":["진"],"임":["신"],"계":["미"]}},
+  {name:"양인살",hanja:"羊刃煞",category:"흉신",description:"양의 칼날. 폭력, 다혈질, 재물 손실, 극부극처. 무관, 의사에게는 오히려 필요한 살.",personality:"예리한 칼날 — 날카롭고 강렬하지만 통제 못하면 자해하는 양날검",map:{"갑":["묘"],"을":["인"],"병":["오"],"정":["사"],"무":["오"],"기":["사"],"경":["유"],"신":["신"],"임":["자"],"계":["해"]}},
+  {name:"천주귀인",hanja:"天廚貴人",category:"길신",description:"하늘의 주방. 식복이 있고 의식주가 풍족하다. 미식가 기질이 있다.",personality:"식복의 주인 — 먹고 즐기는 복이 타고난 풍요의 화신",map:{"갑":["사"],"을":["오"],"병":["인"],"정":["묘"],"무":["사"],"기":["오"],"경":["인"],"신":["묘"],"임":["사"],"계":["유"]}},
+  {name:"천관귀인",hanja:"天官貴人",category:"길신",description:"하늘의 관직. 관록이 있고 공직이나 단체에서 인정받는다. 명예와 지위를 얻는다.",personality:"하늘의 관리 — 조직에서 빛나는 공직자 기질",map:{"갑":["미"],"을":["진"],"병":["술"],"정":["해"],"무":["축"],"기":["자"],"경":["진"],"신":["인"],"임":["묘"],"계":["사"]}},
+  {name:"천복귀인",hanja:"天福貴人",category:"길신",description:"하늘의 복. 복록이 자연스럽게 따르고 귀인의 도움으로 풍요를 누린다.",personality:"복록의 자석 — 애쓰지 않아도 복이 따르는 하늘의 총애를 받은 자",map:{"갑":["술"],"을":["해"],"병":["자"],"정":["축"],"무":["자"],"기":["축"],"경":["인"],"신":["묘"],"임":["인"],"계":["사"]}},
+  {name:"국인귀인",hanja:"國印貴人",category:"길신",description:"나라의 도장을 가진 귀인. 권력, 명예, 인감권. 인수에 해당하는 귀인성.",personality:"도장의 주인 — 권위와 신뢰를 상징하는 공적인 힘의 소유자",map:{"갑":["술"],"을":["해"],"병":["자"],"정":["축"],"무":["인"],"기":["묘"],"경":["진"],"신":["사"],"임":["미"],"계":["신"]}},
+  {name:"비인",hanja:"飛刃",category:"흉신",description:"날아오는 칼날. 양인살과 쌍을 이루어 혈광지재를 암시. 외부의 폭력적 위협.",personality:"날선 경계인 — 항상 외부의 위협을 감지하며 긴장을 늦추지 않는 자",map:{"갑":["유"],"을":["신"],"병":["자"],"정":["해"],"무":["자"],"기":["해"],"경":["묘"],"신":["인"],"임":["오"],"계":["사"]}},
+];
+
+const DAY_STEM_STEM_SALS: (SalDef & { map: Record<string, string> })[] = [
+  {name:"효신살",hanja:"梟神煞",category:"흉신",description:"부엉이 신살. 어머니 인연이 박하거나 인성이 기신으로 작용한다. 의식주의 불안정.",personality:"밤의 탐구자 — 고독한 통찰 속에서 세상을 바라보는 예리한 관찰자",map:{"갑":"임","을":"계","병":"갑","정":"을","무":"병","기":"정","경":"무","신":"기","임":"경","계":"신"}},
+];
+
+const MONTH_BRANCH_STEM_SALS: (SalDef & { map: Record<string, string> })[] = [
+  {name:"천덕귀인",hanja:"天德貴人",category:"길신",description:"하늘의 덕을 받아 흉함을 해소하고 길함을 증폭시킨다. 재액을 피하고 관재구설이 없다.",personality:"하늘의 보호막 — 모든 액운을 소화하는 덕의 화신",map:{"인":"정","묘":"신","진":"임","사":"신","오":"갑","미":"계","신":"임","유":"정","술":"병","해":"을","자":"경","축":"신"}},
+  {name:"월덕귀인",hanja:"月德貴人",category:"길신",description:"달의 덕으로 흉신을 제압하고 귀인의 도움을 받는다. 관재, 시비, 송사가 없다.",personality:"달빛 수호자 — 조용하지만 강한 음덕의 소유자",map:{"인":"병","묘":"갑","진":"임","사":"병","오":"갑","미":"임","신":"병","유":"갑","술":"임","해":"병","자":"갑","축":"임"}},
+];
+
+const MONTH_BRANCH_BRANCH_SALS: (SalDef & { map: Record<string, string> })[] = [
+  {name:"천의성",hanja:"天醫星",category:"길신",description:"하늘의 의원. 의료, 치유, 간호 분야에 탁월한 재능을 가진다. 사람을 살리는 기운.",personality:"하늘이 보낸 치유자 — 타인의 고통을 감지하고 회복시키는 천성의 의인",map:{"자":"해","축":"자","인":"축","묘":"인","진":"묘","사":"진","오":"사","미":"오","신":"미","유":"신","술":"유","해":"술"}},
+];
+
+type SamhapSalDef = SalDef & { groups: [number, number, number, number] };
+const SAMHAP_SALS: SamhapSalDef[] = [
+  {name:"화개",hanja:"華蓋",category:"중성",description:"예술적 재능, 고독, 종교적 심성. 예술가나 종교인 기질이 있으나 고독하다.",personality:"고독한 예술혼 — 창조와 고독 사이를 오가는 영혼",groups:[4,10,7,1]},
+  {name:"역마",hanja:"驛馬",category:"중성",description:"이동, 변화, 해외 인연. 역마가 길신이면 해외에서 성공하고, 흉신이면 떠돌이 신세다.",personality:"영원한 나그네 — 변화와 이동이 생명력인 자유로운 영혼",groups:[2,8,5,11]},
+  {name:"도화",hanja:"桃花",category:"중성",description:"이성을 끌어당기는 매력성. 예술, 연예, 접객업에 유리하나 주색에 빠질 수 있다.",personality:"인간 자석 — 거부할 수 없는 매력으로 세상을 홀리는 자",groups:[9,3,0,6]},
+  {name:"겁살",hanja:"劫煞",category:"흉신",description:"강탈, 도둑, 사고, 재액. 예상치 못한 손실이나 사고가 발생한다.",personality:"위기의 매개자 — 예측 불가능한 상황에 늘 휘말리는 운명",groups:[5,11,8,2]},
+  {name:"망신살",hanja:"亡身煞",category:"흉신",description:"명예 손상, 수치, 관재구설. 충동적 행동으로 체면을 잃는다.",personality:"위험한 충동 — 한순간의 실수로 모든 것을 잃는 아킬레스건",groups:[2,8,5,11]},
+  {name:"재살",hanja:"災煞",category:"흉신",description:"천재지변, 사고, 갑작스러운 재액. 물과 불로 인한 재난에 주의해야 한다.",personality:"재앙의 그림자 — 평온 속에 숨어있는 돌발 재액",groups:[6,0,9,3]},
+  {name:"천살",hanja:"天煞",category:"흉신",description:"하늘의 재앙. 천재지변, 불가항력적인 사고나 사건이 발생한다.",personality:"하늘의 시험 — 인간의 의지를 넘어선 운명의 도전",groups:[4,10,7,1]},
+  {name:"지살",hanja:"地煞",category:"흉신",description:"지상의 재앙. 사고, 부상, 지진 등 물리적 위험이 따른다.",personality:"땅의 시련 — 발 디딘 현실에서 오는 물리적 위협",groups:[0,6,3,9]},
+  {name:"년살",hanja:"年煞",category:"흉신",description:"도화살과 같은 지지에 해당. 이성 관계로 인한 구설, 음란함, 관계의 혼란.",personality:"유혹의 늪 — 이성 문제로 자신을 잃어가는 위험한 매력",groups:[9,3,0,6]},
+  {name:"월살",hanja:"月煞",category:"흉신",description:"공망에 준하는 흉살. 고민, 우울, 좌절, 노력이 수포로 돌아간다.",personality:"사라지는 노력 — 아무리 애써도 결실이 흩어지는 허무의 살",groups:[10,4,1,7]},
+  {name:"반안살",hanja:"攀鞍煞",category:"길신",description:"말안장에 올라타는 기상. 승진, 진급, 지위 상승에 유리하다.",personality:"승마하는 자 — 끊임없이 위를 향해 도약하는 상승의 화신",groups:[1,7,4,10]},
+  {name:"육해살",hanja:"六害煞",category:"흉신",description:"관계에서 오는 해로움. 배신, 중상모략, 인간관계로 인한 피해.",personality:"관계의 칼날 — 믿는 자에게 상처받는 배신의 굴레",groups:[11,5,2,8]},
+];
+
+const SAMHAP_GROUPS: number[][] = [[8,0,4],[2,6,10],[11,3,7],[5,9,1]];
+
+function getSamhapGroup(branchIdx: number): number {
+  for (let g = 0; g < SAMHAP_GROUPS.length; g++) {
+    if (SAMHAP_GROUPS[g].includes(branchIdx)) return g;
+  }
+  return 0;
+}
+
+type IndivBranchSalDef = SalDef & { map: Record<string, string[]>; basis: string };
+const INDIVIDUAL_BRANCH_SALS: IndivBranchSalDef[] = [
+  {name:"장성",hanja:"將星",category:"길신",description:"장군성. 통솔력, 지도력, 카리스마가 있다. 군인, 경찰, 무관직에 적합하다.",personality:"타고난 지휘관 — 무리를 이끄는 카리스마의 화신",basis:"년지 또는 일지",map:{"자":["자"],"축":["축"],"인":["인"],"묘":["묘"],"진":["진"],"사":["사"],"오":["오"],"미":["미"],"신":["신"],"유":["유"],"술":["술"],"해":["해"]}},
+  {name:"원진살",hanja:"怨嗔煞",category:"흉신",description:"원한과 미움의 살. 만나면 서로 끌리지만 결국 원망과 증오로 끝난다.",personality:"달콤한 독약 — 처음엔 끌리지만 결국 서로를 갉아먹는 관계의 마그네트",basis:"년지 또는 일지",map:{"자":["미"],"축":["오"],"인":["유"],"묘":["신"],"진":["해"],"사":["술"],"오":["축"],"미":["자"],"신":["묘"],"유":["인"],"술":["사"],"해":["진"]}},
+  {name:"천형살",hanja:"天刑煞",category:"흉신",description:"하늘의 형벌. 관재구설, 법적 분쟁, 억울한 누명. 법조계 종사자에게는 오히려 유리.",personality:"법의 칼날 — 정의와 형벌 사이에서 균형을 잡는 냉철한 심판자",basis:"년지 또는 일지",map:{"자":["유"],"축":["술"],"인":["해"],"묘":["자"],"진":["축"],"사":["인"],"오":["묘"],"미":["진"],"신":["사"],"유":["오"],"술":["미"],"해":["신"]}},
+  {name:"고신",hanja:"孤辰",category:"흉신",description:"고독한 신. 주로 남성에게 적용하며 혼자 지내는 시간이 많다.",personality:"고독한 나침반 — 혼자서도 방향을 잃지 않는 내면의 강자",basis:"년지 또는 일지",map:{"인":["사"],"묘":["사"],"진":["사"],"사":["신"],"오":["신"],"미":["신"],"신":["해"],"유":["해"],"술":["해"],"해":["인"],"자":["인"],"축":["인"]}},
+  {name:"과숙",hanja:"寡宿",category:"흉신",description:"과부의 기숙. 주로 여성에게 적용하며 이별, 사별, 독거의 기운이 있다.",personality:"스스로 피어나는 꽃 — 홀로서기를 운명으로 받아들인 꿋꿋한 독립자",basis:"년지 또는 일지",map:{"인":["축"],"묘":["축"],"진":["축"],"사":["진"],"오":["진"],"미":["진"],"신":["미"],"유":["미"],"술":["미"],"해":["술"],"자":["술"],"축":["술"]}},
+  {name:"귀문관살",hanja:"鬼門關煞",category:"흉신",description:"귀신의 문. 신경과민, 정신적 불안정, 영적 예민함. 무속인이나 종교인에게는 오히려 능력.",personality:"두 세계의 경계인 — 현실과 영계 사이에서 감지하는 초감각의 소유자",basis:"일지",map:{"자":["유"],"축":["오"],"인":["미"],"묘":["신"],"진":["해"],"사":["술"],"오":["축"],"미":["인"],"신":["묘"],"유":["자"],"술":["사"],"해":["진"]}},
+  {name:"탕화살",hanja:"湯火煞",category:"흉신",description:"끓는 물과 불의 재앙. 화상, 폭발, 화재, 중독사고 등 급격한 사고를 암시한다.",personality:"불꽃 속의 무모함 — 강렬함에 이끌려 위험에 뛰어드는 열정의 역설",basis:"일지 또는 년지",map:{"자":["유"],"오":["묘"],"묘":["오"],"유":["자"],"인":["사"],"사":["인"],"신":["해"],"해":["신"],"진":["술"],"술":["진"],"축":["미"],"미":["축"]}},
+  {name:"급각살",hanja:"急脚煞",category:"흉신",description:"갑작스러운 다리 부상, 교통사고. 하체나 이동 중 사고를 암시한다.",personality:"질주하는 위험 — 빠른 움직임 속에 도사린 돌발 사고의 그림자",basis:"일지 또는 년지",map:{"자":["신"],"축":["인"],"인":["자"],"묘":["신"],"진":["인"],"사":["자"],"오":["신"],"미":["인"],"신":["자"],"유":["신"],"술":["인"],"해":["자"]}},
+  {name:"상문살",hanja:"喪門煞",category:"흉신",description:"상가와 관련된 살. 주변에 상을 당하거나 장례 관련 일이 생긴다.",personality:"죽음의 목격자 — 삶과 죽음의 경계에서 서는 깊은 성찰의 자",basis:"년지",map:{"자":["인"],"축":["묘"],"인":["진"],"묘":["사"],"진":["오"],"사":["미"],"오":["신"],"미":["유"],"신":["술"],"유":["해"],"술":["자"],"해":["축"]}},
+  {name:"조객살",hanja:"弔客煞",category:"흉신",description:"조문을 다니는 살. 슬픔, 이별, 손실의 기운이 따른다.",personality:"이별의 동반자 — 만남보다 헤어짐에 더 익숙한 슬픔의 학자",basis:"년지",map:{"자":["술"],"축":["해"],"인":["자"],"묘":["축"],"진":["인"],"사":["묘"],"오":["진"],"미":["사"],"신":["오"],"유":["미"],"술":["신"],"해":["유"]}},
+  {name:"낙정관살",hanja:"落井關煞",category:"흉신",description:"우물에 빠지는 살. 익사, 수해, 추락 사고. 물가나 높은 곳을 주의해야 한다.",personality:"심연의 탐험가 — 깊은 곳으로 빠져드는 위험한 호기심",basis:"년지",map:{"자":["자"],"축":["유"],"인":["오"],"묘":["묘"],"진":["오"],"사":["오"],"오":["자"],"미":["묘"],"신":["자"],"유":["자"],"술":["묘"],"해":["묘"]}},
+  {name:"천전살",hanja:"穿箭煞",category:"흉신",description:"화살에 뚫리는 살. 충극(沖剋)이 심해 갑작스러운 사고나 분쟁이 생긴다.",personality:"충돌의 중심 — 피할 수 없는 마찰과 대립을 부르는 자",basis:"년지",map:{"자":["오"],"축":["미"],"인":["신"],"묘":["유"],"진":["술"],"사":["해"],"오":["자"],"미":["축"],"신":["인"],"유":["묘"],"술":["진"],"해":["사"]}},
+];
+
+type DayPillarSalDef = SalDef & { keys: string[] };
+const DAY_PILLAR_SALS: DayPillarSalDef[] = [
+  {name:"백호대살",hanja:"白虎大煞",category:"흉신",description:"흰 호랑이의 기운. 피, 수술, 사고, 혈광지재(血光之災). 의사나 군인은 오히려 좋다.",personality:"혈기의 화신 — 강렬한 생명력이 때론 파괴로 이어지는 양날의 검",keys:["갑진","을미","병술","정축","무진","기미","경술","신축","임진","계미"]},
+  {name:"괴강살",hanja:"魁罡煞",category:"중성",description:"강렬하고 단호한 성격. 군인, 법관, 의사에 유리. 남성은 권세, 여성은 克夫(극부) 우려.",personality:"강철의 의지 — 타협 없는 강단과 날카로운 판단력의 소유자",keys:["경진","경술","임진","무술"]},
+  {name:"십악대패",hanja:"十惡大敗",category:"흉신",description:"열 가지 악이 모인 일주. 패배, 실패, 좌절이 많다. 단, 능력이 출중하면 극복 가능.",personality:"역경의 도가니 — 수많은 실패 속에서 단련되어 결국 빛나는 자",keys:["갑진","을사","병신","정해","무술","기축","경진","신사","임신","계해"]},
+  {name:"진신",hanja:"進神",category:"길신",description:"나아가는 신. 전진, 발전, 승진의 기운이 강하다. 목표를 향해 지속적으로 나아간다.",personality:"불굴의 전진자 — 멈추지 않고 목표를 향해 나아가는 추진력의 화신",keys:["갑자","갑오","기묘","기유"]},
+  {name:"퇴신",hanja:"退神",category:"흉신",description:"물러나는 신. 퇴보, 실직, 하락의 기운. 확장보다 수성에 집중해야 한다.",personality:"현명한 후퇴자 — 때로는 물러서는 것이 더 큰 지혜임을 아는 자",keys:["갑오","갑자","기유","기묘"]},
+  {name:"복신",hanja:"伏神",category:"중성",description:"숨어있는 신. 잠재된 능력, 내면의 강인함. 겉으로는 드러나지 않지만 내실이 탄탄하다.",personality:"침잠의 강자 — 드러내지 않지만 내면에 거대한 힘을 품은 자",keys:["갑자","을묘","병오","정미","무오","기미","경유","신유","임자","계해"]},
+];
+
+const KONGMANG_MAP: Record<number, number[]> = {0:[10,11],10:[8,9],8:[6,7],6:[4,5],4:[2,3],2:[0,1]};
+
+const OGWI_MAP: [number[], number][] = [
+  [[0,5],6],
+  [[1,6],7],
+  [[2,7],8],
+  [[3,8],9],
+  [[4,9],0],
+];
+
+function detectComprehensiveSals(chart: SajuChart): SpecialSal[] {
   const sals: SpecialSal[] = [];
-  const daySH = chart.dayPillar.stemHanja;
-  const dayBH = chart.dayPillar.branchHanja;
-  const dayPillarStr = daySH + dayBH;
+  const branches = [chart.yearPillar.branchIndex, chart.monthPillar.branchIndex, chart.dayPillar.branchIndex, chart.hourPillar.branchIndex];
+  const stems = [chart.yearPillar.stemIndex, chart.monthPillar.stemIndex, chart.dayPillar.stemIndex, chart.hourPillar.stemIndex];
+  const dayStem = chart.dayPillar.stem;
+  const monthBranch = chart.monthPillar.branch;
+  const yearBranch = chart.yearPillar.branch;
+  const dayBranch = chart.dayPillar.branch;
+  const dayPillarKr = dayStem + dayBranch;
 
-  // 1. 괴강살 (魁罡殺)
-  const GWEGANG = ["庚辰", "庚戌", "壬辰", "壬戌", "戊戌"];
-  if (GWEGANG.includes(dayPillarStr)) {
-    const isGeum = daySH === "庚"; // 경금
-    sals.push({
-      name: "괴강살",
-      hanja: "魁罡殺",
-      description: isGeum
-        ? `${dayPillarStr} 일주의 괴강살입니다. 평소에는 온화해 보이나, 결정적인 위기 상황이나 목표 앞에서는 폭발적인 리더십과 카리스마가 튀어나오는 '반전 매력'의 소유자입니다. 우두머리 기질이 있어 남 밑에 있기보다 주도적으로 일을 이끌어야 직성이 풀립니다.`
-        : `${dayPillarStr} 일주의 괴강살입니다. 깊은 지혜와 날카로운 판단력을 겸비했습니다. 위기 상황에서 누구도 예상 못한 대담한 결단을 내리는 전략가이며, 타인을 압도하는 강한 기운이 있습니다.`,
-      personality: isGeum
-        ? "겉은 온화하나 속은 강철 — 위기에 빛나는 리더"
-        : "깊은 물속의 칼날 — 침착하지만 치명적인 전략가",
-    });
+  for (const sal of DAY_STEM_BRANCH_SALS) {
+    const targets = sal.map[dayStem];
+    if (targets && targets.some(t => branches.includes(B2I[t]))) {
+      sals.push({name:sal.name,hanja:sal.hanja,category:sal.category,description:sal.description,personality:sal.personality});
+    }
   }
 
-  // 2. 도화살 (桃花殺) - 년지 또는 일지 기준
-  const checkDohwa = (baseBranchIdx: number, targetBranchIdx: number) => {
-    const map: Record<number, number> = {};
-    [8, 0, 4].forEach(b => map[b] = 9); // 신자진 -> 유
-    [2, 6, 10].forEach(b => map[b] = 3); // 인오술 -> 묘
-    [5, 9, 1].forEach(b => map[b] = 6); // 사유축 -> 오
-    [11, 3, 7].forEach(b => map[b] = 0); // 해묘미 -> 자
-
-    return map[baseBranchIdx] === targetBranchIdx;
-  };
-
-  const branches = [
-    chart.yearPillar.branchIndex,
-    chart.monthPillar.branchIndex,
-    chart.dayPillar.branchIndex,
-    chart.hourPillar.branchIndex
-  ];
-
-  let hasDohwa = false;
-  for (let i = 0; i < 4; i++) {
-    if (i === 0) continue;
-    if (checkDohwa(branches[0], branches[i])) hasDohwa = true;
-  }
-  for (let i = 0; i < 4; i++) {
-    if (i === 2) continue;
-    if (checkDohwa(branches[2], branches[i])) hasDohwa = true;
+  for (const sal of DAY_STEM_STEM_SALS) {
+    const target = sal.map[dayStem];
+    if (target !== undefined && stems.includes(S2I[target])) {
+      sals.push({name:sal.name,hanja:sal.hanja,category:sal.category,description:sal.description,personality:sal.personality});
+    }
   }
 
-  if (hasDohwa) {
-    sals.push({
-      name: "도화살",
-      hanja: "桃花殺",
-      description: "사람을 끌어당기는 강렬한 매력의 살입니다. 단순히 외모가 뛰어난 것을 넘어, 대중의 시선을 사로잡는 '끼'와 스타성이 있습니다. 연예, 예술, 방송 분야에서 두각을 나타냅니다.",
-      personality: "치명적인 매력 — 시선을 훔치는 스타성",
-    });
+  for (const sal of MONTH_BRANCH_STEM_SALS) {
+    const target = sal.map[monthBranch];
+    if (target !== undefined && stems.includes(S2I[target])) {
+      sals.push({name:sal.name,hanja:sal.hanja,category:sal.category,description:sal.description,personality:sal.personality});
+    }
   }
 
-  // 3. 화개살 (華蓋殺) - 예술과 종교, 고독
-  const checkHwagae = (baseBranchIdx: number, targetBranchIdx: number) => {
-    const map: Record<number, number> = {};
-    [2, 6, 10].forEach(b => map[b] = 10); // 인오술 -> 술
-    [8, 0, 4].forEach(b => map[b] = 4);   // 신자진 -> 진
-    [5, 9, 1].forEach(b => map[b] = 1);   // 사유축 -> 축
-    [11, 3, 7].forEach(b => map[b] = 7);  // 해묘미 -> 미
-
-    return map[baseBranchIdx] === targetBranchIdx;
-  };
-
-  let hasHwagae = false;
-  for (let i = 0; i < 4; i++) {
-    if (checkHwagae(branches[0], branches[i])) hasHwagae = true;
-  }
-  for (let i = 0; i < 4; i++) {
-    if (checkHwagae(branches[2], branches[i])) hasHwagae = true;
+  for (const sal of MONTH_BRANCH_BRANCH_SALS) {
+    const target = sal.map[monthBranch];
+    if (target !== undefined && branches.includes(B2I[target])) {
+      sals.push({name:sal.name,hanja:sal.hanja,category:sal.category,description:sal.description,personality:sal.personality});
+    }
   }
 
-  if (hasHwagae) {
-    sals.push({
-      name: "화개살",
-      hanja: "華蓋殺",
-      description: "화려함을 덮고 내면을 들여다보는 '고독한 예술가'의 별입니다. 종교, 철학, 심리학, 예술(디자인) 분야에 탁월한 재능이 있으며, 내면의 세계가 깊고 복잡합니다. 과거를 복기하거나 정신적인 가치를 추구할 때 큰 성취를 이룹니다.",
-      personality: "고독한 천재 — 내면의 우주를 가진 예술가",
-    });
+  const yearGroup = getSamhapGroup(chart.yearPillar.branchIndex);
+  const dayGroup = getSamhapGroup(chart.dayPillar.branchIndex);
+  for (const sal of SAMHAP_SALS) {
+    const targetYear = sal.groups[yearGroup];
+    const targetDay = sal.groups[dayGroup];
+    if (branches.includes(targetYear) || branches.includes(targetDay)) {
+      sals.push({name:sal.name,hanja:sal.hanja,category:sal.category,description:sal.description,personality:sal.personality});
+    }
   }
 
-  // 4. 역마살 (驛馬殺) - 이동과 변화
-  const checkYeokma = (baseBranchIdx: number, targetBranchIdx: number) => {
-    const map: Record<number, number> = {};
-    [2, 6, 10].forEach(b => map[b] = 8);  // 인오술 -> 신
-    [8, 0, 4].forEach(b => map[b] = 2);   // 신자진 -> 인
-    [5, 9, 1].forEach(b => map[b] = 11);  // 사유축 -> 해
-    [11, 3, 7].forEach(b => map[b] = 5);  // 해묘미 -> 사
+  for (const sal of INDIVIDUAL_BRANCH_SALS) {
+    const isJangsung = sal.name === "장성";
+    let detected = false;
 
-    return map[baseBranchIdx] === targetBranchIdx;
-  };
-
-  let hasYeokma = false;
-  for (let i = 0; i < 4; i++) {
-     if (i !== 0 && checkYeokma(branches[0], branches[i])) hasYeokma = true;
-     if (i !== 2 && checkYeokma(branches[2], branches[i])) hasYeokma = true;
-  }
-
-  if (hasYeokma) {
-    sals.push({
-      name: "역마살",
-      hanja: "驛馬殺",
-      description: "한곳에 머물지 못하고 끊임없이 움직이는 기운입니다. 이는 불안정이 아니라 '확장'을 의미합니다. 해외, 여행, 무역, 출장 등 활동 반경을 넓힐수록 운이 트이며, 변화 없는 삶에서는 답답함을 느낍니다.",
-      personality: "자유로운 영혼 — 움직여야 사는 개척자",
-    });
-  }
-
-  // 5. 홍염살 (紅艶殺) - 강렬한 이성 매력 (년간 기준)
-  const HONGYEOM_MAP: Record<number, number> = {
-    0: 6,  // 갑 -> 오(午)
-    1: 8,  // 을 -> 신(申)
-    2: 2,  // 병 -> 인(寅)
-    3: 7,  // 정 -> 미(未)
-    4: 6,  // 무 -> 오(午)
-    5: 6,  // 기 -> 오(午)
-    6: 10, // 경 -> 술(戌)
-    7: 9,  // 신 -> 유(酉)
-    8: 0,  // 임 -> 자(子)
-    9: 8,  // 계 -> 신(申)
-  };
-  const yearStemIdx = chart.yearPillar.stemIndex;
-  const hongyeomTarget = HONGYEOM_MAP[yearStemIdx];
-  const hasHongyeomYear = branches.some(b => b === hongyeomTarget);
-
-  // 홍염살 (일간 기준) - 일간이 보는 지지
-  const HONGYEOM_DAY_MAP: Record<number, number> = {
-    0: 6,  // 갑 -> 오(午)
-    1: 8,  // 을 -> 신(申)
-    2: 2,  // 병 -> 인(寅)
-    3: 7,  // 정 -> 미(未)
-    4: 6,  // 무 -> 오(午)
-    5: 6,  // 기 -> 오(午)
-    6: 10, // 경 -> 술(戌)
-    7: 9,  // 신 -> 유(酉)
-    8: 0,  // 임 -> 자(子)
-    9: 8,  // 계 -> 신(申)
-  };
-  const dayStemIdx = chart.dayPillar.stemIndex;
-  const hongyeomDayTarget = HONGYEOM_DAY_MAP[dayStemIdx];
-  const hasHongyeomDay = branches.some(b => b === hongyeomDayTarget);
-
-  if (hasHongyeomYear || hasHongyeomDay) {
-    sals.push({
-      name: "홍염살",
-      hanja: "紅艶殺",
-      description: "도화살보다 깊고 강렬한 매력의 살입니다. 이성에게 강렬한 끌림을 발산하며, 뛰어난 외모나 분위기로 이목을 끌어 연애나 사교 방면에서 활발합니다. 다만 이성 관계에서 구설수나 감정적 파도에 휘말릴 수 있으니, 스스로 감정 관리를 잘하는 것이 열쇠입니다.",
-      personality: "불꽃 같은 매력 — 도화보다 깊고 강렬한 이성 자석",
-    });
-  }
-
-  // 6. 백호살 (白虎殺) - 강한 기운, 사고/수술/유혈 주의
-  const BAEKHO_MAP: Record<number, number> = {
-    0: 4,  // 갑 -> 진(辰)
-    1: 5,  // 을 -> 사(巳)
-    2: 6,  // 병 -> 오(午)
-    3: 7,  // 정 -> 미(未)
-    4: 8,  // 무 -> 신(申)
-    5: 9,  // 기 -> 유(酉)
-    6: 10, // 경 -> 술(戌)
-    7: 11, // 신 -> 해(亥)
-    8: 0,  // 임 -> 자(子)
-    9: 1,  // 계 -> 축(丑)
-  };
-  const baekhoTarget = BAEKHO_MAP[yearStemIdx];
-  const hasBaekho = branches.some(b => b === baekhoTarget);
-  if (hasBaekho) {
-    sals.push({
-      name: "백호살",
-      hanja: "白虎殺",
-      description: "백호(흰 호랑이)의 강인하고 날카로운 기운을 품고 있습니다. 결단력과 추진력이 뛰어나지만, 너무 강한 에너지가 대인관계에서 충돌을 일으킬 수 있습니다. 배우자 관계에서 주도권 싸움이 생기기 쉬우며, 본인의 기운이 센 만큼 부드러운 커뮤니케이션이 중요합니다.",
-      personality: "흰 호랑이의 카리스마 — 강인하지만 날카로운 기운",
-    });
-  }
-
-  // 7. 양인살 (羊刃殺) - 위기에 빛나는 칼날 같은 리더십
-  const YANGIN_MAP: Record<number, number> = {
-    0: 3,  // 갑 -> 묘(卯) 제왕지
-    2: 6,  // 병 -> 오(午) 제왕지
-    4: 6,  // 무 -> 오(午) 제왕지
-    6: 9,  // 경 -> 유(酉) 제왕지
-    8: 0,  // 임 -> 자(子) 제왕지
-  };
-  let hasYangin = false;
-  if (STEM_ELEMENTS[dayStemIdx].polarity === "양" && YANGIN_MAP[dayStemIdx] !== undefined) {
-    hasYangin = branches.some(b => b === YANGIN_MAP[dayStemIdx]);
-  }
-  if (dayStemIdx === 3 && chart.monthPillar.branchIndex === 6) {
-    hasYangin = true;
-  }
-  if (hasYangin) {
-    sals.push({
-      name: "양인살",
-      hanja: "羊刃殺",
-      description: "위기에 빛나는 칼날 같은 리더십을 가진 살입니다. 평소에는 잔잔하지만, 결정적인 순간에 폭발적인 추진력과 결단력을 발휘합니다. 군인, 경찰, 외과의, 기업가 등 강한 리더십이 필요한 분야에서 크게 빛납니다. 다만 에너지가 과도하면 주변과 충돌할 수 있으니 절제가 필요합니다.",
-      personality: "위기에 빛나는 칼날 — 폭발적 리더십의 소유자",
-    });
-  }
-
-  // 8. 천을귀인 (天乙貴人) - 절체절명의 순간 돕는 귀인의 기운
-  const CHEON_EUL_MAP: Record<number, number[]> = {
-    0: [1, 7],   // 갑 -> 축, 미
-    1: [0, 8],   // 을 -> 자, 신
-    2: [11, 9],  // 병 -> 해, 유
-    3: [11, 9],  // 정 -> 해, 유
-    4: [1, 7],   // 무 -> 축, 미
-    5: [0, 8],   // 기 -> 자, 신
-    6: [1, 7],   // 경 -> 축, 미 (일부 학파: 인, 오)
-    7: [6, 2],   // 신 -> 오, 인
-    8: [5, 3],   // 임 -> 사, 묘
-    9: [5, 3],   // 계 -> 사, 묘
-  };
-  const cheonEulTargets = CHEON_EUL_MAP[dayStemIdx] || [];
-  const hasCheonEul = branches.some(b => cheonEulTargets.includes(b));
-  if (hasCheonEul) {
-    sals.push({
-      name: "천을귀인",
-      hanja: "天乙貴人",
-      description: "절체절명의 순간에 도움을 주는 귀인의 기운입니다. 하늘이 보낸 귀인이 위기 때마다 나타나 화를 복으로 바꿔주는 최고의 길신(吉神)입니다. 사회적 인맥이 넓고 어디서든 귀인을 만나는 복이 있으며, 큰 사고나 재난을 비켜가는 행운이 따릅니다.",
-      personality: "귀인의 별 — 절체절명의 순간 하늘이 돕는 운명",
-    });
-  }
-
-  // 9. 천덕귀인 (天德貴人) - 하늘이 내린 덕으로 재앙을 피함
-  const CHEON_DEOK_MAP: Record<number, number> = {
-    2: 3,   // 인월 -> 정(丁) stemIdx=3
-    3: 8,   // 묘월 -> 임(壬) (신=辛 stemIdx=7 일부 학파)... 갑(甲)=0 일부학파. 정통: 신(辛)=7
-    4: 8,   // 진월 -> 임(壬) stemIdx=8
-    5: 7,   // 사월 -> 신(辛) stemIdx=7
-    6: 0,   // 오월 -> 갑(甲) stemIdx=0... 정통법: 임(壬)=8
-    7: 9,   // 미월 -> 계(癸) stemIdx=9
-    8: 8,   // 신월 -> 임(壬) stemIdx=8... 일부학파: 임
-    9: 2,   // 유월 -> 병(丙) stemIdx=2
-    10: 0,  // 술월 -> 갑(甲) stemIdx=0
-    11: 1,  // 해월 -> 을(乙) stemIdx=1
-    0: 2,   // 자월 -> 병(丙) stemIdx=2
-    1: 3,   // 축월 -> 정(丁) stemIdx=3
-  };
-  const monthBranchIdx = chart.monthPillar.branchIndex;
-  const cheonDeokStemTarget = CHEON_DEOK_MAP[monthBranchIdx];
-  const allStemIndices = [
-    chart.yearPillar.stemIndex,
-    chart.monthPillar.stemIndex,
-    chart.dayPillar.stemIndex,
-    chart.hourPillar.stemIndex,
-  ];
-  if (cheonDeokStemTarget !== undefined) {
-    const hasCheonDeok = allStemIndices.some(s => s === cheonDeokStemTarget);
-    if (monthBranchIdx === 6) {
-      const hasCheonDeokAlt = allStemIndices.some(s => s === 8);
-      if (hasCheonDeok || hasCheonDeokAlt) {
-        sals.push({
-          name: "천덕귀인",
-          hanja: "天德貴人",
-          description: "하늘이 내린 덕으로 재앙을 피하는 길신입니다. 도덕적이고 인자한 성품을 타고났으며, 남모르는 음덕(陰德)으로 흉한 일이 자연스럽게 소멸됩니다. 관재구설, 질병, 사고 등 위험에서 무사히 빠져나오는 천복이 있습니다.",
-          personality: "하늘의 덕 — 재앙을 피하고 복을 부르는 천복의 기운",
-        });
+    if (sal.basis === "년지" || sal.basis === "년지 또는 일지" || sal.basis === "일지 또는 년지") {
+      const targets = sal.map[yearBranch];
+      if (targets) {
+        const targetIndices = targets.map(t => B2I[t]);
+        if (isJangsung) {
+          detected = [chart.monthPillar.branchIndex, chart.dayPillar.branchIndex, chart.hourPillar.branchIndex].some(b => targetIndices.includes(b));
+        } else {
+          detected = branches.some(b => targetIndices.includes(b));
+        }
       }
-    } else if (hasCheonDeok) {
-      sals.push({
-        name: "천덕귀인",
-        hanja: "天德貴人",
-        description: "하늘이 내린 덕으로 재앙을 피하는 길신입니다. 도덕적이고 인자한 성품을 타고났으며, 남모르는 음덕(陰德)으로 흉한 일이 자연스럽게 소멸됩니다. 관재구설, 질병, 사고 등 위험에서 무사히 빠져나오는 천복이 있습니다.",
-        personality: "하늘의 덕 — 재앙을 피하고 복을 부르는 천복의 기운",
-      });
+    }
+
+    if (!detected && (sal.basis === "일지" || sal.basis === "년지 또는 일지" || sal.basis === "일지 또는 년지")) {
+      const targets = sal.map[dayBranch];
+      if (targets) {
+        const targetIndices = targets.map(t => B2I[t]);
+        if (isJangsung) {
+          detected = [chart.yearPillar.branchIndex, chart.monthPillar.branchIndex, chart.hourPillar.branchIndex].some(b => targetIndices.includes(b));
+        } else {
+          detected = branches.some(b => targetIndices.includes(b));
+        }
+      }
+    }
+
+    if (detected) {
+      sals.push({name:sal.name,hanja:sal.hanja,category:sal.category,description:sal.description,personality:sal.personality});
+    }
+  }
+
+  for (const sal of DAY_PILLAR_SALS) {
+    if (sal.keys.includes(dayPillarKr)) {
+      sals.push({name:sal.name,hanja:sal.hanja,category:sal.category,description:sal.description,personality:sal.personality});
+    }
+  }
+
+  const startBranch = ((chart.dayPillar.branchIndex - chart.dayPillar.stemIndex) % 12 + 12) % 12;
+  const emptyBranches = KONGMANG_MAP[startBranch];
+  if (emptyBranches) {
+    const otherBranches = [chart.yearPillar.branchIndex, chart.monthPillar.branchIndex, chart.hourPillar.branchIndex];
+    if (otherBranches.some(b => emptyBranches.includes(b))) {
+      sals.push({name:"공망",hanja:"空亡",category:"흉신",description:"비어있는 공간. 해당 육친이나 지지의 작용이 무력화된다. 허무, 손실, 이별.",personality:"공허의 철학자 — 비움 속에서 진리를 탐구하는 역설의 존재"});
+    }
+  }
+
+  const hasSul = branches.includes(10);
+  const hasHae = branches.includes(11);
+  const hasJin = branches.includes(4);
+  const hasSa = branches.includes(5);
+  if ((hasSul && hasHae) || (hasJin && hasSa)) {
+    sals.push({name:"천라지망",hanja:"天羅地網",category:"흉신",description:"하늘과 땅의 그물에 갇힌 살. 탈출하기 어려운 상황에 놓인다. 감옥, 억압.",personality:"그물 속의 자유인 — 구속을 견디며 해방을 꿈꾸는 자"});
+  }
+
+  const yearStemIdx = chart.yearPillar.stemIndex;
+  for (const [stemPair, targetIdx] of OGWI_MAP) {
+    if (stemPair.includes(yearStemIdx) && stems.includes(targetIdx)) {
+      sals.push({name:"오귀살",hanja:"五鬼煞",category:"흉신",description:"다섯 귀신의 살. 괴이한 일, 음모, 배신, 정신적 혼란.",personality:"오귀의 시험대 — 보이지 않는 적과 싸우는 영적 투사"});
+      break;
     }
   }
 
@@ -1445,7 +1378,7 @@ export function analyzeSajuPersonality(chart: SajuChart): SajuPersonality {
   const dayElIdx = STEM_ELEMENTS[chart.dayPillar.stemIndex].element;
 
   // 특수살 감지
-  const specialSals = detectSpecialSal(chart);
+  const specialSals = detectComprehensiveSals(chart);
   // 구조 패턴 감지
   const structurePatterns = detectStructurePatterns(chart);
   // 용신 개운법
@@ -1470,6 +1403,25 @@ export function analyzeSajuPersonality(chart: SajuChart): SajuPersonality {
   const hasGeobJae = tenGods.includes("겁재");
 
   let heavenlyGift = ELEMENT_TALENT[dayElIdx] || "";
+
+  const salNames = new Set(specialSals.map(s => s.name));
+  const salGifts: string[] = [];
+  if (salNames.has("문창귀인") || salNames.has("학당귀인")) salGifts.push("학문과 시험에 탁월한 재능이 더해져 지적 분야에서 두각을 나타냅니다");
+  if (salNames.has("천을귀인")) salGifts.push("위기마다 귀인이 나타나 도움을 주는 특별한 운명입니다");
+  if (salNames.has("도화")) salGifts.push("사람을 끌어당기는 천부적 매력이 있어 대인관계와 예술 방면에 빛납니다");
+  if (salNames.has("역마")) salGifts.push("해외나 이동 관련 분야에서 확장의 기회가 큽니다");
+  if (salNames.has("화개")) salGifts.push("깊은 내면세계와 예술적 감수성이 뛰어나 창작·종교·철학 분야에 재능이 있습니다");
+  if (salNames.has("천의성")) salGifts.push("치유와 의료 분야에 천부적 감각이 있습니다");
+  if (salNames.has("괴강살")) salGifts.push("위기 상황에서 폭발하는 카리스마와 결단력을 타고났습니다");
+  if (salNames.has("금여록")) salGifts.push("풍요와 안락이 자연스럽게 따르는 복록의 기운이 있습니다");
+  if (salNames.has("천록")) salGifts.push("자립으로 성공하는 자수성가형 복록이 있습니다");
+  if (salNames.has("천주귀인")) salGifts.push("식복이 풍성하고 의식주가 풍족한 운명입니다");
+  if (salNames.has("장성")) salGifts.push("통솔력과 지도력이 뛰어난 리더 기질을 가지고 있습니다");
+  if (salNames.has("복신")) salGifts.push("겉으로 드러나지 않는 잠재된 내면의 강인함이 있습니다");
+  if (salNames.has("국인귀인")) salGifts.push("공적인 권위와 조직 내 인정받는 기운이 있습니다");
+  if (salGifts.length > 0) {
+    heavenlyGift += ". 특히 " + salGifts.slice(0, 3).join(", ");
+  }
 
   const subTraits: string[] = [];
   if (hasShikShin) subTraits.push("식신(食神) — 풍요로운 감성과 표현력, 미식가적 감각");

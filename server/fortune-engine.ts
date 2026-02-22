@@ -648,13 +648,16 @@ export async function generateGuardianReport(data: {
 
 금지: 별자리 데이터를 사주와 동등한 근거로 사용하는 것. 예를 들어 "쌍둥이자리이므로 소통 능력이 뛰어납니다"를 주요 논거로 쓰지 마세요. 대신 "사주의 식상 구조가 소통 능력을 만드는데, 쌍둥이자리의 수성이 이를 한층 강화합니다" 처럼 사주가 주어, 별자리가 보조.
 
-**원칙 4: 모든 특수살 빠짐없이 언급** — 각 살을 쉬운 비유로 설명 후 살 간 화학적 결합 분석.
+**원칙 4: 핵심 신살 중심 분석** — 길신(吉神)과 흉신(凶神)의 핵심 3~5개를 깊이 분석하고, 나머지는 조합 관점에서 화학적 결합만 간단히 언급. 모든 살을 나열하지 말고, 이 사람의 운명을 결정짓는 핵심 살 위주로 서술.
 
-**원칙 5: 특수 구조 정밀 분석**
+**원칙 5: 길흉 신살 간 화학적 결합 분석**
 - 양인살+천을귀인: "칼을 쥔 귀족"
-- 삼합: 어떤 오행 합국인지, 십성 중 무엇인지 → 인생의 주무기
-- 무재 구조: "돈을 쫓지 않을 때 돈이 따르는 역설"
-- 홍염살+화개살: "숨으려 하는데 빛이 새어나오는" 이중 구조
+- 도화+귀문관살: "예민한 감각의 매력가"
+- 역마+장성: "세계를 무대로 움직이는 리더"
+- 공망+암록: "비어 보이지만 숨겨진 복록"
+- 천을귀인+백호대살: "위기를 기회로 바꾸는 강인한 행운아"
+- 문창귀인+화개: "학문과 예술을 겸비한 지식인"
+길신이 흉신을 제어하는 관계, 흉신이 오히려 전문성이 되는 역전 관계를 분석하세요.
 
 **원칙 6: 대운 동적 신살** — "원래 없었는데 지금 생겼다"는 시간적 대비를 서사에 녹이기.
 
@@ -718,7 +721,9 @@ ${sc.fiveElementRatios?.map((r: any) => `  - ${r.element}(${r.elementHanja}): ${
 ■ 하늘이 준 선물: ${sp.heavenlyGift}
 ■ 약점: ${sp.weakPoint}
 
-■ 특수살: ${sp.specialSals?.map((s: any) => `${s.name}(${s.hanja}) — ${s.description}`).join("\n  ") || "없음"}
+■ 특수살 [길신]: ${sp.specialSals?.filter((s: any) => s.category === "길신").map((s: any) => `${s.name}(${s.hanja}) — ${s.description}`).join("\n  ") || "없음"}
+■ 특수살 [흉신]: ${sp.specialSals?.filter((s: any) => s.category === "흉신").map((s: any) => `${s.name}(${s.hanja}) — ${s.description}`).join("\n  ") || "없음"}
+■ 특수살 [중성]: ${sp.specialSals?.filter((s: any) => s.category === "중성").map((s: any) => `${s.name}(${s.hanja}) — ${s.description}`).join("\n  ") || "없음"}
 
 ■ 구조 패턴: ${sp.structurePatterns?.map((p: any) => `${p.name}(${p.hanja}) — ${p.description}`).join("\n  ") || "없음"}
 
@@ -892,7 +897,9 @@ export async function generateYearlyFortune(data: {
 ${sc.fiveElementRatios?.map((r: any) => `  - ${r.element}(${r.elementHanja}): ${r.ratio}% (가중치 ${r.weight})`).join("\n") || "  데이터 없음"}
 ■ 용신(用神): ${sc.yongShin?.element}(${sc.yongShin?.elementHanja}) — ${sc.yongShin?.reason}
 ■ 십성(十星) 배치: ${sp.tenGodProfile}
-■ 특수살: ${sp.specialSals?.map((s: any) => `${s.name}(${s.hanja})`).join(", ") || "없음"}
+■ 특수살 [길신]: ${sp.specialSals?.filter((s: any) => s.category === "길신").map((s: any) => `${s.name}(${s.hanja})`).join(", ") || "없음"}
+■ 특수살 [흉신]: ${sp.specialSals?.filter((s: any) => s.category === "흉신").map((s: any) => `${s.name}(${s.hanja})`).join(", ") || "없음"}
+■ 특수살 [중성]: ${sp.specialSals?.filter((s: any) => s.category === "중성").map((s: any) => `${s.name}(${s.hanja})`).join(", ") || "없음"}
 ■ 구조 패턴: ${sp.structurePatterns?.map((p: any) => `${p.name}(${p.hanja})`).join(", ") || "없음"}
 ■ 대운 흐름 (10년 단위):
   ${daeunInfo}`;
