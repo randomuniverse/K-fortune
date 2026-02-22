@@ -7,7 +7,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, Play, Sparkles, TrendingUp, Heart, Briefcase, AlertTriangle, Lightbulb, Search, Activity, Star, Sun, Archive, Trash2, Eye } from "lucide-react";
+import { Loader2, Play, Sparkles, TrendingUp, Heart, Briefcase, AlertTriangle, Lightbulb, Search, Activity, Star, Sun, Archive, Trash2, Eye, Zap } from "lucide-react";
+import { analyzeSinsalIntegrated } from "@shared/saju";
+import type { SinsalAnalysis } from "@shared/saju";
 
 interface ArchiveEntry {
   id: string;
@@ -504,31 +506,68 @@ function SajuDisplay({ chart, personality }: { chart: any; personality: any }) {
                     ))}
                   </div>
                 )}
-                {personality.specialSals && personality.specialSals.length > 0 && (
-                  <div className="mt-2 space-y-2">
-                    <div className="text-white/40 text-[11px] font-bold">특수 신살 ({personality.specialSals.length}개)</div>
-                    {[
-                      { cat: "길신", color: "text-emerald-300", bg: "bg-emerald-500/10" },
-                      { cat: "흉신", color: "text-red-300", bg: "bg-red-500/10" },
-                      { cat: "중성", color: "text-amber-300", bg: "bg-amber-500/10" },
-                    ].map(({ cat, color, bg }) => {
-                      const filtered = personality.specialSals.filter((s: any) => (s.category || "중성") === cat);
-                      if (filtered.length === 0) return null;
-                      return (
-                        <div key={cat}>
-                          <div className={`${color} text-[10px] font-bold mb-1`}>[{cat}]</div>
-                          {filtered.map((s: any, i: number) => (
-                            <div key={i} className={`${bg} rounded p-2 mb-1`}>
-                              <div className={`${color} text-[11px] font-bold`}>{s.name} ({s.hanja})</div>
-                              <div className="text-white/50 text-[10px] mt-0.5">{s.personality}</div>
-                              <div className="text-white/40 text-[10px] mt-0.5">{s.description}</div>
+                {personality.specialSals && personality.specialSals.length > 0 && (() => {
+                  const sinsalData: SinsalAnalysis | null = chart ? analyzeSinsalIntegrated(chart, new Date().getFullYear()) : null;
+                  return (
+                    <div className="mt-2 space-y-3">
+                      <div className="text-white/40 text-[11px] font-bold">원국 신살 ({personality.specialSals.length}개)</div>
+                      {[
+                        { cat: "길신", color: "text-emerald-300", bg: "bg-emerald-500/10" },
+                        { cat: "흉신", color: "text-red-300", bg: "bg-red-500/10" },
+                        { cat: "중성", color: "text-amber-300", bg: "bg-amber-500/10" },
+                      ].map(({ cat, color, bg }) => {
+                        const filtered = personality.specialSals.filter((s: any) => (s.category || "중성") === cat);
+                        if (filtered.length === 0) return null;
+                        const overlappingNames = new Set(sinsalData?.overlapping?.map((o: any) => o.name) || []);
+                        return (
+                          <div key={cat}>
+                            <div className={`${color} text-[10px] font-bold mb-1`}>[{cat}]</div>
+                            {filtered.map((s: any, i: number) => (
+                              <div key={i} className={`${bg} rounded p-2 mb-1 ${overlappingNames.has(s.name) ? 'ring-1 ring-yellow-400/50' : ''}`}>
+                                <div className="flex items-center gap-1.5">
+                                  <span className={`${color} text-[11px] font-bold`}>{s.name} ({s.hanja})</span>
+                                  {s.foundIn && <span className="text-[9px] px-1.5 py-0.5 rounded bg-white/5 text-white/30">{s.foundIn}</span>}
+                                  {overlappingNames.has(s.name) && <span className="text-[9px] px-1.5 py-0.5 rounded bg-yellow-500/20 text-yellow-300">올해 극대화</span>}
+                                </div>
+                                <div className="text-white/50 text-[10px] mt-0.5">{s.personality}</div>
+                                <div className="text-white/40 text-[10px] mt-0.5">{s.description}</div>
+                              </div>
+                            ))}
+                          </div>
+                        );
+                      })}
+                      {sinsalData && sinsalData.dynamicSinsal.length > 0 && (
+                        <div className="mt-3 pt-3 border-t border-white/10">
+                          <div className="flex items-center gap-1.5 mb-2">
+                            <Zap className="w-3 h-3 text-purple-300" />
+                            <span className="text-purple-300 text-[11px] font-bold">{sinsalData.year}년 세운 신살 ({sinsalData.dynamicSinsal.length}개)</span>
+                          </div>
+                          {sinsalData.dynamicSinsal.map((s: any, i: number) => (
+                            <div key={i} className="bg-purple-500/10 rounded p-2 mb-1">
+                              <div className="flex items-center gap-1.5">
+                                <span className={`text-[11px] font-bold ${s.category === '길신' ? 'text-emerald-300' : s.category === '흉신' ? 'text-red-300' : 'text-amber-300'}`}>{s.name} ({s.hanja})</span>
+                                <span className="text-[9px] px-1.5 py-0.5 rounded bg-purple-500/20 text-purple-200">{s.foundIn}</span>
+                              </div>
+                              <div className="text-white/50 text-[10px] mt-0.5">{s.description}</div>
                             </div>
                           ))}
                         </div>
-                      );
-                    })}
-                  </div>
-                )}
+                      )}
+                      {sinsalData?.samjae && (
+                        <div className="mt-3 pt-3 border-t border-red-500/20">
+                          <div className="flex items-center gap-1.5 mb-2">
+                            <AlertTriangle className="w-3 h-3 text-red-300" />
+                            <span className="text-red-300 text-[11px] font-bold">{sinsalData.year}년 {sinsalData.samjae.name}</span>
+                          </div>
+                          <div className="bg-red-500/10 rounded p-2">
+                            <div className="text-white/50 text-[10px]">{sinsalData.samjae.description}</div>
+                            <div className="text-red-200/60 text-[10px] mt-1">{sinsalData.samjae.personality}</div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
                 {personality.structurePatterns && personality.structurePatterns.length > 0 && (
                   <div className="mt-2 space-y-2">
                     <div className="text-white/40 text-[11px] font-bold">구조 패턴</div>

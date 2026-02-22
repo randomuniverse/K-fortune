@@ -3,9 +3,9 @@ import { Card } from "@/components/ui/card";
 import { Flame, Droplets, Mountain, Wind, Gem, User, Sparkles, Brain, Shield, Target, Zap, Clock, MapPin, Palette, UtensilsCrossed, TrendingUp, AlertTriangle, Star, Moon, Briefcase, Wallet, Compass, Heart, Plane, Lightbulb } from "lucide-react";
 import type { SajuChart } from "@shared/saju";
 import type { ZodiacInfo } from "@shared/schema";
-import { analyzeSajuPersonality } from "@shared/saju";
+import { analyzeSajuPersonality, analyzeSinsalIntegrated } from "@shared/saju";
 import { calculateZiWei, generateDestinyInsight } from "@shared/ziwei";
-import type { SajuPersonality, SpecialSal, StructurePattern, YongShinRemedy, DynamicDaewoonStar } from "@shared/saju";
+import type { SajuPersonality, SpecialSal, StructurePattern, YongShinRemedy, DynamicDaewoonStar, SinsalAnalysis } from "@shared/saju";
 import { calculateDaewoonDynamicStars } from "@shared/saju";
 import { SajuInfoCard } from "./SajuInfoCard";
 import { ZodiacInfoCard } from "./ZodiacInfoCard";
@@ -121,43 +121,85 @@ export function SajuDeepAnalysis({ chart, birthDate, birthTime, userName }: Saju
         <p className="text-sm text-white/70 leading-relaxed">{personality.dayMasterDescription}</p>
       </Section>
 
-      {personality.specialSals.length > 0 && (
-        <Section icon={Zap} title={`특수살(特殊煞) - 숨겨진 힘 (${personality.specialSals.length}개 감지)`} delay={0.15}>
-          <div className="space-y-4">
-            {(() => {
-              const gilSals = personality.specialSals.filter((s: any) => s.category === "길신");
-              const hyungSals = personality.specialSals.filter((s: any) => s.category === "흉신");
-              const neutralSals = personality.specialSals.filter((s: any) => s.category === "중성" || !s.category);
-              const categoryConfig = {
-                길신: { label: "길신(吉神) — 하늘이 준 축복", sals: gilSals, gradient: "from-emerald-500/10 to-teal-500/10", border: "border-emerald-500/20", iconColor: "text-emerald-400", textColor: "text-emerald-300", subColor: "text-emerald-200/70", badge: "bg-emerald-500/20 text-emerald-300" },
-                흉신: { label: "흉신(凶神) — 시련 속 성장의 열쇠", sals: hyungSals, gradient: "from-red-500/10 to-orange-500/10", border: "border-red-500/20", iconColor: "text-red-400", textColor: "text-red-300", subColor: "text-red-200/70", badge: "bg-red-500/20 text-red-300" },
-                중성: { label: "중성(中性) — 양면의 가능성", sals: neutralSals, gradient: "from-amber-500/10 to-yellow-500/10", border: "border-amber-500/20", iconColor: "text-amber-400", textColor: "text-amber-300", subColor: "text-amber-200/70", badge: "bg-amber-500/20 text-amber-300" },
-              };
-              return Object.entries(categoryConfig).map(([key, cfg]) => {
-                if (cfg.sals.length === 0) return null;
-                return (
-                  <div key={key} className="space-y-2">
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${cfg.badge}`}>{cfg.label}</span>
-                      <span className="text-[10px] text-white/30">{cfg.sals.length}개</span>
-                    </div>
-                    {cfg.sals.map((sal: any, i: number) => (
-                      <div key={i} className={`bg-gradient-to-r ${cfg.gradient} border ${cfg.border} rounded-xl p-4`}>
-                        <div className="flex items-center gap-2 mb-2">
-                          <Zap className={`w-4 h-4 ${cfg.iconColor}`} />
-                          <span className={`text-sm font-bold ${cfg.textColor}`}>{sal.name} ({sal.hanja})</span>
+      {personality.specialSals.length > 0 && (() => {
+        const sinsalData: SinsalAnalysis = analyzeSinsalIntegrated(chart, new Date().getFullYear());
+        const overlappingNames = new Set(sinsalData.overlapping.map(o => o.name));
+        return (
+          <>
+            <Section icon={Zap} title={`원국 신살(原局神煞) — 타고난 기운 (${personality.specialSals.length}개)`} delay={0.15}>
+              <div className="space-y-4">
+                {(() => {
+                  const gilSals = personality.specialSals.filter((s: any) => s.category === "길신");
+                  const hyungSals = personality.specialSals.filter((s: any) => s.category === "흉신");
+                  const neutralSals = personality.specialSals.filter((s: any) => s.category === "중성" || !s.category);
+                  const categoryConfig = {
+                    길신: { label: "길신(吉神) — 하늘이 준 축복", sals: gilSals, gradient: "from-emerald-500/10 to-teal-500/10", border: "border-emerald-500/20", iconColor: "text-emerald-400", textColor: "text-emerald-300", subColor: "text-emerald-200/70", badge: "bg-emerald-500/20 text-emerald-300" },
+                    흉신: { label: "흉신(凶神) — 시련 속 성장의 열쇠", sals: hyungSals, gradient: "from-red-500/10 to-orange-500/10", border: "border-red-500/20", iconColor: "text-red-400", textColor: "text-red-300", subColor: "text-red-200/70", badge: "bg-red-500/20 text-red-300" },
+                    중성: { label: "중성(中性) — 양면의 가능성", sals: neutralSals, gradient: "from-amber-500/10 to-yellow-500/10", border: "border-amber-500/20", iconColor: "text-amber-400", textColor: "text-amber-300", subColor: "text-amber-200/70", badge: "bg-amber-500/20 text-amber-300" },
+                  };
+                  return Object.entries(categoryConfig).map(([key, cfg]) => {
+                    if (cfg.sals.length === 0) return null;
+                    return (
+                      <div key={key} className="space-y-2">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${cfg.badge}`}>{cfg.label}</span>
+                          <span className="text-[10px] text-white/30">{cfg.sals.length}개</span>
                         </div>
-                        <p className={`text-xs ${cfg.subColor} mb-2 font-medium`}>{sal.personality}</p>
+                        {cfg.sals.map((sal: any, i: number) => (
+                          <div key={i} className={`bg-gradient-to-r ${cfg.gradient} border ${cfg.border} rounded-xl p-4 ${overlappingNames.has(sal.name) ? 'ring-1 ring-yellow-400/40' : ''}`}>
+                            <div className="flex items-center gap-2 mb-2 flex-wrap">
+                              <Zap className={`w-4 h-4 ${cfg.iconColor}`} />
+                              <span className={`text-sm font-bold ${cfg.textColor}`}>{sal.name} ({sal.hanja})</span>
+                              {sal.foundIn && <span className="text-[9px] px-1.5 py-0.5 rounded bg-white/10 text-white/40">{sal.foundIn}</span>}
+                              {overlappingNames.has(sal.name) && <span className="text-[9px] px-1.5 py-0.5 rounded bg-yellow-500/20 text-yellow-300 font-bold">올해 극대화</span>}
+                            </div>
+                            <p className={`text-xs ${cfg.subColor} mb-2 font-medium`}>{sal.personality}</p>
+                            <p className="text-xs text-white/70 leading-relaxed">{sal.description}</p>
+                          </div>
+                        ))}
+                      </div>
+                    );
+                  });
+                })()}
+              </div>
+            </Section>
+            {sinsalData.dynamicSinsal.length > 0 && (
+              <Section icon={Sparkles} title={`${sinsalData.year}년 세운 신살(歲運神煞) — 올해의 기운 (${sinsalData.dynamicSinsal.length}개)`} delay={0.17}>
+                <div className="space-y-2">
+                  {sinsalData.dynamicSinsal.map((sal, i) => {
+                    const color = sal.category === '길신' ? 'text-emerald-300' : sal.category === '흉신' ? 'text-red-300' : 'text-amber-300';
+                    const bg = sal.category === '길신' ? 'from-emerald-500/5 to-teal-500/5 border-emerald-500/15' : sal.category === '흉신' ? 'from-red-500/5 to-orange-500/5 border-red-500/15' : 'from-amber-500/5 to-yellow-500/5 border-amber-500/15';
+                    const isOverlap = overlappingNames.has(sal.name);
+                    return (
+                      <div key={i} className={`bg-gradient-to-r ${bg} border rounded-xl p-4 ${isOverlap ? 'ring-1 ring-yellow-400/40' : ''}`}>
+                        <div className="flex items-center gap-2 mb-2 flex-wrap">
+                          <Sparkles className={`w-4 h-4 ${sal.category === '길신' ? 'text-emerald-400' : sal.category === '흉신' ? 'text-red-400' : 'text-amber-400'}`} />
+                          <span className={`text-sm font-bold ${color}`}>{sal.name} ({sal.hanja})</span>
+                          <span className="text-[9px] px-1.5 py-0.5 rounded bg-purple-500/20 text-purple-200">{sal.foundIn}</span>
+                          {isOverlap && <span className="text-[9px] px-1.5 py-0.5 rounded bg-yellow-500/20 text-yellow-300 font-bold">원국과 겹침</span>}
+                        </div>
                         <p className="text-xs text-white/70 leading-relaxed">{sal.description}</p>
                       </div>
-                    ))}
+                    );
+                  })}
+                </div>
+              </Section>
+            )}
+            {sinsalData.samjae && (
+              <Section icon={AlertTriangle} title={`${sinsalData.year}년 삼재(三災) 경고`} delay={0.19}>
+                <div className="bg-gradient-to-r from-red-500/10 to-orange-500/10 border border-red-500/20 rounded-xl p-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <AlertTriangle className="w-4 h-4 text-red-400" />
+                    <span className="text-sm font-bold text-red-300">{sinsalData.samjae.name}</span>
                   </div>
-                );
-              });
-            })()}
-          </div>
-        </Section>
-      )}
+                  <p className="text-xs text-white/70 leading-relaxed">{sinsalData.samjae.description}</p>
+                  <p className="text-xs text-red-200/60 mt-2 font-medium">{sinsalData.samjae.personality}</p>
+                </div>
+              </Section>
+            )}
+          </>
+        );
+      })()}
 
       {(() => {
         const currentYear = new Date().getFullYear();

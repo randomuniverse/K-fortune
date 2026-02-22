@@ -809,6 +809,7 @@ export interface SpecialSal {
   category: "길신" | "흉신" | "중성";
   description: string;
   personality: string;
+  foundIn?: string;
 }
 
 const B2I: Record<string, number> = {"자":0,"축":1,"인":2,"묘":3,"진":4,"사":5,"오":6,"미":7,"신":8,"유":9,"술":10,"해":11};
@@ -901,6 +902,19 @@ const OGWI_MAP: [number[], number][] = [
   [[4,9],0],
 ];
 
+const PILLAR_NAMES = ["년지", "월지", "일지", "시지"];
+const STEM_PILLAR_NAMES = ["년간", "월간", "일간", "시간"];
+
+function branchIdxToPillar(branchIdx: number, branches: number[]): string {
+  const idx = branches.indexOf(branchIdx);
+  return idx >= 0 ? PILLAR_NAMES[idx] : "원국";
+}
+
+function stemIdxToPillar(stemIdx: number, stems: number[]): string {
+  const idx = stems.indexOf(stemIdx);
+  return idx >= 0 ? STEM_PILLAR_NAMES[idx] : "원국";
+}
+
 function detectComprehensiveSals(chart: SajuChart): SpecialSal[] {
   const sals: SpecialSal[] = [];
   const branches = [chart.yearPillar.branchIndex, chart.monthPillar.branchIndex, chart.dayPillar.branchIndex, chart.hourPillar.branchIndex];
@@ -913,50 +927,75 @@ function detectComprehensiveSals(chart: SajuChart): SpecialSal[] {
 
   for (const sal of DAY_STEM_BRANCH_SALS) {
     const targets = sal.map[dayStem];
-    if (targets && targets.some(t => branches.includes(B2I[t]))) {
-      sals.push({name:sal.name,hanja:sal.hanja,category:sal.category,description:sal.description,personality:sal.personality});
+    if (targets) {
+      for (const t of targets) {
+        const tIdx = B2I[t];
+        if (branches.includes(tIdx)) {
+          sals.push({name:sal.name,hanja:sal.hanja,category:sal.category,description:sal.description,personality:sal.personality,foundIn:branchIdxToPillar(tIdx, branches)});
+          break;
+        }
+      }
     }
   }
 
   for (const sal of DAY_STEM_STEM_SALS) {
     const target = sal.map[dayStem];
-    if (target !== undefined && stems.includes(S2I[target])) {
-      sals.push({name:sal.name,hanja:sal.hanja,category:sal.category,description:sal.description,personality:sal.personality});
+    if (target !== undefined) {
+      const tIdx = S2I[target];
+      if (stems.includes(tIdx)) {
+        sals.push({name:sal.name,hanja:sal.hanja,category:sal.category,description:sal.description,personality:sal.personality,foundIn:stemIdxToPillar(tIdx, stems)});
+      }
     }
   }
 
   for (const sal of MONTH_BRANCH_STEM_SALS) {
     const target = sal.map[monthBranch];
-    if (target !== undefined && stems.includes(S2I[target])) {
-      sals.push({name:sal.name,hanja:sal.hanja,category:sal.category,description:sal.description,personality:sal.personality});
+    if (target !== undefined) {
+      const tIdx = S2I[target];
+      if (stems.includes(tIdx)) {
+        sals.push({name:sal.name,hanja:sal.hanja,category:sal.category,description:sal.description,personality:sal.personality,foundIn:stemIdxToPillar(tIdx, stems)});
+      }
     }
   }
 
   for (const sal of MONTH_BRANCH_BRANCH_SALS) {
     const target = sal.map[monthBranch];
-    if (target !== undefined && branches.includes(B2I[target])) {
-      sals.push({name:sal.name,hanja:sal.hanja,category:sal.category,description:sal.description,personality:sal.personality});
+    if (target !== undefined) {
+      const tIdx = B2I[target];
+      if (branches.includes(tIdx)) {
+        sals.push({name:sal.name,hanja:sal.hanja,category:sal.category,description:sal.description,personality:sal.personality,foundIn:branchIdxToPillar(tIdx, branches)});
+      }
     }
   }
 
   const yearGroup = getSamhapGroup(chart.yearPillar.branchIndex);
   const nonYearBranches = [chart.monthPillar.branchIndex, chart.dayPillar.branchIndex, chart.hourPillar.branchIndex];
+  const nonYearPillarNames = ["월지", "일지", "시지"];
   for (const sal of SAMHAP_SALS) {
     const target = sal.groups[yearGroup];
-    if (nonYearBranches.includes(target)) {
-      sals.push({name:sal.name,hanja:sal.hanja,category:sal.category,description:sal.description,personality:sal.personality});
+    const foundIdx = nonYearBranches.indexOf(target);
+    if (foundIdx >= 0) {
+      sals.push({name:sal.name,hanja:sal.hanja,category:sal.category,description:sal.description,personality:sal.personality,foundIn:nonYearPillarNames[foundIdx]});
     }
   }
 
   const nonDayBranches = [chart.yearPillar.branchIndex, chart.monthPillar.branchIndex, chart.hourPillar.branchIndex];
+  const nonDayPillarNames = ["년지", "월지", "시지"];
   for (const sal of INDIVIDUAL_BRANCH_SALS) {
     let detected = false;
+    let foundPillar = "원국";
 
     if (sal.basis === "년지" || sal.basis === "년지 또는 일지" || sal.basis === "일지 또는 년지") {
       const targets = sal.map[yearBranch];
       if (targets) {
         const targetIndices = targets.map(t => B2I[t]);
-        detected = nonYearBranches.some(b => targetIndices.includes(b));
+        for (let i = 0; i < nonYearBranches.length; i++) {
+          if (targetIndices.includes(nonYearBranches[i])) {
+            detected = true;
+            foundPillar = nonYearPillarNames[i];
+            break;
+          }
+        }
       }
     }
 
@@ -964,18 +1003,24 @@ function detectComprehensiveSals(chart: SajuChart): SpecialSal[] {
       const targets = sal.map[dayBranch];
       if (targets) {
         const targetIndices = targets.map(t => B2I[t]);
-        detected = nonDayBranches.some(b => targetIndices.includes(b));
+        for (let i = 0; i < nonDayBranches.length; i++) {
+          if (targetIndices.includes(nonDayBranches[i])) {
+            detected = true;
+            foundPillar = nonDayPillarNames[i];
+            break;
+          }
+        }
       }
     }
 
     if (detected) {
-      sals.push({name:sal.name,hanja:sal.hanja,category:sal.category,description:sal.description,personality:sal.personality});
+      sals.push({name:sal.name,hanja:sal.hanja,category:sal.category,description:sal.description,personality:sal.personality,foundIn:foundPillar});
     }
   }
 
   for (const sal of DAY_PILLAR_SALS) {
     if (sal.keys.includes(dayPillarKr)) {
-      sals.push({name:sal.name,hanja:sal.hanja,category:sal.category,description:sal.description,personality:sal.personality});
+      sals.push({name:sal.name,hanja:sal.hanja,category:sal.category,description:sal.description,personality:sal.personality,foundIn:"일주"});
     }
   }
 
@@ -983,8 +1028,12 @@ function detectComprehensiveSals(chart: SajuChart): SpecialSal[] {
   const emptyBranches = KONGMANG_MAP[startBranch];
   if (emptyBranches) {
     const otherBranches = [chart.yearPillar.branchIndex, chart.monthPillar.branchIndex, chart.hourPillar.branchIndex];
-    if (otherBranches.some(b => emptyBranches.includes(b))) {
-      sals.push({name:"공망",hanja:"空亡",category:"흉신",description:"비어있는 공간. 해당 육친이나 지지의 작용이 무력화된다. 허무, 손실, 이별.",personality:"공허의 철학자 — 비움 속에서 진리를 탐구하는 역설의 존재"});
+    const otherNames = ["년지", "월지", "시지"];
+    for (let i = 0; i < otherBranches.length; i++) {
+      if (emptyBranches.includes(otherBranches[i])) {
+        sals.push({name:"공망",hanja:"空亡",category:"흉신",description:"비어있는 공간. 해당 육친이나 지지의 작용이 무력화된다. 허무, 손실, 이별.",personality:"공허의 철학자 — 비움 속에서 진리를 탐구하는 역설의 존재",foundIn:otherNames[i]});
+        break;
+      }
     }
   }
 
@@ -993,18 +1042,130 @@ function detectComprehensiveSals(chart: SajuChart): SpecialSal[] {
   const hasJin = branches.includes(4);
   const hasSa = branches.includes(5);
   if ((hasSul && hasHae) || (hasJin && hasSa)) {
-    sals.push({name:"천라지망",hanja:"天羅地網",category:"흉신",description:"하늘과 땅의 그물에 갇힌 살. 탈출하기 어려운 상황에 놓인다. 감옥, 억압.",personality:"그물 속의 자유인 — 구속을 견디며 해방을 꿈꾸는 자"});
+    sals.push({name:"천라지망",hanja:"天羅地網",category:"흉신",description:"하늘과 땅의 그물에 갇힌 살. 탈출하기 어려운 상황에 놓인다. 감옥, 억압.",personality:"그물 속의 자유인 — 구속을 견디며 해방을 꿈꾸는 자",foundIn:"원국"});
   }
 
   const yearStemIdx = chart.yearPillar.stemIndex;
   for (const [stemPair, targetIdx] of OGWI_MAP) {
     if (stemPair.includes(yearStemIdx) && stems.includes(targetIdx)) {
-      sals.push({name:"오귀살",hanja:"五鬼煞",category:"흉신",description:"다섯 귀신의 살. 괴이한 일, 음모, 배신, 정신적 혼란.",personality:"오귀의 시험대 — 보이지 않는 적과 싸우는 영적 투사"});
+      sals.push({name:"오귀살",hanja:"五鬼煞",category:"흉신",description:"다섯 귀신의 살. 괴이한 일, 음모, 배신, 정신적 혼란.",personality:"오귀의 시험대 — 보이지 않는 적과 싸우는 영적 투사",foundIn:"년간"});
       break;
     }
   }
 
   return sals;
+}
+
+// ---- 동적 신살 (세운 신살) 계산 ----
+
+export interface SinsalAnalysis {
+  staticSinsal: SpecialSal[];
+  dynamicSinsal: SpecialSal[];
+  overlapping: SpecialSal[];
+  samjae: SpecialSal | null;
+  year: number;
+}
+
+const SAMJAE_MAP: Record<string, string[]> = {
+  "신": ["인","묘","진"], "자": ["인","묘","진"], "진": ["인","묘","진"],
+  "인": ["신","유","술"], "오": ["신","유","술"], "술": ["신","유","술"],
+  "해": ["사","오","미"], "묘": ["사","오","미"], "미": ["사","오","미"],
+  "사": ["해","자","축"], "유": ["해","자","축"], "축": ["해","자","축"],
+};
+
+const SAMJAE_TYPES = ["들삼재 (입삼재)", "눌삼재 (중삼재)", "날삼재 (출삼재)"];
+
+function checkSamjae(birthYearBranch: string, targetYear: number): SpecialSal | null {
+  const yearPillar = calculateYearPillar(targetYear, 6, 1);
+  const yearBranch = EARTHLY_BRANCHES[yearPillar.branchIndex];
+  const samjaeYears = SAMJAE_MAP[birthYearBranch];
+  if (!samjaeYears?.includes(yearBranch)) return null;
+  const idx = samjaeYears.indexOf(yearBranch);
+  const typeLabel = SAMJAE_TYPES[idx];
+  return {
+    name: `삼재 — ${typeLabel}`,
+    hanja: "三災",
+    category: "흉신",
+    description: idx === 0 ? "삼재가 시작되는 해. 건강, 재물, 인간관계 모두 주의가 필요합니다."
+      : idx === 1 ? "삼재의 가장 강한 해. 매사 신중하게 행동하고 큰 결정은 미뤄야 합니다."
+      : "삼재가 끝나가는 해. 서서히 회복되나 방심은 금물입니다.",
+    personality: "긴 시련의 여정 — 3년의 담금질을 통해 단단해지는 불굴의 정신",
+    foundIn: `${targetYear}년 세운`,
+  };
+}
+
+export function calculateDynamicSinsal(chart: SajuChart, targetYear: number = new Date().getFullYear()): SpecialSal[] {
+  const results: SpecialSal[] = [];
+  const yearPillar = calculateYearPillar(targetYear, 6, 1);
+  const yearBranch = EARTHLY_BRANCHES[yearPillar.branchIndex];
+  const yearStem = HEAVENLY_STEMS[yearPillar.stemIndex];
+  const yearBranchIdx = yearPillar.branchIndex;
+  const yearStemIdx = yearPillar.stemIndex;
+  const yearLabel = `${targetYear}년 세운 (${yearStem}${yearBranch}년)`;
+
+  const dayStem = chart.dayPillar.stem;
+  for (const sal of DAY_STEM_BRANCH_SALS) {
+    const targets = sal.map[dayStem];
+    if (targets?.some(t => B2I[t] === yearBranchIdx)) {
+      results.push({name:sal.name,hanja:sal.hanja,category:sal.category,description:sal.description,personality:sal.personality,foundIn:yearLabel});
+    }
+  }
+
+  for (const sal of DAY_STEM_STEM_SALS) {
+    const target = sal.map[dayStem];
+    if (target !== undefined && S2I[target] === yearStemIdx) {
+      results.push({name:sal.name,hanja:sal.hanja,category:sal.category,description:sal.description,personality:sal.personality,foundIn:yearLabel});
+    }
+  }
+
+  const birthYearBranch = chart.yearPillar.branch;
+  const birthYearGroup = getSamhapGroup(chart.yearPillar.branchIndex);
+  for (const sal of SAMHAP_SALS) {
+    const target = sal.groups[birthYearGroup];
+    if (target === yearBranchIdx) {
+      results.push({name:sal.name,hanja:sal.hanja,category:sal.category,description:sal.description,personality:sal.personality,foundIn:yearLabel});
+    }
+  }
+
+  for (const sal of INDIVIDUAL_BRANCH_SALS) {
+    if (sal.basis === "년지" || sal.basis === "년지 또는 일지" || sal.basis === "일지 또는 년지") {
+      const targets = sal.map[birthYearBranch];
+      if (targets?.some(t => B2I[t] === yearBranchIdx)) {
+        results.push({name:sal.name,hanja:sal.hanja,category:sal.category,description:sal.description,personality:sal.personality,foundIn:yearLabel});
+        continue;
+      }
+    }
+    if (sal.basis === "일지" || sal.basis === "년지 또는 일지" || sal.basis === "일지 또는 년지") {
+      const targets = sal.map[chart.dayPillar.branch];
+      if (targets?.some(t => B2I[t] === yearBranchIdx)) {
+        results.push({name:sal.name,hanja:sal.hanja,category:sal.category,description:sal.description,personality:sal.personality,foundIn:yearLabel});
+      }
+    }
+  }
+
+  const dayPillarOfYear = yearStem + yearBranch;
+  for (const sal of DAY_PILLAR_SALS) {
+    if (sal.keys.includes(dayPillarOfYear)) {
+      results.push({name:sal.name,hanja:sal.hanja,category:sal.category,description:sal.description,personality:sal.personality,foundIn:yearLabel});
+    }
+  }
+
+  const samjae = checkSamjae(birthYearBranch, targetYear);
+  if (samjae) results.push(samjae);
+
+  return results;
+}
+
+export function analyzeSinsalIntegrated(chart: SajuChart, targetYear: number = new Date().getFullYear()): SinsalAnalysis {
+  const staticSinsal = detectComprehensiveSals(chart);
+  const dynamicSinsal = calculateDynamicSinsal(chart, targetYear);
+
+  const staticNames = new Set(staticSinsal.map(s => s.name));
+  const overlapping = dynamicSinsal.filter(d => staticNames.has(d.name));
+
+  const samjae = checkSamjae(chart.yearPillar.branch, targetYear);
+
+  return { staticSinsal, dynamicSinsal, overlapping, samjae, year: targetYear };
 }
 
 // ---- 간여지동 (干與支同) 판단 ----

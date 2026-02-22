@@ -39,6 +39,7 @@
 
 ### Core Calculation Engines
 - **Saju Engine**: Pure TypeScript implementation for Four Pillars astrology, calculating pillars, Ten Gods, five element ratios, Day Master strength, Yongshin, Daeun cycles, and 40+ special sal types via `detectComprehensiveSals()` — data-driven detection with category classification (길신/흉신/중성). Detection methods include: 일간→지지 mapping, 월지→천간 mapping, 삼합 group, 일주 exact match, 공망, 천라지망, 오귀살 등. Also detects 간여지동 (干與支同) and structure patterns (식상생재, 관인상생, 상관견관, 재다신약). `heavenlyGift` generation incorporates detected sals for personalized talent descriptions (max 3 sal-based talents appended).
+- **Two-Layer Sinsal System**: Static sinsal (원국, from birth chart) vs Dynamic sinsal (세운, recalculated yearly) with `foundIn` tracking (년지/월지/일지/시지 etc.). `analyzeSinsalIntegrated()` combines both layers, detects overlapping sals for "극대화" effects, and includes samjae (삼재) 3-year cycle detection (들삼재→눌삼재→날삼재). UI displays foundIn badges, "올해 극대화" markers for overlapping sals, and dedicated sections for dynamic/samjae warnings.
 - **Ziwei Doushu Engine**: Implements Purple Star Astrology, calculating Bureau, Life Palaces, and the distribution/interpretation of 14 major stars across various palaces.
 
 ## External Dependencies

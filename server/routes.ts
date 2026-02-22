@@ -4,7 +4,7 @@ import { storage } from "./storage";
 import { api, updateUserSchema } from "@shared/routes";
 import { z } from "zod";
 import { getZodiacInfo, getZodiacSign } from "@shared/schema";
-import { calculateFullSaju, analyzeSajuPersonality } from "@shared/saju";
+import { calculateFullSaju, analyzeSajuPersonality, analyzeSinsalIntegrated } from "@shared/saju";
 import { calculateZiWei } from "@shared/ziwei";
 import { generateFortuneForUser, sendTelegramMessage, formatFortuneForTelegram, generateGuardianReport, generateYearlyFortune } from "./fortune-engine";
 
@@ -419,7 +419,9 @@ export async function registerRoutes(
       const [bYear, bMonth, bDay] = user.birthDate.split('-').map(Number);
       const bHour = parseInt(user.birthTime.split(':')[0]);
       const ziweiData = calculateZiWei(bYear, bMonth, bDay, bHour, gender);
-      res.json({ sajuChart, personality, zodiacInfo, ziweiData });
+      const targetYear = req.query.year ? parseInt(req.query.year as string) : new Date().getFullYear();
+      const sinsalAnalysis = analyzeSinsalIntegrated(sajuChart, targetYear);
+      res.json({ sajuChart, personality, zodiacInfo, ziweiData, sinsalAnalysis });
     } catch (error) {
       console.error("Error calculating saju:", error);
       res.status(500).json({ message: "사주 계산 중 오류가 발생했습니다." });
@@ -526,10 +528,13 @@ export async function registerRoutes(
         gender: genderVal,
       });
 
+      const sinsalAnalysis = analyzeSinsalIntegrated(sajuChart);
+
       res.json({
         ...result,
         sajuChart,
         sajuPersonality,
+        sinsalAnalysis,
         ziwei: ziweiResult,
         zodiac: { sign: zodiacSign, info: zodiacInfo },
       });
