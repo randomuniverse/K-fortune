@@ -1,0 +1,153 @@
+2026-02-23T05:46:46.052016071Z [inf]  [⣷] Pulling schema from database...
+2026-02-23T05:46:46.174454871Z [inf]  [2K[1G[⣯] Pulling schema from database...
+2026-02-23T05:46:46.208358906Z [inf]  [2K[1G[✓] Pulling schema from database...
+2026-02-23T05:46:46.219453874Z [inf]  · You're about to add users_link_token_unique unique constraint to the table, which contains 6 items. If this statement fails, you will receive an error from the database. Do you want to truncate users table?
+2026-02-23T05:46:46.219457263Z [inf]  
+2026-02-23T05:46:46.220940833Z [inf]  [?25l❯ No, add the constraint without truncating the table
+2026-02-23T05:46:46.527755046Z [inf]  Starting Container
+2026-02-23T05:46:56.853480614Z [inf]    Yes, truncate the table
+2026-02-23T05:47:06.220974541Z [err]    line: '1160',
+2026-02-23T05:47:06.220984446Z [inf]  [DB] Running migrations...
+2026-02-23T05:47:06.220992504Z [inf]  [DB] Migrations path: /app/dist/migrations
+2026-02-23T05:47:06.220997744Z [err]  [DB] Migration failed: error: relation "fortunes" already exists
+2026-02-23T05:47:06.221003314Z [err]      at /app/dist/index.cjs:68:11658
+2026-02-23T05:47:06.221008863Z [err]      at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+2026-02-23T05:47:06.221015848Z [err]      at async /app/dist/index.cjs:74:336
+2026-02-23T05:47:06.221021892Z [err]      at async r.transaction (/app/dist/index.cjs:74:32610)
+2026-02-23T05:47:06.221027956Z [err]      at async gn.migrate (/app/dist/index.cjs:74:222)
+2026-02-23T05:47:06.221033184Z [err]      at async t2 (/app/dist/index.cjs:74:34770)
+2026-02-23T05:47:06.221038356Z [err]      at async y2 (/app/dist/index.cjs:74:107951)
+2026-02-23T05:47:06.221044498Z [err]      at async /app/dist/index.cjs:657:17354 {
+2026-02-23T05:47:06.221050909Z [err]    length: 102,
+2026-02-23T05:47:06.221055848Z [err]    severity: 'ERROR',
+2026-02-23T05:47:06.221061616Z [err]    code: '42P07',
+2026-02-23T05:47:06.221066497Z [err]    detail: undefined,
+2026-02-23T05:47:06.221071297Z [err]    hint: undefined,
+2026-02-23T05:47:06.221076704Z [err]    position: undefined,
+2026-02-23T05:47:06.221081854Z [err]    internalPosition: undefined,
+2026-02-23T05:47:06.221087153Z [err]    internalQuery: undefined,
+2026-02-23T05:47:06.221092317Z [err]    where: undefined,
+2026-02-23T05:47:06.221096957Z [err]    schema: undefined,
+2026-02-23T05:47:06.221102052Z [err]    table: undefined,
+2026-02-23T05:47:06.221106795Z [err]    column: undefined,
+2026-02-23T05:47:06.221111284Z [err]    dataType: undefined,
+2026-02-23T05:47:06.221116097Z [err]    constraint: undefined,
+2026-02-23T05:47:06.221120919Z [err]    file: 'heap.c',
+2026-02-23T05:47:06.222480206Z [err]    severity: 'ERROR',
+2026-02-23T05:47:06.222486248Z [err]    code: '42P07',
+2026-02-23T05:47:06.222489960Z [err]    detail: undefined,
+2026-02-23T05:47:06.222493527Z [err]    hint: undefined,
+2026-02-23T05:47:06.222497624Z [err]    position: undefined,
+2026-02-23T05:47:06.222502890Z [err]    internalPosition: undefined,
+2026-02-23T05:47:06.222507087Z [err]    internalQuery: undefined,
+2026-02-23T05:47:06.222507769Z [err]    routine: 'heap_create_with_catalog'
+2026-02-23T05:47:06.222512235Z [err]    where: undefined,
+2026-02-23T05:47:06.222516919Z [err]  }
+2026-02-23T05:47:06.222517766Z [err]    schema: undefined,
+2026-02-23T05:47:06.222523253Z [err]    table: undefined,
+2026-02-23T05:47:06.222523820Z [err]  node:internal/process/promises:394
+2026-02-23T05:47:06.222530087Z [err]    column: undefined,
+2026-02-23T05:47:06.222531017Z [err]      triggerUncaughtException(err, true /* fromPromise */);
+2026-02-23T05:47:06.222535831Z [err]    dataType: undefined,
+2026-02-23T05:47:06.222537796Z [err]      ^
+2026-02-23T05:47:06.222541999Z [err]  
+2026-02-23T05:47:06.222545848Z [err]  error: relation "fortunes" already exists
+2026-02-23T05:47:06.222549554Z [err]      at /app/dist/index.cjs:68:11658
+2026-02-23T05:47:06.222553033Z [err]      at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+2026-02-23T05:47:06.222556976Z [err]      at async /app/dist/index.cjs:74:336
+2026-02-23T05:47:06.222560598Z [err]      at async r.transaction (/app/dist/index.cjs:74:32610)
+2026-02-23T05:47:06.222564626Z [err]      at async gn.migrate (/app/dist/index.cjs:74:222)
+2026-02-23T05:47:06.222568495Z [err]      at async t2 (/app/dist/index.cjs:74:34770)
+2026-02-23T05:47:06.222572400Z [err]      at async y2 (/app/dist/index.cjs:74:107951)
+2026-02-23T05:47:06.222578652Z [err]      at async /app/dist/index.cjs:657:17354 {
+2026-02-23T05:47:06.222582316Z [err]    length: 102,
+2026-02-23T05:47:06.223976517Z [inf]  [2K[1G[⣯] Pulling schema from database...
+2026-02-23T05:47:06.223982523Z [inf]  [2K[1G[✓] Pulling schema from database...
+2026-02-23T05:47:06.223986642Z [inf]  · You're about to add users_link_token_unique unique constraint to the table, which contains 6 items. If this statement fails, you will receive an error from the database. Do you want to truncate users table?
+2026-02-23T05:47:06.223992313Z [inf]  
+2026-02-23T05:47:06.223994426Z [err]    constraint: undefined,
+2026-02-23T05:47:06.223998970Z [inf]  [?25l❯ No, add the constraint without truncating the table
+2026-02-23T05:47:06.224001893Z [err]    file: 'heap.c',
+2026-02-23T05:47:06.224005948Z [err]    line: '1160',
+2026-02-23T05:47:06.224009393Z [err]    routine: 'heap_create_with_catalog'
+2026-02-23T05:47:06.224013451Z [err]  }
+2026-02-23T05:47:06.224016968Z [err]  
+2026-02-23T05:47:06.224020202Z [err]  Node.js v22.22.0
+2026-02-23T05:47:06.224023276Z [err]  npm warn config production Use `--omit=dev` instead.
+2026-02-23T05:47:06.224026469Z [inf]  No config path provided, using default 'drizzle.config.ts'
+2026-02-23T05:47:06.224029466Z [inf]  Reading config file '/app/drizzle.config.ts'
+2026-02-23T05:47:06.224032723Z [inf]  Using 'pg' driver for database querying
+2026-02-23T05:47:06.224037043Z [inf]  [⣷] Pulling schema from database...
+2026-02-23T05:47:07.809467463Z [inf]    Yes, truncate the table[DB] Running migrations...
+2026-02-23T05:47:07.809473480Z [inf]  [DB] Migrations path: /app/dist/migrations
+2026-02-23T05:47:07.870318070Z [err]  [DB] Migration failed: error: relation "fortunes" already exists
+2026-02-23T05:47:07.870318648Z [err]    routine: 'heap_create_with_catalog'
+2026-02-23T05:47:07.870324229Z [err]  }
+2026-02-23T05:47:07.870325867Z [err]      at /app/dist/index.cjs:68:11658
+2026-02-23T05:47:07.870331259Z [err]  node:internal/process/promises:394
+2026-02-23T05:47:07.870331393Z [err]    constraint: undefined,
+2026-02-23T05:47:07.870332017Z [err]      at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+2026-02-23T05:47:07.870338975Z [err]      at async /app/dist/index.cjs:74:336
+2026-02-23T05:47:07.870339670Z [err]    file: 'heap.c',
+2026-02-23T05:47:07.870347767Z [err]      at async r.transaction (/app/dist/index.cjs:74:32610)
+2026-02-23T05:47:07.870347895Z [err]    line: '1160',
+2026-02-23T05:47:07.870351066Z [err]    internalQuery: undefined,
+2026-02-23T05:47:07.870355148Z [err]      at async gn.migrate (/app/dist/index.cjs:74:222)
+2026-02-23T05:47:07.870358145Z [err]    where: undefined,
+2026-02-23T05:47:07.870362198Z [err]      at async t2 (/app/dist/index.cjs:74:34770)
+2026-02-23T05:47:07.870363834Z [err]    schema: undefined,
+2026-02-23T05:47:07.870369685Z [err]      at async y2 (/app/dist/index.cjs:74:107951)
+2026-02-23T05:47:07.870369912Z [err]    table: undefined,
+2026-02-23T05:47:07.870375788Z [err]      at async /app/dist/index.cjs:657:17354 {
+2026-02-23T05:47:07.870376289Z [err]    column: undefined,
+2026-02-23T05:47:07.870381372Z [err]    length: 102,
+2026-02-23T05:47:07.870382032Z [err]    dataType: undefined,
+2026-02-23T05:47:07.870384818Z [err]    severity: 'ERROR',
+2026-02-23T05:47:07.870387960Z [err]    code: '42P07',
+2026-02-23T05:47:07.870391297Z [err]    detail: undefined,
+2026-02-23T05:47:07.870394210Z [err]    hint: undefined,
+2026-02-23T05:47:07.870397370Z [err]    position: undefined,
+2026-02-23T05:47:07.870400450Z [err]    internalPosition: undefined,
+2026-02-23T05:47:07.871976271Z [err]    schema: undefined,
+2026-02-23T05:47:07.871982557Z [err]    table: undefined,
+2026-02-23T05:47:07.871987752Z [err]    column: undefined,
+2026-02-23T05:47:07.871988422Z [err]      triggerUncaughtException(err, true /* fromPromise */);
+2026-02-23T05:47:07.871992338Z [err]    dataType: undefined,
+2026-02-23T05:47:07.871994068Z [err]      ^
+2026-02-23T05:47:07.871997880Z [err]    constraint: undefined,
+2026-02-23T05:47:07.871999468Z [err]  
+2026-02-23T05:47:07.872003333Z [err]    file: 'heap.c',
+2026-02-23T05:47:07.872005918Z [err]  error: relation "fortunes" already exists
+2026-02-23T05:47:07.872008209Z [err]    line: '1160',
+2026-02-23T05:47:07.872010965Z [err]      at /app/dist/index.cjs:68:11658
+2026-02-23T05:47:07.872014478Z [err]      at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+2026-02-23T05:47:07.872017936Z [err]      at async /app/dist/index.cjs:74:336
+2026-02-23T05:47:07.872023954Z [err]      at async r.transaction (/app/dist/index.cjs:74:32610)
+2026-02-23T05:47:07.872027208Z [err]      at async gn.migrate (/app/dist/index.cjs:74:222)
+2026-02-23T05:47:07.872031297Z [err]      at async t2 (/app/dist/index.cjs:74:34770)
+2026-02-23T05:47:07.872034996Z [err]      at async y2 (/app/dist/index.cjs:74:107951)
+2026-02-23T05:47:07.872038396Z [err]      at async /app/dist/index.cjs:657:17354 {
+2026-02-23T05:47:07.872042868Z [err]    length: 102,
+2026-02-23T05:47:07.872046320Z [err]    severity: 'ERROR',
+2026-02-23T05:47:07.872050088Z [err]    code: '42P07',
+2026-02-23T05:47:07.872053434Z [err]    detail: undefined,
+2026-02-23T05:47:07.872056707Z [err]    hint: undefined,
+2026-02-23T05:47:07.872060126Z [err]    position: undefined,
+2026-02-23T05:47:07.872063369Z [err]    internalPosition: undefined,
+2026-02-23T05:47:07.872067726Z [err]    internalQuery: undefined,
+2026-02-23T05:47:07.872072318Z [err]    where: undefined,
+2026-02-23T05:47:07.873449492Z [err]    routine: 'heap_create_with_catalog'
+2026-02-23T05:47:07.873453369Z [err]  }
+2026-02-23T05:47:07.873458614Z [err]  
+2026-02-23T05:47:07.873463694Z [err]  Node.js v22.22.0
+2026-02-23T05:47:10.286004834Z [err]  npm warn config production Use `--omit=dev` instead.
+2026-02-23T05:47:10.510789892Z [inf]  No config path provided, using default 'drizzle.config.ts'
+2026-02-23T05:47:10.510797126Z [inf]  Reading config file '/app/drizzle.config.ts'
+2026-02-23T05:47:10.772126641Z [inf]  Using 'pg' driver for database querying
+2026-02-23T05:47:10.846106308Z [inf]  [⣷] Pulling schema from database...
+2026-02-23T05:47:10.967528646Z [inf]  [2K[1G[⣯] Pulling schema from database...
+2026-02-23T05:47:10.985907777Z [inf]  [2K[1G[✓] Pulling schema from database...
+2026-02-23T05:47:10.997754288Z [inf]  · You're about to add users_link_token_unique unique constraint to the table, which contains 6 items. If this statement fails, you will receive an error from the database. Do you want to truncate users table?
+2026-02-23T05:47:10.997759071Z [inf]  
+2026-02-23T05:47:10.999350550Z [inf]  [?25l❯ No, add the constraint without truncating the table
+2026-02-23T05:47:21.854207614Z [inf]    Yes, truncate the table

@@ -1,4 +1,4 @@
-CREATE TABLE "fortunes" (
+CREATE TABLE IF NOT EXISTS "fortunes" (
 	"id" serial PRIMARY KEY NOT NULL,
 	"user_id" serial NOT NULL,
 	"content" text NOT NULL,
@@ -6,7 +6,7 @@ CREATE TABLE "fortunes" (
 	"created_at" timestamp DEFAULT now()
 );
 --> statement-breakpoint
-CREATE TABLE "guardian_reports" (
+CREATE TABLE IF NOT EXISTS "guardian_reports" (
 	"id" serial PRIMARY KEY NOT NULL,
 	"user_id" integer NOT NULL,
 	"core_energy" text NOT NULL,
@@ -22,7 +22,7 @@ CREATE TABLE "guardian_reports" (
 	"created_at" timestamp DEFAULT now()
 );
 --> statement-breakpoint
-CREATE TABLE "users" (
+CREATE TABLE IF NOT EXISTS "users" (
 	"id" serial PRIMARY KEY NOT NULL,
 	"telegram_id" text NOT NULL,
 	"telegram_chat_id" text,
@@ -42,7 +42,7 @@ CREATE TABLE "users" (
 	CONSTRAINT "users_link_token_unique" UNIQUE("link_token")
 );
 --> statement-breakpoint
-CREATE TABLE "yearly_fortunes" (
+CREATE TABLE IF NOT EXISTS "yearly_fortunes" (
 	"id" serial PRIMARY KEY NOT NULL,
 	"user_id" integer NOT NULL,
 	"year" integer NOT NULL,
@@ -62,4 +62,7 @@ CREATE TABLE "yearly_fortunes" (
 	"created_at" timestamp DEFAULT now()
 );
 --> statement-breakpoint
-ALTER TABLE "fortunes" ADD CONSTRAINT "fortunes_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action;
+DO $$ BEGIN
+  ALTER TABLE "fortunes" ADD CONSTRAINT "fortunes_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action;
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
