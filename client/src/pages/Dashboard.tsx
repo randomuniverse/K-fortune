@@ -6,6 +6,7 @@ import { Card } from "@/components/ui/card";
 import { FortuneCard } from "@/components/FortuneCard";
 import { Loader2, Sparkles, AlertCircle, Send, Sun, CalendarDays, Compass, Star, Moon, User, LayoutDashboard, MessageCircle, ExternalLink, ArrowLeft, Users } from "lucide-react";
 import { useState, useEffect } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import { useToast } from "@/hooks/use-toast";
 import { getZodiacSign, getZodiacInfo } from "@shared/schema";
@@ -53,12 +54,14 @@ export default function Dashboard() {
   const { data: sajuData } = useSajuAnalysis(telegramId);
   const generateFortune = useGenerateFortune();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   
   const [isSendingTelegram, setIsSendingTelegram] = useState(false);
   const [activeTab, setActiveTab] = useState<MainTabId>("today");
   const [yearlySubTab, setYearlySubTab] = useState<YearlyTabId>("guardian");
   const [destinySubTab, setDestinySubTab] = useState<DestinyTabId>("summary");
   const [fortunesShown, setFortunesShown] = useState(FORTUNES_PER_PAGE);
+  const [telegramLinkClicked, setTelegramLinkClicked] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -70,6 +73,21 @@ export default function Dashboard() {
       } catch {}
     }
   }, [user]);
+
+  useEffect(() => {
+    if (!telegramLinkClicked || !telegramId || user?.telegramChatId) return;
+    const interval = setInterval(() => {
+      queryClient.invalidateQueries({ queryKey: ['/api/users', telegramId] });
+    }, 3000);
+    return () => clearInterval(interval);
+  }, [telegramLinkClicked, telegramId, user?.telegramChatId, queryClient]);
+
+  useEffect(() => {
+    if (telegramLinkClicked && user?.telegramChatId) {
+      setTelegramLinkClicked(false);
+      toast({ title: "텔레그램 연동 완료!", description: "매일 아침 운세 알림을 받으실 수 있습니다." });
+    }
+  }, [telegramLinkClicked, user?.telegramChatId, toast]);
 
   if (isUserLoading) {
     return (
@@ -225,7 +243,7 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {!user.telegramChatId && (
+        {!user.telegramChatId && !telegramLinkClicked && (
           <motion.div
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
@@ -243,6 +261,7 @@ export default function Dashboard() {
               href={`https://t.me/ricky_lucky_guardian_bot?start=${user.linkToken || user.telegramId}`}
               target="_blank"
               rel="noopener noreferrer"
+              onClick={() => setTelegramLinkClicked(true)}
               data-testid="link-telegram-deeplink"
             >
               <Button variant="outline" className="border-amber-500/30 text-amber-200 shrink-0 whitespace-nowrap">
@@ -250,6 +269,22 @@ export default function Dashboard() {
                 텔레그램 연결하기
               </Button>
             </a>
+          </motion.div>
+        )}
+        {!user.telegramChatId && telegramLinkClicked && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="flex flex-col sm:flex-row items-start sm:items-center gap-3 p-4 rounded-xl bg-blue-500/10 border border-blue-500/20"
+            data-testid="banner-telegram-waiting"
+          >
+            <Loader2 className="w-5 h-5 text-blue-400 shrink-0 animate-spin" />
+            <div className="flex-1 min-w-0">
+              <p className="text-sm text-blue-200 font-medium">텔레그램 연동 대기 중...</p>
+              <p className="text-xs text-blue-200/60 mt-0.5">
+                텔레그램에서 "시작" 버튼을 눌러주세요. 연동이 완료되면 자동으로 감지됩니다.
+              </p>
+            </div>
           </motion.div>
         )}
 

@@ -225,7 +225,7 @@ export function YearlyFortuneCard({ chart, userName, telegramId, yearlySubTab, z
   const ziweiFlow = (aiYearly?.ziweiMonthlyFlow || []) as MonthlyFlowItem[];
   const zodiacFlow = (aiYearly?.zodiacMonthlyFlow || []) as MonthlyFlowItem[];
 
-  const topSummaryCard = (
+  const topSummaryCard = aiYearly ? (
     <Card className="bg-white/[0.03] border-white/10 p-6">
       <div className="flex flex-col md:flex-row items-start gap-6">
         <div className="text-center md:text-left">
@@ -236,7 +236,7 @@ export function YearlyFortuneCard({ chart, userName, telegramId, yearlySubTab, z
         </div>
 
         <div className="flex-1 space-y-3">
-          {aiYearly?.keywords && aiYearly.keywords.length > 0 ? (
+          {aiYearly?.keywords && aiYearly.keywords.length > 0 && (
             <div className="bg-white/[0.03] rounded-lg p-3">
               <p className="text-xs text-primary/80 font-medium mb-1">
                 <Compass className="w-3 h-3 inline mr-1" />
@@ -248,12 +248,6 @@ export function YearlyFortuneCard({ chart, userName, telegramId, yearlySubTab, z
                     {kw}{i < (aiYearly.keywords as string[]).length - 1 ? " · " : ""}
                   </span>
                 ))}
-              </p>
-            </div>
-          ) : (
-            <div className="bg-white/[0.03] rounded-lg p-3">
-              <p className="text-xs text-muted-foreground">
-                아래에서 AI 총평을 생성하면 올해의 키워드와 상세 분석이 여기에 표시됩니다.
               </p>
             </div>
           )}
@@ -289,7 +283,7 @@ export function YearlyFortuneCard({ chart, userName, telegramId, yearlySubTab, z
         </div>
       </div>
     </Card>
-  );
+  ) : null;
 
   const generateButton = (
     <>

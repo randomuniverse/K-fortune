@@ -9,7 +9,8 @@ import { motion } from "framer-motion";
 import { useToast } from "@/hooks/use-toast";
 import { useForm } from "react-hook-form";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { getZodiacSign } from "@shared/schema";
 
 const MBTI_TYPES = [
@@ -37,6 +38,8 @@ export default function Settings() {
   const { data: user, isLoading } = useUser(telegramId);
   const updateUser = useUpdateUser();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const [telegramLinkClicked, setTelegramLinkClicked] = useState(false);
 
   const form = useForm<SettingsFormData>({
     defaultValues: {
@@ -66,6 +69,21 @@ export default function Settings() {
     }
   }, [user, form]);
 
+  useEffect(() => {
+    if (!telegramLinkClicked || !telegramId || user?.telegramChatId) return;
+    const interval = setInterval(() => {
+      queryClient.invalidateQueries({ queryKey: ['/api/users', telegramId] });
+    }, 3000);
+    return () => clearInterval(interval);
+  }, [telegramLinkClicked, telegramId, user?.telegramChatId, queryClient]);
+
+  useEffect(() => {
+    if (telegramLinkClicked && user?.telegramChatId) {
+      setTelegramLinkClicked(false);
+      toast({ title: "텔레그램 연동 완료!", description: "매일 아침 운세 알림을 받으실 수 있습니다." });
+    }
+  }, [telegramLinkClicked, user?.telegramChatId, toast]);
+
   const onSubmit = (data: SettingsFormData) => {
     updateUser.mutate(
       {
@@ -80,6 +98,7 @@ export default function Settings() {
       {
         onSuccess: () => {
           toast({ title: "정보가 수정되었습니다", description: "변경사항이 저장되었습니다." });
+          setLocation(`/dashboard/${telegramId}`);
         },
         onError: (error) => {
           toast({ variant: "destructive", title: "수정 실패", description: error.message });
@@ -172,6 +191,14 @@ export default function Settings() {
                         <span className="text-xs text-muted-foreground ml-1">@{user.telegramHandle}</span>
                       )}
                     </div>
+                  ) : telegramLinkClicked ? (
+                    <div className="space-y-2" data-testid="status-telegram-waiting">
+                      <div className="flex items-center gap-2 text-blue-400">
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        <span className="text-sm">텔레그램 연동 대기 중...</span>
+                      </div>
+                      <p className="text-xs text-muted-foreground">텔레그램에서 "시작" 버튼을 눌러주세요.</p>
+                    </div>
                   ) : (
                     <div className="space-y-2" data-testid="status-telegram-not-connected">
                       <p className="text-sm text-muted-foreground">텔레그램과 연동하면 매일 아침 운세를 자동으로 받을 수 있어요.</p>
@@ -180,6 +207,7 @@ export default function Settings() {
                           href={`https://t.me/ricky_lucky_guardian_bot?start=${user.linkToken}`}
                           target="_blank"
                           rel="noopener noreferrer"
+                          onClick={() => setTelegramLinkClicked(true)}
                           data-testid="link-settings-telegram-deeplink"
                         >
                           <Button type="button" variant="outline" size="sm" className="border-primary/30 text-primary hover:bg-primary/10 w-full mt-1">
