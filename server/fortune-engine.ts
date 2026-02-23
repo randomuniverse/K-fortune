@@ -963,7 +963,7 @@ ${zodiacDataBlock}`;
       consolidatedYearlyUserPrompt,
       "연간운세통합",
       0.7,
-      8000
+      16000
     );
 
     const monthlyFlowSchema = z.array(z.object({
