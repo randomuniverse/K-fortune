@@ -1,15 +1,14 @@
 import { motion } from "framer-motion";
 import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { TrendingUp, TrendingDown, AlertTriangle, Star, Calendar, Compass, Loader2, Briefcase, Heart, HeartPulse, Activity, BrainCircuit, ChevronDown, ChevronUp, Sparkles, Globe, Moon } from "lucide-react";
+import { TrendingUp, TrendingDown, AlertTriangle, Star, Calendar, Compass, Loader2, Briefcase, Heart, HeartPulse, Activity, ChevronDown, ChevronUp, Sparkles, Globe, Moon } from "lucide-react";
 import type { SajuChart } from "@shared/saju";
 import { calculateYearlyFortune, calculateMonthlyFortunes } from "@shared/saju";
 import type { YearlyFortune, MonthlyFortune } from "@shared/saju";
 import type { MonthlyFlowItem, ZodiacInfo } from "@shared/schema";
 import type { ZiWeiResult } from "@shared/ziwei";
-import { useMutation, useQuery } from "@tanstack/react-query";
-import { apiRequest, queryClient } from "@/lib/queryClient";
+import { useQuery } from "@tanstack/react-query";
+import { queryClient } from "@/lib/queryClient";
 import { useState } from "react";
 
 interface Props {
@@ -214,15 +213,6 @@ export function YearlyFortuneCard({ chart, userName, telegramId, yearlySubTab, z
     staleTime: Infinity,
   });
 
-  const generateYearly = useMutation({
-    mutationFn: async (regenerate: boolean) => {
-      const res = await apiRequest("POST", "/api/fortunes/yearly", { telegramId, year, regenerate });
-      return res.json();
-    },
-    onSuccess: (data: YearlyFortuneData) => {
-      queryClient.setQueryData(['/api/yearly-fortune', telegramId, year], data);
-    },
-  });
 
   const bestMonth = [...monthlyFortunes].sort((a, b) => b.score - a.score)[0];
   const worstMonth = [...monthlyFortunes].sort((a, b) => a.score - b.score)[0];
@@ -303,14 +293,7 @@ export function YearlyFortuneCard({ chart, userName, telegramId, yearlySubTab, z
 
   const generateButton = (
     <>
-      {generateYearly.isPending && (
-        <Card className="bg-white/[0.03] border-white/10 p-8 text-center space-y-4" data-testid="yearly-ai-loading">
-          <Loader2 className="w-8 h-8 text-indigo-400 animate-spin mx-auto" />
-          <p className="text-sm text-white/60">AI가 사주 · 자미두수 · 별자리 3체계 독립 분석 중...</p>
-        </Card>
-      )}
-
-      {!aiYearly && !generateYearly.isPending && !isAiLoading && (
+      {!aiYearly && !isAiLoading && (
         <Card className="bg-white/5 border-indigo-500/20 overflow-hidden relative" data-testid="yearly-ai-empty">
           <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/10 via-transparent to-purple-500/10" />
           <div className="p-8 md:p-12 text-center relative z-10 space-y-4">
@@ -321,17 +304,11 @@ export function YearlyFortuneCard({ chart, userName, telegramId, yearlySubTab, z
                 {year}년 병오년(丙午年)의 기운이 {userName}님의 사주와 만나 어떤 변화를 일으킬까요?
                 <br />사주 · 자미두수 · 별자리 3체계를 독립 분석 후 교차 검증합니다.
               </p>
+              <p className="text-xs text-indigo-400/80 mt-3">
+                <Sparkles className="w-3 h-3 inline mr-1" />
+                "운명 분석" 탭에서 <span className="font-bold">가디언 리포트</span>를 생성하면 연간 운세가 자동으로 함께 생성됩니다.
+              </p>
             </div>
-            <Button
-              variant="mystical"
-              size="lg"
-              onClick={() => generateYearly.mutate(false)}
-              disabled={generateYearly.isPending}
-              className="min-w-[200px] shadow-lg shadow-indigo-500/20"
-              data-testid="button-generate-yearly"
-            >
-              <BrainCircuit className="mr-2 h-5 w-5" /> {year}년 AI 심층 분석 시작
-            </Button>
           </div>
         </Card>
       )}
@@ -595,25 +572,15 @@ export function YearlyFortuneCard({ chart, userName, telegramId, yearlySubTab, z
             ) : (
               <Card className="bg-white/[0.03] border-white/10 p-6 text-center">
                 <p className="text-sm text-muted-foreground mb-3">자미두수 독립 월별 달력 데이터가 없습니다.</p>
-                <p className="text-xs text-white/40">AI 분석을 다시 생성하면 각 체계별 독립 달력이 포함됩니다.</p>
-                <Button
-                  variant="mystical"
-                  size="sm"
-                  className="mt-3"
-                  onClick={() => generateYearly.mutate(true)}
-                  disabled={generateYearly.isPending}
-                  data-testid="button-regenerate-ziwei"
-                >
-                  <BrainCircuit className="mr-2 h-4 w-4" /> AI 분석 다시 생성
-                </Button>
+                <p className="text-xs text-white/40">"운명 분석" 탭에서 가디언 리포트를 재생성하면 각 체계별 독립 달력이 포함됩니다.</p>
               </Card>
             )}
           </motion.div>
         )}
 
-        {!aiYearly && !generateYearly.isPending && !isAiLoading && (
+        {!aiYearly && !isAiLoading && (
           <Card className="bg-white/[0.03] border-white/10 p-8 text-center">
-            <p className="text-sm text-muted-foreground">가디언 총평 탭에서 AI 심층 분석을 먼저 시작해주세요.</p>
+            <p className="text-sm text-muted-foreground">"운명 분석" 탭에서 가디언 리포트를 먼저 생성해주세요.</p>
           </Card>
         )}
       </motion.div>
@@ -727,25 +694,15 @@ export function YearlyFortuneCard({ chart, userName, telegramId, yearlySubTab, z
             ) : (
               <Card className="bg-white/[0.03] border-white/10 p-6 text-center">
                 <p className="text-sm text-muted-foreground mb-3">별자리 독립 월별 달력 데이터가 없습니다.</p>
-                <p className="text-xs text-white/40">AI 분석을 다시 생성하면 각 체계별 독립 달력이 포함됩니다.</p>
-                <Button
-                  variant="mystical"
-                  size="sm"
-                  className="mt-3"
-                  onClick={() => generateYearly.mutate(true)}
-                  disabled={generateYearly.isPending}
-                  data-testid="button-regenerate-zodiac"
-                >
-                  <BrainCircuit className="mr-2 h-4 w-4" /> AI 분석 다시 생성
-                </Button>
+                <p className="text-xs text-white/40">"운명 분석" 탭에서 가디언 리포트를 재생성하면 각 체계별 독립 달력이 포함됩니다.</p>
               </Card>
             )}
           </motion.div>
         )}
 
-        {!aiYearly && !generateYearly.isPending && !isAiLoading && (
+        {!aiYearly && !isAiLoading && (
           <Card className="bg-white/[0.03] border-white/10 p-8 text-center">
-            <p className="text-sm text-muted-foreground">가디언 총평 탭에서 AI 심층 분석을 먼저 시작해주세요.</p>
+            <p className="text-sm text-muted-foreground">"운명 분석" 탭에서 가디언 리포트를 먼저 생성해주세요.</p>
           </Card>
         )}
       </motion.div>
