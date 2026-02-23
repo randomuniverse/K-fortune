@@ -2,18 +2,18 @@ import { storage } from "./storage";
 import { getZodiacSign, getZodiacInfo, type FortuneData } from "@shared/schema";
 import { calculateFullSaju, checkGanYeoJiDong, calculateDaewoonDynamicStars, analyzeSajuPersonality, calculateTimeGuide, generateDailySajuInsight } from "@shared/saju";
 import { calculateZiWei } from "@shared/ziwei";
-import Anthropic from "@anthropic-ai/sdk";
+import OpenAI from "openai";
 import { z } from "zod";
 import pRetry from "p-retry";
 
-let _anthropic: Anthropic | null = null;
-function getAnthropic(): Anthropic {
-  if (!_anthropic) {
-    _anthropic = new Anthropic({
-      apiKey: process.env.ANTHROPIC_API_KEY || "missing",
+let _openai: OpenAI | null = null;
+function getOpenAI(): OpenAI {
+  if (!_openai) {
+    _openai = new OpenAI({
+      apiKey: process.env.OPENAI_API_KEY || "missing",
     });
   }
-  return _anthropic;
+  return _openai;
 }
 
 export async function sendTelegramMessage(chatId: string, text: string): Promise<boolean> {
@@ -139,19 +139,21 @@ export interface FortuneGenerationResult {
   displayContent: string;
 }
 
-async function generateWithClaude(sys: string, usr: string, label: string, temperature = 0.4, maxTokens = 4096): Promise<string> {
+async function generateWithGPT(sys: string, usr: string, label: string, temperature = 0.4, maxTokens = 4096): Promise<string> {
   return pRetry(
     async () => {
-      const c = await getAnthropic().messages.create({
-        model: "claude-sonnet-4-6",
+      const c = await getOpenAI().chat.completions.create({
+        model: "gpt-4o",
         max_tokens: maxTokens,
         temperature,
-        system: sys,
-        messages: [{ role: "user", content: usr }],
+        messages: [
+          { role: "system", content: sys },
+          { role: "user", content: usr },
+        ],
       });
-      const content = c.content[0].type === "text" ? c.content[0].text : "";
+      const content = c.choices[0]?.message?.content || "";
       if (!content.trim()) {
-        throw new Error(`Empty response from Claude for ${label}`);
+        throw new Error(`Empty response from GPT for ${label}`);
       }
       return content;
     },
@@ -161,7 +163,7 @@ async function generateWithClaude(sys: string, usr: string, label: string, tempe
       maxTimeout: 5000,
       onFailedAttempt: (context) => {
         console.warn(
-          `[FORTUNE] ${label} Claude 호출 실패 (시도 ${context.attemptNumber}/${context.attemptNumber + context.retriesLeft}): ${context.error.message}`
+          `[FORTUNE] ${label} GPT 호출 실패 (시도 ${context.attemptNumber}/${context.attemptNumber + context.retriesLeft}): ${context.error.message}`
         );
       },
     }
@@ -286,8 +288,8 @@ export async function generateFortuneForUser(user: {
 
 위 3체계를 동시에 분석하고 교차 검증하여 JSON으로 응답하세요.`;
 
-  console.log("[FORTUNE] Claude 1회 통합 호출 시작 (사주+별자리+자미두수+교차검증)...");
-  const consolidatedRaw = await generateWithClaude(
+  console.log("[FORTUNE] GPT 1회 통합 호출 시작 (사주+별자리+자미두수+교차검증)...");
+  const consolidatedRaw = await generateWithGPT(
     consolidatedSystemPrompt,
     consolidatedUserPrompt,
     "일일운세통합",
@@ -299,7 +301,7 @@ export async function generateFortuneForUser(user: {
   if (!result) {
     throw new Error("일일 운세 통합 분석 파싱 실패");
   }
-  console.log("[FORTUNE] Claude 통합 호출 완료. 일치도:", result.coherenceScore + "%");
+  console.log("[FORTUNE] GPT 통합 호출 완료. 일치도:", result.coherenceScore + "%");
 
   // 최종 점수 계산
   const baseScore = Math.round((result.sajuScore + result.zodiacScore + result.ziweiScore) / 3);
@@ -671,15 +673,17 @@ loveAdvice는 섹션 4의 이성운 데이터를 반드시 참조하세요.
   try {
     console.log("[Guardian] 1회 생성 (few-shot 강화 프롬프트) 시작...");
 
-    const response = await getAnthropic().messages.create({
-      model: "claude-sonnet-4-6",
+    const response = await getOpenAI().chat.completions.create({
+      model: "gpt-4o",
       max_tokens: 8000,
       temperature: 0.75,
-      system: systemPrompt,
-      messages: [{ role: "user", content: userPrompt }],
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: userPrompt },
+      ],
     });
 
-    const content = response.content[0].type === "text" ? response.content[0].text : "{}";
+    const content = response.choices[0]?.message?.content || "{}";
     const result = JSON.parse(content);
 
     if (!result.pastInference) result.pastInference = "운명 데이터 분석 중 과거 패턴을 특정할 수 없습니다.";
@@ -845,7 +849,7 @@ ${toneRules}
 ${monthlyFlowFormat}`;
 
   try {
-    console.log(`[Yearly] ${data.year}년 운세 Claude 1회 통합 호출 시작 (사주+자미두수+별자리+교차검증)...`);
+    console.log(`[Yearly] ${data.year}년 운세 GPT 1회 통합 호출 시작 (사주+자미두수+별자리+교차검증)...`);
 
     const gr = data.guardianReport;
     const guardianBlock = gr ? `
@@ -934,7 +938,7 @@ ${ziweiDataBlock}
 **[별자리 데이터]**
 ${zodiacDataBlock}`;
 
-    const yearlyRaw = await generateWithClaude(
+    const yearlyRaw = await generateWithGPT(
       consolidatedYearlySystemPrompt,
       consolidatedYearlyUserPrompt,
       "연간운세통합",
