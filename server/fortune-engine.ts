@@ -679,7 +679,8 @@ loveAdvice는 섹션 4의 이성운 데이터를 반드시 참조하세요.
       messages: [{ role: "user", content: userPrompt }],
     });
 
-    const content = response.content[0].type === "text" ? response.content[0].text : "{}";
+    const rawContent = response.content[0].type === "text" ? response.content[0].text : "{}";
+    const content = rawContent.replace(/```json\s*/g, "").replace(/```/g, "").trim();
     const result = JSON.parse(content);
 
     if (!result.pastInference) result.pastInference = "운명 데이터 분석 중 과거 패턴을 특정할 수 없습니다.";
