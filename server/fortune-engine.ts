@@ -69,6 +69,12 @@ export function formatFortuneForTelegram(data: FortuneData, userName: string, da
     msg += `⚠️ 주의: ${data.sajuCaution}\n\n`;
   }
 
+  if (data.mentorWisdom) {
+    msg += `✦ <b>오늘의 멘토 조언</b>\n${data.mentorWisdom}`;
+    if (data.mentorSource) msg += `\n— ${data.mentorSource}`;
+    msg += `\n\n`;
+  }
+
   msg += `-- 행운 가이드\n`;
   msg += `방향: ${data.sajuDirection} | 숫자: ${data.luckyNumbers.join(", ")}`;
   if (data.luckyColor) msg += ` | 색상: ${data.luckyColor}`;
@@ -144,6 +150,8 @@ const synthesisSchema = z.object({
   zodiacWork: z.string(),
   zodiacSummary: z.string(),
   ziweiMessage: z.string(),
+  mentorWisdom: z.string().describe("오늘 운세 내용에 정확히 대응하는 멘토의 실용 조언 2~3문장"),
+  mentorSource: z.string().describe("조언의 출처 또는 철학 유형. 예: 'Naval Ravikant', 'Paul Graham', '스토아 철학', 'Ray Dalio'"),
 });
 
 export interface FortuneGenerationResult {
@@ -151,11 +159,11 @@ export interface FortuneGenerationResult {
   displayContent: string;
 }
 
-async function generateWithRetry(sys: string, usr: string, label: string): Promise<string> {
+async function generateWithRetry(sys: string, usr: string, label: string, temperature = 0.4): Promise<string> {
   return pRetry(
     async () => {
       const c = await openai.chat.completions.create({
-        model: "gpt-4o", temperature: 0.4, // 창의성보다는 분석력을 위해 온도를 약간 낮춤
+        model: "gpt-4o", temperature,
         messages: [{ role: "system", content: sys }, { role: "user", content: usr }],
       });
       const content = c.choices[0].message.content || "";
@@ -383,6 +391,14 @@ ${partialNotice}
 6. **자미두수 메시지:** 자미두수의 분석 결과를 자연스럽게 다듬어서 "명궁의 [별이름]이 오늘..." 형태로 작성하세요.
 7. **한 줄 신탁(oracleLine):** 오늘의 운세를 관통하는 시적이고 비유적인 한 문장을 작성하세요. 반드시 자연, 계절, 동물, 원소 등의 은유를 포함해야 합니다. 예: "봄 얼음 아래 흐르는 물처럼 — 겉은 고요하나 속에서는 이미 변화가 시작되었다." 매일 다른 이미지를 사용하세요. 절대로 "~할 수 있습니다" 같은 상투적 표현 금지.
 8. **오늘의 처방(todayPrescription):** 오늘 당장 실행할 수 있는 구체적이고 독특한 행동 1가지를 처방하세요. "긍정적으로 생각하세요" 같은 추상적 조언 금지. 반드시 장소/시간/행동이 구체적이어야 합니다. 예: "점심에 평소 안 가던 카페를 가보세요. 뜻밖의 영감이 옵니다."
+9. **멘토의 조언(mentorWisdom + mentorSource):** 위 운세 결과(핵심 메시지, 주의사항, 특이사항, 공통 키워드)를 면밀히 읽고, 그 내용에 **정확히 대응하는** 실용적 조언을 작성하세요.
+   - 반드시 오늘의 운세 흐름(길/흉/중립, 어느 영역이 두드러지는지)과 직결된 내용이어야 합니다.
+   - 실리콘밸리 창업가(Paul Graham, Sam Altman, Patrick Collison 등), 투자자(Ray Dalio, Naval Ravikant, Charlie Munger 등), 철학자/심리학자(마르쿠스 아우렐리우스, Viktor Frankl, Nassim Taleb 등)의 실제 사고방식을 반영하세요.
+   - "긍정적으로 생각하세요" 같은 공허한 동기부여 금지. 구체적이고 날카로운 인생 원칙이나 전술이어야 합니다.
+   - 형식: 2~3문장. 마지막 문장은 오늘 바로 실행 가능한 마인드셋 혹은 행동 원칙으로 마무리.
+   - 예시 (재물운이 막힌 날): "돈을 쫓을수록 돈은 멀어진다. Paul Graham은 말한다: '가장 좋은 스타트업은 돈을 목적으로 만들지 않았다.' 오늘은 결과 대신 과정에 집중하고, 하나의 문제를 더 깊이 이해하는 데 에너지를 쏟아라."
+   - 예시 (대인관계 주의 날): "Naval Ravikant는 말했다: '분노는 당신이 마시는 독이다.' 오늘 날카로운 말이 튀어나오려 할 때, 그것이 상대방이 아닌 내 내면의 신호임을 기억하라. 오늘 하루는 말을 반으로 줄이고 듣는 데 두 배를 투자하라."
+   - mentorSource에는 인물 이름이나 철학 유형만 간결하게 기입. 예: "Naval Ravikant", "스토아 철학 (마르쿠스 아우렐리우스)", "Ray Dalio / 원칙주의"
 
 중요: 각 원본 필드(sajuSummary, zodiacLove 등)는 위의 원본 내용을 그대로 가져와서 자연스럽게 다듬어 주세요.
 
@@ -402,13 +418,16 @@ ${partialNotice}
   "zodiacSummary": "별자리 원본 요약 유지",
   "ziweiMessage": "자미두수 원본 분석을 자연스럽게 다듬은 메시지",
   "oracleLine": "시적이고 비유적인 한 줄 신탁 (은유/비유 필수, 상투어 금지)",
-  "todayPrescription": "오늘 당장 실행 가능한 구체적 행동 1가지 (장소/시간/행동 포함)"
+  "todayPrescription": "오늘 당장 실행 가능한 구체적 행동 1가지 (장소/시간/행동 포함)",
+  "mentorWisdom": "오늘 운세에 정확히 대응하는 멘토의 날카로운 실용 조언 (2~3문장)",
+  "mentorSource": "조언 출처 또는 철학 유형 (예: 'Naval Ravikant', '스토아 철학')"
 }`;
 
   const synthesisRaw = await generateWithRetry(
     "당신은 사주, 별자리, 자미두수를 교차 검증하여 종합하는 운명 데이터 융합 분석가입니다. JSON으로만 응답하세요.",
     synthesizePrompt,
-    "교차검증"
+    "교차검증",
+    0.75
   );
 
   const synthesis = parseJson(synthesisRaw, synthesisSchema);
@@ -466,6 +485,8 @@ ${partialNotice}
     timeGuide,
     sajuInsight,
     scoreDelta,
+    mentorWisdom: synthesis.mentorWisdom || undefined,
+    mentorSource: synthesis.mentorSource || undefined,
   };
 
   const displayContent = formatFortuneForTelegram(fortuneData, user.name, dateStr, zodiacSign);

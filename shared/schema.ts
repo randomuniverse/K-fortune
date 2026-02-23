@@ -142,6 +142,8 @@ export interface FortuneData {
   };
   sajuInsight?: string;
   scoreDelta?: number;
+  mentorWisdom?: string;
+  mentorSource?: string;
 }
 
 export const guardianReports = pgTable("guardian_reports", {

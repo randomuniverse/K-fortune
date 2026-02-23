@@ -321,6 +321,28 @@ export default function Dashboard() {
               className="space-y-8"
             >
               {todayFortuneData && <FortuneScoreCard data={todayFortuneData} zodiacSign={zodiacSign} />}
+              {todayFortuneData?.mentorWisdom && (
+                <motion.div
+                  initial={{ opacity: 0, y: 12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.4, delay: 0.15 }}
+                  className="relative rounded-xl overflow-hidden border border-amber-500/20 bg-gradient-to-br from-amber-950/40 via-yellow-950/20 to-transparent p-5"
+                >
+                  <div className="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-amber-400/60 to-amber-600/20 rounded-l-xl" />
+                  <div className="pl-3">
+                    <div className="flex items-center gap-2 mb-3">
+                      <Star className="w-4 h-4 text-amber-400 shrink-0" />
+                      <span className="text-xs font-semibold text-amber-400/80 uppercase tracking-widest">오늘의 멘토 조언</span>
+                    </div>
+                    <p className="text-sm text-white/85 leading-relaxed mb-3 whitespace-pre-line">
+                      {todayFortuneData.mentorWisdom}
+                    </p>
+                    {todayFortuneData.mentorSource && (
+                      <p className="text-xs text-amber-400/60 font-medium">— {todayFortuneData.mentorSource}</p>
+                    )}
+                  </div>
+                </motion.div>
+              )}
               {!todayFortuneData && !generateFortune.isPending && (
                 <div className="py-16 text-center glass-panel rounded-xl">
                   <Sparkles className="w-12 h-12 text-primary/30 mx-auto mb-4" />
