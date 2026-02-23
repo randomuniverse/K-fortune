@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Shield, Eye, EyeOff, Users, Calendar, Clock, MapPin, ArrowLeft, AlertTriangle, CheckCircle, XCircle, Send } from "lucide-react";
+import { Shield, Eye, EyeOff, Users, Calendar, Clock, MapPin, ArrowLeft, CheckCircle, XCircle, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -225,24 +225,23 @@ export default function Admin() {
                         </div>
                         <div>
                           <p className="text-[10px] text-purple-500 uppercase tracking-wider">텔레그램</p>
-                          <p className="text-purple-200 text-sm" data-testid={`text-telegram-${user.id}`}>
-                            @{user.telegramHandle || user.telegramId}
-                          </p>
+                          {user.telegramHandle ? (
+                            <p className="text-purple-200 text-sm" data-testid={`text-telegram-${user.id}`}>
+                              @{user.telegramHandle}
+                            </p>
+                          ) : (
+                            <p className="text-purple-400/60 text-sm" data-testid={`text-telegram-${user.id}`}>
+                              미설정
+                            </p>
+                          )}
                           {user.telegramChatId ? (
                             <p className="text-green-400/70 text-[10px] flex items-center gap-1">
                               <CheckCircle className="w-3 h-3" /> 연동됨 · 운세 수신 가능
                             </p>
                           ) : (
-                            <div className="space-y-1">
-                              <p className="text-red-400/70 text-[10px] flex items-center gap-1">
-                                <XCircle className="w-3 h-3" /> 미연동 · 운세 수신 불가
-                              </p>
-                              {(user.telegramHandle || user.telegramId || "").includes("@") && (user.telegramHandle || user.telegramId || "").includes(".") && (
-                                <p className="text-amber-400/70 text-[10px] flex items-center gap-1">
-                                  <AlertTriangle className="w-3 h-3" /> 이메일 형식 — 텔레그램 핸들 아님
-                                </p>
-                              )}
-                            </div>
+                            <p className="text-red-400/70 text-[10px] flex items-center gap-1">
+                              <XCircle className="w-3 h-3" /> 미연동 · 운세 수신 불가
+                            </p>
                           )}
                         </div>
                         <div>

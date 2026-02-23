@@ -4,7 +4,7 @@ import { Layout } from "@/components/Layout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, Save, ArrowLeft } from "lucide-react";
+import { Loader2, Save, ArrowLeft, CheckCircle, ExternalLink } from "lucide-react";
 import { motion } from "framer-motion";
 import { useToast } from "@/hooks/use-toast";
 import { useForm } from "react-hook-form";
@@ -21,8 +21,6 @@ const MBTI_TYPES = [
 
 interface SettingsFormData {
   name: string;
-  telegramChatId: string;
-  telegramHandle: string;
   birthDate: string;
   birthTime: string;
   gender: string;
@@ -43,8 +41,6 @@ export default function Settings() {
   const form = useForm<SettingsFormData>({
     defaultValues: {
       name: "",
-      telegramChatId: "",
-      telegramHandle: "",
       birthDate: "",
       birthTime: "",
       gender: "male",
@@ -59,8 +55,6 @@ export default function Settings() {
     if (user) {
       form.reset({
         name: user.name,
-        telegramChatId: user.telegramChatId || "",
-        telegramHandle: user.telegramHandle || "",
         birthDate: user.birthDate,
         birthTime: user.birthTime,
         gender: user.gender,
@@ -78,11 +72,9 @@ export default function Settings() {
         telegramId,
         data: {
           ...data,
-          telegramChatId: data.telegramChatId || null,
           mbti: data.mbti || null,
           birthCountry: data.birthCountry || null,
           birthCity: data.birthCity || null,
-          telegramHandle: data.telegramHandle || null,
         },
       },
       {
@@ -170,36 +162,35 @@ export default function Settings() {
                   )}
                 />
 
-                <div className="grid grid-cols-2 gap-4">
-                  <FormField
-                    control={form.control}
-                    name="telegramHandle"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="text-primary/90">텔레그램 핸들</FormLabel>
-                        <FormControl>
-                          <Input placeholder="@username" {...field} className={inputClass} data-testid="input-settings-handle" />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="telegramChatId"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="text-primary/90">텔레그램 Chat ID</FormLabel>
-                        <FormControl>
-                          <Input placeholder="123456789" {...field} className={inputClass} data-testid="input-settings-chat-id" />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                <div className="rounded-xl border border-white/10 bg-black/20 p-4">
+                  <p className="text-primary/90 text-sm font-medium mb-3">텔레그램 연동</p>
+                  {user.telegramChatId ? (
+                    <div className="flex items-center gap-2 text-green-400" data-testid="status-telegram-connected">
+                      <CheckCircle className="w-4 h-4" />
+                      <span className="text-sm">연동 완료</span>
+                      {user.telegramHandle && (
+                        <span className="text-xs text-muted-foreground ml-1">@{user.telegramHandle}</span>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="space-y-2" data-testid="status-telegram-not-connected">
+                      <p className="text-sm text-muted-foreground">텔레그램과 연동하면 매일 아침 운세를 자동으로 받을 수 있어요.</p>
+                      {user.linkToken && (
+                        <a
+                          href={`https://t.me/ricky_lucky_guardian_bot?start=${user.linkToken}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          data-testid="link-settings-telegram-deeplink"
+                        >
+                          <Button type="button" variant="outline" size="sm" className="border-primary/30 text-primary hover:bg-primary/10 w-full mt-1">
+                            <ExternalLink className="w-3.5 h-3.5 mr-2" />
+                            텔레그램 연동하기
+                          </Button>
+                        </a>
+                      )}
+                    </div>
+                  )}
                 </div>
-                <p className="text-xs text-muted-foreground -mt-3">Chat ID는 텔레그램에서 @userinfobot에게 메시지를 보내면 확인할 수 있습니다.</p>
 
                 <div className="grid grid-cols-2 gap-4">
                   <FormField
