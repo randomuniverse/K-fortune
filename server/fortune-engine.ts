@@ -2,18 +2,18 @@ import { storage } from "./storage";
 import { getZodiacSign, getZodiacInfo, type FortuneData } from "@shared/schema";
 import { calculateFullSaju, checkGanYeoJiDong, calculateDaewoonDynamicStars, analyzeSajuPersonality, calculateTimeGuide, generateDailySajuInsight } from "@shared/saju";
 import { calculateZiWei } from "@shared/ziwei";
-import OpenAI from "openai";
+import Anthropic from "@anthropic-ai/sdk";
 import { z } from "zod";
 import pRetry from "p-retry";
 
-let _openai: OpenAI | null = null;
-function getOpenAI(): OpenAI {
-  if (!_openai) {
-    _openai = new OpenAI({
-      apiKey: process.env.OPENAI_API_KEY || "missing",
+let _anthropic: Anthropic | null = null;
+function getAnthropic(): Anthropic {
+  if (!_anthropic) {
+    _anthropic = new Anthropic({
+      apiKey: process.env.ANTHROPIC_API_KEY || "missing",
     });
   }
-  return _openai;
+  return _anthropic;
 }
 
 export async function sendTelegramMessage(chatId: string, text: string): Promise<boolean> {
@@ -139,21 +139,19 @@ export interface FortuneGenerationResult {
   displayContent: string;
 }
 
-async function generateWithGPT(sys: string, usr: string, label: string, temperature = 0.4, maxTokens = 4096): Promise<string> {
+async function generateWithClaude(sys: string, usr: string, label: string, temperature = 0.4, maxTokens = 4096): Promise<string> {
   return pRetry(
     async () => {
-      const c = await getOpenAI().chat.completions.create({
-        model: "gpt-4o",
+      const c = await getAnthropic().messages.create({
+        model: "claude-sonnet-4-20250514",
         max_tokens: maxTokens,
         temperature,
-        messages: [
-          { role: "system", content: sys },
-          { role: "user", content: usr },
-        ],
+        system: sys,
+        messages: [{ role: "user", content: usr }],
       });
-      const content = c.choices[0]?.message?.content || "";
+      const content = c.content[0].type === "text" ? c.content[0].text : "";
       if (!content.trim()) {
-        throw new Error(`Empty response from GPT for ${label}`);
+        throw new Error(`Empty response from Claude for ${label}`);
       }
       return content;
     },
@@ -163,7 +161,7 @@ async function generateWithGPT(sys: string, usr: string, label: string, temperat
       maxTimeout: 5000,
       onFailedAttempt: (context) => {
         console.warn(
-          `[FORTUNE] ${label} GPT 호출 실패 (시도 ${context.attemptNumber}/${context.attemptNumber + context.retriesLeft}): ${context.error.message}`
+          `[FORTUNE] ${label} Claude 호출 실패 (시도 ${context.attemptNumber}/${context.attemptNumber + context.retriesLeft}): ${context.error.message}`
         );
       },
     }
@@ -289,7 +287,7 @@ export async function generateFortuneForUser(user: {
 위 3체계를 동시에 분석하고 교차 검증하여 JSON으로 응답하세요.`;
 
   console.log("[FORTUNE] GPT 1회 통합 호출 시작 (사주+별자리+자미두수+교차검증)...");
-  const consolidatedRaw = await generateWithGPT(
+  const consolidatedRaw = await generateWithClaude(
     consolidatedSystemPrompt,
     consolidatedUserPrompt,
     "일일운세통합",
@@ -673,17 +671,15 @@ loveAdvice는 섹션 4의 이성운 데이터를 반드시 참조하세요.
   try {
     console.log("[Guardian] 1회 생성 (few-shot 강화 프롬프트) 시작...");
 
-    const response = await getOpenAI().chat.completions.create({
-      model: "gpt-4o",
+    const response = await getAnthropic().messages.create({
+      model: "claude-sonnet-4-20250514",
       max_tokens: 8000,
       temperature: 0.75,
-      messages: [
-        { role: "system", content: systemPrompt },
-        { role: "user", content: userPrompt },
-      ],
+      system: systemPrompt,
+      messages: [{ role: "user", content: userPrompt }],
     });
 
-    const content = response.choices[0]?.message?.content || "{}";
+    const content = response.content[0].type === "text" ? response.content[0].text : "{}";
     const result = JSON.parse(content);
 
     if (!result.pastInference) result.pastInference = "운명 데이터 분석 중 과거 패턴을 특정할 수 없습니다.";
@@ -938,7 +934,7 @@ ${ziweiDataBlock}
 **[별자리 데이터]**
 ${zodiacDataBlock}`;
 
-    const yearlyRaw = await generateWithGPT(
+    const yearlyRaw = await generateWithClaude(
       consolidatedYearlySystemPrompt,
       consolidatedYearlyUserPrompt,
       "연간운세통합",
