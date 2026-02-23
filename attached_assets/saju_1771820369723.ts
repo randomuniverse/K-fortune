@@ -849,6 +849,7 @@ const SAMHAP_SALS: SamhapSalDef[] = [
   {name:"월살",hanja:"月煞",category:"흉신",description:"공망에 준하는 흉살. 고민, 우울, 좌절, 노력이 수포로 돌아간다.",personality:"사라지는 노력 — 아무리 애써도 결실이 흩어지는 허무의 살",groups:[10,4,1,7]},
   {name:"반안살",hanja:"攀鞍煞",category:"길신",description:"말안장에 올라타는 기상. 승진, 진급, 지위 상승에 유리하다.",personality:"승마하는 자 — 끊임없이 위를 향해 도약하는 상승의 화신",groups:[1,7,4,10]},
   {name:"육해살",hanja:"六害煞",category:"흉신",description:"관계에서 오는 해로움. 배신, 중상모략, 인간관계로 인한 피해.",personality:"관계의 칼날 — 믿는 자에게 상처받는 배신의 굴레",groups:[11,5,2,8]},
+  // ✅ [수정5] 누락된 12신살 추가
   {name:"장성",hanja:"將星",category:"중성",description:"장군의 별. 강한 리더십과 통솔력, 카리스마. 권위와 지도력이 있다.",personality:"타고난 장군 — 무리를 이끄는 카리스마와 통솔력의 화신",groups:[0,6,3,9]},
   {name:"지살",hanja:"地煞",category:"흉신",description:"지상의 재액. 이동, 변화, 사고의 기운. 이사나 이직이 잦다.",personality:"대지의 방랑자 — 한 곳에 머물지 못하고 이동과 변화를 거듭하는 자",groups:[8,2,11,5]},
   {name:"천살",hanja:"天煞",category:"흉신",description:"하늘의 재액. 예기치 못한 사건, 천재지변, 하늘의 시험. 구설수에 주의.",personality:"하늘의 시험대 — 예측 불가능한 운명의 반전을 견뎌내는 자",groups:[4,10,7,1]},
@@ -965,6 +966,7 @@ function detectComprehensiveSals(chart: SajuChart, gender?: "male" | "female"): 
     }
   }
 
+  // ✅ [수정2] 삼합 신살: 년지 AND 일지 모두 기준으로 확장 (중복 제거)
   const yearGroup = getSamhapGroup(chart.yearPillar.branchIndex);
   const dayGroup  = getSamhapGroup(chart.dayPillar.branchIndex);
   const allPillarsForSamhap = [
@@ -977,12 +979,14 @@ function detectComprehensiveSals(chart: SajuChart, gender?: "male" | "female"): 
     let detected = false;
     let foundPillar = "원국";
 
+    // 년지 기준: 년지가 아닌 나머지 기둥에서 타겟 찾기
     const targetByYear = sal.groups[yearGroup];
     for (const { branch, name } of allPillarsForSamhap) {
       if (branch === chart.yearPillar.branchIndex) continue;
       if (branch === targetByYear) { detected = true; foundPillar = name; break; }
     }
 
+    // 미발견 시 일지 기준으로도 체크
     if (!detected) {
       const targetByDay = sal.groups[dayGroup];
       for (const { branch, name } of allPillarsForSamhap) {
@@ -996,8 +1000,6 @@ function detectComprehensiveSals(chart: SajuChart, gender?: "male" | "female"): 
     }
   }
 
-  const nonYearBranches = [chart.monthPillar.branchIndex, chart.dayPillar.branchIndex, chart.hourPillar.branchIndex];
-  const nonYearPillarNames = ["월지", "일지", "시지"];
   const nonDayBranches = [chart.yearPillar.branchIndex, chart.monthPillar.branchIndex, chart.hourPillar.branchIndex];
   const nonDayPillarNames = ["년지", "월지", "시지"];
   for (const sal of INDIVIDUAL_BRANCH_SALS) {
@@ -1044,14 +1046,18 @@ function detectComprehensiveSals(chart: SajuChart, gender?: "male" | "female"): 
     }
   }
 
+  // ✅ [수정1] 공망: break 제거 → 오(月)·미(時) 모두 등록, 월지도 포함
   const startBranch = ((chart.dayPillar.branchIndex - chart.dayPillar.stemIndex) % 12 + 12) % 12;
   const emptyBranches = KONGMANG_MAP[startBranch];
   if (emptyBranches) {
-    const otherBranches = [chart.yearPillar.branchIndex, chart.monthPillar.branchIndex, chart.hourPillar.branchIndex];
-    const otherNames = ["년지", "월지", "시지"];
-    for (let i = 0; i < otherBranches.length; i++) {
-      if (emptyBranches.includes(otherBranches[i])) {
-        sals.push({name:"공망",hanja:"空亡",category:"흉신",description:"비어있는 공간. 해당 육친이나 지지의 작용이 무력화된다. 허무, 손실, 이별.",personality:"공허의 철학자 — 비움 속에서 진리를 탐구하는 역설의 존재",foundIn:otherNames[i]});
+    const kongmangTargets = [
+      { branch: chart.yearPillar.branchIndex,  name: "년지" },
+      { branch: chart.monthPillar.branchIndex, name: "월지" },
+      { branch: chart.hourPillar.branchIndex,  name: "시지" },
+    ];
+    for (const { branch, name } of kongmangTargets) {
+      if (emptyBranches.includes(branch)) {
+        sals.push({name:"공망",hanja:"空亡",category:"흉신",description:"비어있는 공간. 해당 육친이나 지지의 작용이 무력화된다. 허무, 손실, 이별.",personality:"공허의 철학자 — 비움 속에서 진리를 탐구하는 역설의 존재",foundIn:name});
       }
     }
   }
@@ -1162,6 +1168,10 @@ export function calculateDynamicSinsal(chart: SajuChart, targetYear: number = ne
       }
     }
   }
+
+  // ✅ [수정3] 세운의 일주로 DAY_PILLAR_SALS를 체크하는 비표준 로직 제거
+  //   (복신·백호대살 등은 사용자 자신의 일주 기준 → detectComprehensiveSals에서 처리)
+  //   세운 병오(丙午)가 복신 목록에 있다고 해서 올해 복신이 뜨는 건 아님
 
   const samjae = checkSamjae(birthYearBranch, targetYear);
   if (samjae) results.push(samjae);
@@ -1576,7 +1586,6 @@ export function analyzeSajuPersonality(chart: SajuChart, gender?: "male" | "fema
   if (salNames.has("금여록")) salGifts.push("풍요와 안락이 자연스럽게 따르는 복록의 기운이 있습니다");
   if (salNames.has("천록")) salGifts.push("자립으로 성공하는 자수성가형 복록이 있습니다");
   if (salNames.has("복신")) salGifts.push("겉으로 드러나지 않는 잠재된 내면의 강인함이 있습니다");
-  if (salNames.has("장성")) salGifts.push("통솔력과 지도력이 뛰어난 리더 기질을 가지고 있습니다");
   if (salGifts.length > 0) {
     heavenlyGift += ". 특히 " + salGifts.slice(0, 3).join(", ");
   }
