@@ -37,7 +37,7 @@
 ### Data Storage
 - **Database**: PostgreSQL.
 - **ORM**: Drizzle ORM with `drizzle-zod`.
-- **Migrations**: `drizzle-kit push`.
+- **Migrations**: Safe migration system using `drizzle-kit generate` + auto-apply on server start via `drizzle-orm/migrator`. Schema changes create incremental ALTER TABLE migration files (not destructive DROP/CREATE). Migration files stored in `./migrations/`. Build script copies migrations to `dist/migrations/` for production. **NEVER use `drizzle-kit push` — always use `npx drizzle-kit generate` after schema changes.**
 
 ### Fortune Engine Logic
 - **Graceful Degradation**: Fortune generation uses `Promise.allSettled`; if one or two systems fail, partial results are still provided.

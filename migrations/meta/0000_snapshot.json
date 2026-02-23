@@ -1,0 +1,405 @@
+{
+  "id": "55f0fc3b-e793-4c87-a4bf-01a1ca9e347b",
+  "prevId": "00000000-0000-0000-0000-000000000000",
+  "version": "7",
+  "dialect": "postgresql",
+  "tables": {
+    "public.fortunes": {
+      "name": "fortunes",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "serial",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "content": {
+          "name": "content",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "fortune_data": {
+          "name": "fortune_data",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "fortunes_user_id_users_id_fk": {
+          "name": "fortunes_user_id_users_id_fk",
+          "tableFrom": "fortunes",
+          "tableTo": "users",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.guardian_reports": {
+      "name": "guardian_reports",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "core_energy": {
+          "name": "core_energy",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "coherence_score": {
+          "name": "coherence_score",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "keywords": {
+          "name": "keywords",
+          "type": "text[]",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "past_inference": {
+          "name": "past_inference",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "current_state": {
+          "name": "current_state",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "bottleneck": {
+          "name": "bottleneck",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "solution": {
+          "name": "solution",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "business_advice": {
+          "name": "business_advice",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "love_advice": {
+          "name": "love_advice",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "health_advice": {
+          "name": "health_advice",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.users": {
+      "name": "users",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "telegram_id": {
+          "name": "telegram_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "telegram_chat_id": {
+          "name": "telegram_chat_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "telegram_handle": {
+          "name": "telegram_handle",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "link_token": {
+          "name": "link_token",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "birth_date": {
+          "name": "birth_date",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "birth_time": {
+          "name": "birth_time",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "gender": {
+          "name": "gender",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "mbti": {
+          "name": "mbti",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "birth_country": {
+          "name": "birth_country",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "birth_city": {
+          "name": "birth_city",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "preferred_delivery_time": {
+          "name": "preferred_delivery_time",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'07:00'"
+        },
+        "last_login_at": {
+          "name": "last_login_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "users_telegram_id_unique": {
+          "name": "users_telegram_id_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "telegram_id"
+          ]
+        },
+        "users_link_token_unique": {
+          "name": "users_link_token_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "link_token"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.yearly_fortunes": {
+      "name": "yearly_fortunes",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "year": {
+          "name": "year",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "overall_summary": {
+          "name": "overall_summary",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "coherence_score": {
+          "name": "coherence_score",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "business_fortune": {
+          "name": "business_fortune",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "love_fortune": {
+          "name": "love_fortune",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "health_fortune": {
+          "name": "health_fortune",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "monthly_flow": {
+          "name": "monthly_flow",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "keywords": {
+          "name": "keywords",
+          "type": "text[]",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "saju_monthly_flow": {
+          "name": "saju_monthly_flow",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "saju_summary": {
+          "name": "saju_summary",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "ziwei_monthly_flow": {
+          "name": "ziwei_monthly_flow",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "ziwei_summary": {
+          "name": "ziwei_summary",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "zodiac_monthly_flow": {
+          "name": "zodiac_monthly_flow",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "zodiac_summary": {
+          "name": "zodiac_summary",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    }
+  },
+  "enums": {},
+  "schemas": {},
+  "sequences": {},
+  "roles": {},
+  "policies": {},
+  "views": {},
+  "_meta": {
+    "columns": {},
+    "schemas": {},
+    "tables": {}
+  }
+}
