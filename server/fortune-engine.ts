@@ -95,14 +95,30 @@ const BRANCHES_H = ["子", "丑", "寅", "卯", "辰", "巳", "午", "未", "申
 
 function parseJson<T>(raw: string, schema: z.ZodSchema<T>): T | null {
   try {
-    const cleaned = raw.replace(/```json\s*/g, "").replace(/```/g, "").trim();
+    let cleaned = raw.replace(/```json\s*/g, "").replace(/```/g, "").trim();
+    
+    const jsonStart = cleaned.indexOf('{');
+    const jsonEnd = cleaned.lastIndexOf('}');
+    if (jsonStart > 0 || (jsonEnd >= 0 && jsonEnd < cleaned.length - 1)) {
+      if (jsonStart >= 0 && jsonEnd >= 0) {
+        cleaned = cleaned.substring(jsonStart, jsonEnd + 1);
+      }
+    }
+    
     const parsed = JSON.parse(cleaned);
     if (parsed.lucky_numbers && !parsed.luckyNumbers) {
       parsed.luckyNumbers = parsed.lucky_numbers;
       delete parsed.lucky_numbers;
     }
     return schema.parse(parsed);
-  } catch { return null; }
+  } catch (e: any) {
+    console.error(`[parseJson] 파싱 실패: ${e.message}`);
+    console.error(`[parseJson] 원본 응답 (첫 500자): ${raw.substring(0, 500)}`);
+    if (e.issues) {
+      console.error(`[parseJson] Zod 검증 에러:`, JSON.stringify(e.issues, null, 2));
+    }
+    return null;
+  }
 }
 
 // Zod 스키마 정의 (3체계 분석 + 교차검증을 1회 호출로 통합)
@@ -149,6 +165,7 @@ async function generateWithClaude(sys: string, usr: string, label: string, tempe
         system: sys,
         messages: [{ role: "user", content: usr }],
       });
+      console.log(`[Claude] ${label} stop_reason=${c.stop_reason}, usage=${JSON.stringify(c.usage)}`);
       const content = c.content[0].type === "text" ? c.content[0].text : "";
       if (!content.trim()) {
         throw new Error(`Empty response from Claude for ${label}`);
@@ -286,7 +303,7 @@ export async function generateFortuneForUser(user: {
 
 위 3체계를 동시에 분석하고 교차 검증하여 JSON으로 응답하세요.`;
 
-  console.log("[FORTUNE] GPT 1회 통합 호출 시작 (사주+별자리+자미두수+교차검증)...");
+  console.log("[FORTUNE] Claude 1회 통합 호출 시작 (사주+별자리+자미두수+교차검증)...");
   const consolidatedRaw = await generateWithClaude(
     consolidatedSystemPrompt,
     consolidatedUserPrompt,
@@ -299,7 +316,7 @@ export async function generateFortuneForUser(user: {
   if (!result) {
     throw new Error("일일 운세 통합 분석 파싱 실패");
   }
-  console.log("[FORTUNE] GPT 통합 호출 완료. 일치도:", result.coherenceScore + "%");
+  console.log("[FORTUNE] Claude 통합 호출 완료. 일치도:", result.coherenceScore + "%");
 
   // 최종 점수 계산
   const baseScore = Math.round((result.sajuScore + result.zodiacScore + result.ziweiScore) / 3);
@@ -448,8 +465,14 @@ export async function generateGuardianReport(data: {
 [문체 시범 — 반드시 이 톤과 깊이를 따르세요]
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-아래는 丁火 일간/삼합목국/양인살·화개살·홍염살/무재 사주인 특정 사용자의 완벽한 작성 예시입니다.
-이 톤, 리듬, 깊이를 학습하되, 새로운 사용자에게는 그 사용자의 데이터에 맞는 새로운 이야기를 쓰세요. 절대 아래 내용을 복사하지 마세요.
+아래는 丁火 일간/삼합목국/양인살·화개살·홍염살/무재 사주인 특정 사용자의 톤과 깊이 참고 예시입니다.
+
+⚠️ [절대적 금지] 아래 예시의 문장, 비유, 표현을 절대 재사용하지 마세요.
+- "촛불이 두 자루", "불 위에 불을 얹은", "꺼질 수가 없는 구조", "칼을 쥔 귀족", "정장을 입은 영매" 등의 비유를 그대로 쓰지 마세요.
+- "이건 우연이 아닙니다", "숨으려 하는데 빛이 새어나옵니다" 같은 클리셰도 금지.
+- 이 사용자의 일간/오행/살/구조에 맞는 완전히 새로운 비유와 서사를 창작하세요.
+- 예시의 '톤'(차분한 존댓말 + 날카로운 통찰)과 '깊이'(인과관계 서술, 사주 데이터 기반 추론)만 참고하세요.
+- 같은 사용자가 다시 와도 이전과 다른 관점, 새로운 각도의 해석을 제시해야 합니다.
 
 --- pastInference 예시 ---
 당신의 사주를 펼치면 정화(丁火)가 두 개, 한여름 午월에 앉아 있습니다. 촛불이 두 자루 나란히 타오르고 있는 형상입니다. 그런데 이 촛불이 보통 촛불이 아닙니다.
@@ -979,6 +1002,10 @@ ${zodiacDataBlock}`;
       }).optional(),
       monthlyFlow: monthlyFlowSchema.default([]),
     });
+
+    console.log(`[Yearly] Claude 응답 길이: ${yearlyRaw.length}자`);
+    console.log(`[Yearly] Claude 응답 첫 1000자:`, yearlyRaw.substring(0, 1000));
+    console.log(`[Yearly] Claude 응답 마지막 500자:`, yearlyRaw.substring(yearlyRaw.length - 500));
 
     const rawResult = parseJson(yearlyRaw, yearlyFortuneResponseSchema);
     if (!rawResult) {

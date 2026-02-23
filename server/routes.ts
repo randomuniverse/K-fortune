@@ -277,56 +277,55 @@ export async function registerRoutes(
       });
 
       const targetYear = 2026;
-      const existingYearly = await storage.getYearlyFortuneByUserId(user.id, targetYear);
-      if (existingYearly) {
-        console.log(`[Guardian→Yearly] Guardian Report 갱신 감지 — ${targetYear}년 연간 운세 자동 재생성 시작...`);
-        try {
-          const yearlyFortuneData = await generateYearlyFortune({
-            name: user.name,
-            year: targetYear,
-            sajuChart,
-            sajuPersonality,
-            ziwei: ziweiResult,
-            zodiac: { sign: zodiacSign, info: zodiacInfo },
-            guardianReport: {
-              coreEnergy: reportData.coreEnergy,
-              coherenceScore: reportData.coherenceScore,
-              keywords: reportData.keywords,
-              pastInference: reportData.pastInference,
-              currentState: reportData.currentState,
-              bottleneck: reportData.bottleneck,
-              solution: reportData.solution,
-              businessAdvice: reportData.businessAdvice || null,
-              loveAdvice: reportData.loveAdvice || null,
-              healthAdvice: reportData.healthAdvice || null,
-            },
-          });
+      console.log(`[Guardian→Yearly] Guardian Report 생성 완료 — ${targetYear}년 연간 운세 자동 생성/재생성 시작...`);
+      let yearlyRegenerated = false;
+      try {
+        const yearlyFortuneData = await generateYearlyFortune({
+          name: user.name,
+          year: targetYear,
+          sajuChart,
+          sajuPersonality,
+          ziwei: ziweiResult,
+          zodiac: { sign: zodiacSign, info: zodiacInfo },
+          guardianReport: {
+            coreEnergy: reportData.coreEnergy,
+            coherenceScore: reportData.coherenceScore,
+            keywords: reportData.keywords,
+            pastInference: reportData.pastInference,
+            currentState: reportData.currentState,
+            bottleneck: reportData.bottleneck,
+            solution: reportData.solution,
+            businessAdvice: reportData.businessAdvice || null,
+            loveAdvice: reportData.loveAdvice || null,
+            healthAdvice: reportData.healthAdvice || null,
+          },
+        });
 
-          await storage.deleteYearlyFortuneByUserId(user.id, targetYear);
-          await storage.createYearlyFortune({
-            userId: user.id,
-            year: targetYear,
-            overallSummary: yearlyFortuneData.overallSummary,
-            coherenceScore: yearlyFortuneData.coherenceScore || 75,
-            businessFortune: yearlyFortuneData.businessFortune || null,
-            loveFortune: yearlyFortuneData.loveFortune || null,
-            healthFortune: yearlyFortuneData.healthFortune || null,
-            monthlyFlow: yearlyFortuneData.monthlyFlow || null,
-            keywords: yearlyFortuneData.keywords || [],
-            sajuMonthlyFlow: yearlyFortuneData.sajuMonthlyFlow || null,
-            sajuSummary: yearlyFortuneData.sajuSummary || null,
-            ziweiMonthlyFlow: yearlyFortuneData.ziweiMonthlyFlow || null,
-            ziweiSummary: yearlyFortuneData.ziweiSummary || null,
-            zodiacMonthlyFlow: yearlyFortuneData.zodiacMonthlyFlow || null,
-            zodiacSummary: yearlyFortuneData.zodiacSummary || null,
-          });
-          console.log(`[Guardian→Yearly] ${targetYear}년 연간 운세 자동 재생성 완료`);
-        } catch (yearlyError) {
-          console.error(`[Guardian→Yearly] 연간 운세 자동 재생성 실패 (Guardian Report는 정상 저장됨):`, yearlyError);
-        }
+        await storage.deleteYearlyFortuneByUserId(user.id, targetYear);
+        await storage.createYearlyFortune({
+          userId: user.id,
+          year: targetYear,
+          overallSummary: yearlyFortuneData.overallSummary,
+          coherenceScore: yearlyFortuneData.coherenceScore || 75,
+          businessFortune: yearlyFortuneData.businessFortune || null,
+          loveFortune: yearlyFortuneData.loveFortune || null,
+          healthFortune: yearlyFortuneData.healthFortune || null,
+          monthlyFlow: yearlyFortuneData.monthlyFlow || null,
+          keywords: yearlyFortuneData.keywords || [],
+          sajuMonthlyFlow: yearlyFortuneData.sajuMonthlyFlow || null,
+          sajuSummary: yearlyFortuneData.sajuSummary || null,
+          ziweiMonthlyFlow: yearlyFortuneData.ziweiMonthlyFlow || null,
+          ziweiSummary: yearlyFortuneData.ziweiSummary || null,
+          zodiacMonthlyFlow: yearlyFortuneData.zodiacMonthlyFlow || null,
+          zodiacSummary: yearlyFortuneData.zodiacSummary || null,
+        });
+        yearlyRegenerated = true;
+        console.log(`[Guardian→Yearly] ${targetYear}년 연간 운세 자동 생성 완료`);
+      } catch (yearlyError) {
+        console.error(`[Guardian→Yearly] 연간 운세 자동 생성 실패 (Guardian Report는 정상 저장됨):`, yearlyError);
       }
 
-      res.json({ ...savedReport, yearlyFortuneRegenerated: !!existingYearly });
+      res.json({ ...savedReport, yearlyFortuneRegenerated: yearlyRegenerated });
     } catch (error) {
       console.error("Guardian report generation error:", error);
       res.status(500).json({ message: "Failed to generate guardian report" });
