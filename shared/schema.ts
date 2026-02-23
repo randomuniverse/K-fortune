@@ -7,6 +7,7 @@ export const users = pgTable("users", {
   telegramId: text("telegram_id").unique().notNull(),
   telegramChatId: text("telegram_chat_id"),
   telegramHandle: text("telegram_handle"),
+  linkToken: text("link_token").unique(),
   name: text("name").notNull(),
   birthDate: text("birth_date").notNull(),
   birthTime: text("birth_time").notNull(),

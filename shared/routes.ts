@@ -33,7 +33,9 @@ export const api = {
       method: 'POST' as const,
       path: '/api/users' as const,
       input: insertUserSchema.extend({
+        telegramId: z.string().optional().default(""),
         telegramHandle: z.string().optional(),
+        linkToken: z.string().optional(),
         preferredDeliveryTime: z.string().default("07:00"),
         mbti: z.string().nullable().optional(),
         birthCountry: z.string().nullable().optional(),

@@ -13,6 +13,7 @@ interface AdminUser {
   telegramId: string;
   telegramHandle: string | null;
   telegramChatId: string | null;
+  linkToken: string | null;
   birthDate: string;
   birthTime: string;
   gender: string;
@@ -285,7 +286,7 @@ export default function Admin() {
                         </div>
                       </div>
                       <div className="flex gap-2 md:flex-col">
-                        <Link href={`/dashboard/${user.telegramHandle || user.telegramId}?from=admin`}>
+                        <Link href={`/dashboard/${user.linkToken || user.telegramHandle || user.telegramId}?from=admin`}>
                           <Button
                             variant="ghost"
                             size="sm"

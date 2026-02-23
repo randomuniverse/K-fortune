@@ -3,6 +3,14 @@
 ## Overview
 "천상의 운세" (Celestial Fortune) is a Korean-language AI fortune-telling web application that offers personalized fortune readings. It integrates three distinct Eastern and Western astrological systems (Saju, Ziwei Doushu, and Western Zodiac), cross-validating their insights through a "Guardian AI" to provide synthesized and validated reports. Users register with personal details, including birth information and MBTI, to receive AI-generated readings powered by OpenAI GPT-4o. The application aims to provide a comprehensive and mystical fortune-telling experience, emphasizing accuracy through multi-system cross-validation.
 
+### Telegram Deep Link Auto-Connection (v2.1)
+- **Registration no longer requires telegram ID input.** Users just enter name, birth info, gender, MBTI.
+- On registration, server auto-generates a `linkToken` (12-char hex) stored in users table. `telegramId` is set to this same token value.
+- Dashboard shows a deep link button for unconnected users: `https://t.me/ricky_lucky_guardian_bot?start={linkToken}`
+- When user clicks the deep link → Telegram opens → user taps "Start" → webhook receives `/start {linkToken}` → server matches user by linkToken → sets `telegramChatId` + updates `telegramHandle` from Telegram username.
+- Legacy flow still works: existing users with real telegram handles/IDs can still be matched by the old webhook logic.
+- Dashboard URLs use linkToken as stable identifier: `/dashboard/{linkToken}`. The redirect logic checks both `telegramId` and `linkToken` to avoid unnecessary redirects.
+
 ## User Preferences
 - Preferred communication style: Simple, everyday language.
 - Design preference: Apple Human Interface Guidelines style — clean, minimal.

@@ -1,6 +1,6 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { insertUserSchema, type InsertUser } from "@shared/schema";
+import { type InsertUser } from "@shared/schema";
 import { useCreateUser } from "@/hooks/use-fortune";
 import { useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
@@ -20,27 +20,28 @@ const MBTI_TYPES = [
   "ESTJ", "ESFJ", "ENFJ", "ENTJ",
 ];
 
-const registerSchema = insertUserSchema.extend({
-  telegramId: z.string().min(1, "텔레그램 아이디를 입력해주세요"),
-  telegramHandle: z.string().nullable().optional(),
-  telegramChatId: z.string().nullable().optional(),
+const registerSchema = z.object({
+  name: z.string().min(1, "이름을 입력해주세요"),
+  birthDate: z.string().min(1, "생년월일을 입력해주세요"),
+  birthTime: z.string().min(1, "태어난 시간을 입력해주세요"),
+  gender: z.string().min(1, "성별을 선택해주세요"),
   preferredDeliveryTime: z.string().default("07:00"),
   mbti: z.string().nullable().optional(),
   birthCountry: z.string().nullable().optional(),
   birthCity: z.string().nullable().optional(),
 });
 
+type RegisterFormData = z.infer<typeof registerSchema>;
+
 export default function Register() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const createUser = useCreateUser();
 
-  const form = useForm<InsertUser>({
+  const form = useForm<RegisterFormData>({
     resolver: zodResolver(registerSchema),
     defaultValues: {
       name: "",
-      telegramId: "",
-      telegramHandle: "",
       birthDate: "",
       birthTime: "",
       gender: "male",
@@ -51,37 +52,30 @@ export default function Register() {
     },
   });
 
-  const onSubmit = (data: InsertUser) => {
-    let telegramId = data.telegramId.trim();
-    if (telegramId.startsWith("@")) {
-      telegramId = telegramId.substring(1);
-    }
-
-    const isNumericId = /^\d+$/.test(telegramId);
+  const onSubmit = (data: RegisterFormData) => {
     const payload = {
       ...data,
-      telegramId,
-      telegramHandle: isNumericId ? (data.telegramHandle || null) : telegramId,
-      telegramChatId: isNumericId ? telegramId : null,
+      telegramId: "",
       mbti: data.mbti || null,
       birthCountry: data.birthCountry || null,
       birthCity: data.birthCity || null,
-    };
+    } as InsertUser;
+
     createUser.mutate(payload, {
-      onSuccess: (user) => {
+      onSuccess: (user: any) => {
         toast({
           title: "운명이 연결되었습니다",
           description: `환영합니다, ${user.name}님. 당신의 사주 지도가 완성되었습니다.`,
         });
-        setLocation(`/dashboard/${user.telegramId}`);
+        setLocation(`/dashboard/${user.linkToken || user.telegramId}`);
       },
-      onError: (error: Error & { telegramId?: string }) => {
-        if (error.telegramId) {
+      onError: (error: Error & { telegramId?: string; linkToken?: string }) => {
+        if (error.linkToken || error.telegramId) {
           toast({
             title: "이미 등록된 계정입니다",
             description: "기존 대시보드로 이동합니다.",
           });
-          setLocation(`/dashboard/${error.telegramId}`);
+          setLocation(`/dashboard/${error.linkToken || error.telegramId}`);
           return;
         }
         toast({
@@ -107,7 +101,7 @@ export default function Register() {
           <div className="text-center mb-8">
             <h2 className="text-3xl font-serif text-glow mb-2">여정 시작하기</h2>
             <p className="text-muted-foreground">
-              태어난 정보를 입력하여 별들과 정렬하세요. 텔레그램을 통해 매일 운세를 보내드립니다.
+              태어난 정보를 입력하면 별들이 정렬됩니다. 가입 후 텔레그램을 연결하면 매일 아침 운세를 보내드립니다.
             </p>
           </div>
 
@@ -115,49 +109,19 @@ export default function Register() {
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
                 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <FormField
-                    control={form.control}
-                    name="name"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="text-primary/90">이름</FormLabel>
-                        <FormControl>
-                          <Input placeholder="홍길동" {...field} className={inputClass} data-testid="input-name" />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="telegramId"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="text-primary/90">텔레그램 아이디</FormLabel>
-                        <FormControl>
-                          <Input placeholder="@username 또는 숫자ID" {...field} className={inputClass} data-testid="input-telegram-id" />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-
-                <p className="text-xs text-muted-foreground -mt-4">
-                  텔레그램 @username을 입력하세요. 가입 후{" "}
-                  <a
-                    href="https://t.me/ricky_lucky_guardian_bot"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-primary underline underline-offset-2"
-                    data-testid="link-telegram-bot-register"
-                  >
-                    @ricky_lucky_guardian_bot
-                  </a>
-                  에게 /start를 보내면 운세 알림이 자동 연결됩니다.
-                </p>
+                <FormField
+                  control={form.control}
+                  name="name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-primary/90">이름</FormLabel>
+                      <FormControl>
+                        <Input placeholder="홍길동" {...field} className={inputClass} data-testid="input-name" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <FormField

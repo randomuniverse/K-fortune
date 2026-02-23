@@ -82,8 +82,8 @@ export default function Dashboard() {
     );
   }
 
-  if (user && user.telegramId !== telegramId) {
-    setLocation(`/dashboard/${user.telegramId}`, { replace: true });
+  if (user && user.telegramId !== telegramId && user.linkToken !== telegramId) {
+    setLocation(`/dashboard/${user.linkToken || user.telegramId}`, { replace: true });
     return null;
   }
 
@@ -234,20 +234,20 @@ export default function Dashboard() {
           >
             <MessageCircle className="w-5 h-5 text-amber-400 shrink-0 mt-0.5 sm:mt-0" />
             <div className="flex-1 min-w-0">
-              <p className="text-sm text-amber-200 font-medium">텔레그램 알림을 받으려면 봇에 연결하세요</p>
+              <p className="text-sm text-amber-200 font-medium">텔레그램 알림을 받으려면 아래 버튼을 눌러주세요</p>
               <p className="text-xs text-amber-200/60 mt-0.5">
-                아래 버튼을 눌러 봇에게 <span className="font-mono text-amber-300">/start</span>를 보내면 자동으로 연결됩니다.
+                버튼을 누르면 텔레그램이 열리고, 시작 버튼만 누르면 자동으로 연결됩니다.
               </p>
             </div>
             <a
-              href="https://t.me/ricky_lucky_guardian_bot"
+              href={`https://t.me/ricky_lucky_guardian_bot?start=${user.linkToken || user.telegramId}`}
               target="_blank"
               rel="noopener noreferrer"
-              data-testid="link-telegram-bot"
+              data-testid="link-telegram-deeplink"
             >
               <Button variant="outline" className="border-amber-500/30 text-amber-200 shrink-0 whitespace-nowrap">
                 <ExternalLink className="mr-2 h-4 w-4" />
-                봇 열기
+                텔레그램 연결하기
               </Button>
             </a>
           </motion.div>

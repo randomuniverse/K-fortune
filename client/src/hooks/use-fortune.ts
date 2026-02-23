@@ -16,8 +16,9 @@ export function useCreateUser() {
       if (!res.ok) {
         if (res.status === 409) {
           const body = await res.json();
-          const err = new Error("이미 등록된 텔레그램 ID입니다.") as Error & { telegramId?: string };
+          const err = new Error("이미 등록된 계정입니다.") as Error & { telegramId?: string; linkToken?: string };
           err.telegramId = body.telegramId;
+          err.linkToken = body.linkToken;
           throw err;
         }
         if (res.status === 400) {

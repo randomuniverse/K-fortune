@@ -1,5 +1,6 @@
 import type { Express } from "express";
 import type { Server } from "http";
+import crypto from "crypto";
 import { storage } from "./storage";
 import { api, updateUserSchema } from "@shared/routes";
 import { z } from "zod";
@@ -7,6 +8,10 @@ import { getZodiacInfo, getZodiacSign } from "@shared/schema";
 import { calculateFullSaju, analyzeSajuPersonality, analyzeSinsalIntegrated } from "@shared/saju";
 import { calculateZiWei } from "@shared/ziwei";
 import { generateFortuneForUser, sendTelegramMessage, formatFortuneForTelegram, generateGuardianReport, generateYearlyFortune } from "./fortune-engine";
+
+function generateLinkToken(): string {
+  return crypto.randomBytes(6).toString("hex");
+}
 
 export async function registerRoutes(
   httpServer: Server,
@@ -16,21 +21,31 @@ export async function registerRoutes(
   app.post(api.users.create.path, async (req, res) => {
     try {
       const input = api.users.create.input.parse(req.body);
-      
-      let telegramId = input.telegramId.trim();
-      if (telegramId.startsWith("@")) {
-        telegramId = telegramId.substring(1);
-      }
-      input.telegramId = telegramId;
 
-      const isNumericId = /^\d+$/.test(telegramId);
-      if (!isNumericId && !input.telegramHandle) {
-        input.telegramHandle = telegramId;
+      if (input.telegramId) {
+        let telegramId = input.telegramId.trim();
+        if (telegramId.startsWith("@")) {
+          telegramId = telegramId.substring(1);
+        }
+        input.telegramId = telegramId;
+
+        const isNumericId = /^\d+$/.test(telegramId);
+        if (!isNumericId && !input.telegramHandle) {
+          input.telegramHandle = telegramId;
+        }
+
+        const existing = await storage.getUserByTelegramId(input.telegramId);
+        if (existing) {
+          return res.status(409).json({ message: "User already exists", telegramId: existing.telegramId, linkToken: existing.linkToken });
+        }
+      } else {
+        const token = generateLinkToken();
+        input.telegramId = token;
+        input.linkToken = token;
       }
 
-      const existing = await storage.getUserByTelegramId(input.telegramId);
-      if (existing) {
-        return res.status(409).json({ message: "User already exists", telegramId: existing.telegramId });
+      if (!input.linkToken) {
+        input.linkToken = generateLinkToken();
       }
 
       const user = await storage.createUser(input);
@@ -129,45 +144,72 @@ export async function registerRoutes(
 
       const chatId = String(message.chat?.id);
       const username = message.from?.username;
-      const text = message.text;
+      const text = message.text?.trim() || "";
+      const telegramUserId = String(message.from?.id);
 
-      if (text === "/start") {
-        const users = await storage.getAllUsers();
+      if (text.startsWith("/start")) {
+        const payload = text.replace("/start", "").trim();
         let matched = false;
 
-        for (const u of users) {
-          if (u.telegramChatId === chatId) {
-            matched = true;
-            break;
-          }
-          if (u.telegramId === chatId || (username && u.telegramId === username) || (username && u.telegramHandle === username) || (username && u.telegramHandle === `@${username}`)) {
-            await storage.updateUser(u.telegramId, { telegramChatId: chatId });
+        if (payload) {
+          const userByToken = await storage.getUserByLinkToken(payload);
+          if (userByToken) {
+            const updateData: any = { telegramChatId: chatId };
+            if (username) updateData.telegramHandle = username;
+            await storage.updateUser(userByToken.telegramId, updateData);
             matched = true;
 
-            const token = process.env.TELEGRAM_BOT_TOKEN;
-            if (token) {
-              await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+            const botToken = process.env.TELEGRAM_BOT_TOKEN;
+            if (botToken) {
+              await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                   chat_id: chatId,
-                  text: `${u.name}님, 텔레그램 연동이 완료되었습니다! 이제 운세가 자동으로 전송됩니다.`,
+                  text: `✨ ${userByToken.name}님, 텔레그램 연동이 완료되었습니다!\n\n이제 매일 아침 운세가 자동으로 전송됩니다.`,
                 }),
               });
             }
-            break;
+            console.log(`[TELEGRAM WEBHOOK] Deep link matched: user ${userByToken.id} linked via token ${payload}`);
           }
         }
 
         if (!matched) {
-          const token = process.env.TELEGRAM_BOT_TOKEN;
-          if (token) {
-            await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+          const allUsers = await storage.getAllUsers();
+          for (const u of allUsers) {
+            if (u.telegramChatId === chatId) {
+              matched = true;
+              break;
+            }
+            if (u.telegramId === chatId || u.telegramId === telegramUserId || (username && u.telegramId === username) || (username && u.telegramHandle === username) || (username && u.telegramHandle === `@${username}`)) {
+              await storage.updateUser(u.telegramId, { telegramChatId: chatId, ...(username ? { telegramHandle: username } : {}) });
+              matched = true;
+
+              const botToken = process.env.TELEGRAM_BOT_TOKEN;
+              if (botToken) {
+                await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({
+                    chat_id: chatId,
+                    text: `✨ ${u.name}님, 텔레그램 연동이 완료되었습니다!\n\n이제 매일 아침 운세가 자동으로 전송됩니다.`,
+                  }),
+                });
+              }
+              break;
+            }
+          }
+        }
+
+        if (!matched) {
+          const botToken = process.env.TELEGRAM_BOT_TOKEN;
+          if (botToken) {
+            await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({
                 chat_id: chatId,
-                text: `안녕하세요! 천상의 운세 봇입니다.\n귀하의 Chat ID: ${chatId}\n\n웹사이트에서 회원가입 시 이 Chat ID를 입력하시면 운세를 자동으로 받으실 수 있습니다.`,
+                text: `안녕하세요! 천상의 운세 봇입니다. 🌙\n\n먼저 웹사이트에서 회원가입을 해주세요.\n가입 후 대시보드에 표시되는 연결 버튼을 누르면 자동으로 연동됩니다.`,
               }),
             });
           }

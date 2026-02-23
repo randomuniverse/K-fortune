@@ -5,6 +5,7 @@ import { eq, desc, and, gte } from "drizzle-orm";
 export interface IStorage {
   createUser(user: InsertUser): Promise<User>;
   getUserByTelegramId(telegramId: string): Promise<User | undefined>;
+  getUserByLinkToken(token: string): Promise<User | undefined>;
   updateUser(telegramId: string, data: Partial<InsertUser>): Promise<User | undefined>;
   createFortune(fortune: InsertFortune): Promise<Fortune>;
   getFortunesByUserId(userId: number): Promise<Fortune[]>;
@@ -31,7 +32,14 @@ export class DatabaseStorage implements IStorage {
     const [user] = await db.select().from(users).where(eq(users.telegramId, normalized));
     if (user) return user;
     const [byHandle] = await db.select().from(users).where(eq(users.telegramHandle, normalized));
-    return byHandle;
+    if (byHandle) return byHandle;
+    const [byToken] = await db.select().from(users).where(eq(users.linkToken, normalized));
+    return byToken;
+  }
+
+  async getUserByLinkToken(token: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.linkToken, token));
+    return user;
   }
 
   async getUser(id: number): Promise<User | undefined> {
@@ -52,7 +60,13 @@ export class DatabaseStorage implements IStorage {
       .set(data)
       .where(eq(users.telegramHandle, normalized))
       .returning();
-    return byHandle;
+    if (byHandle) return byHandle;
+    const [byToken] = await db
+      .update(users)
+      .set(data)
+      .where(eq(users.linkToken, normalized))
+      .returning();
+    return byToken;
   }
 
   async createFortune(fortune: InsertFortune): Promise<Fortune> {
