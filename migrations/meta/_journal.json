@@ -8,6 +8,13 @@
       "when": 1771825209438,
       "tag": "0000_aspiring_devos",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1771826700000,
+      "tag": "0001_add_link_token",
+      "breakpoints": true
     }
   ]
 }

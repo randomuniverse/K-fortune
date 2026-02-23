@@ -1,0 +1,31 @@
+2026-02-23T06:03:28.835054249Z [inf]  Starting Container
+2026-02-23T06:03:29.356973290Z [err]    internalPosition: undefined,
+2026-02-23T06:03:29.356985320Z [err]    internalQuery: undefined,
+2026-02-23T06:03:29.356991930Z [err]    column: undefined,
+2026-02-23T06:03:29.356992990Z [err]    where: undefined,
+2026-02-23T06:03:29.356999710Z [err]    schema: undefined,
+2026-02-23T06:03:29.357007620Z [err]    dataType: undefined,
+2026-02-23T06:03:29.357009940Z [err]    table: undefined,
+2026-02-23T06:03:29.357015380Z [err]    constraint: undefined,
+2026-02-23T06:03:29.357026790Z [err]      at /app/dist/index.cjs:68:13326
+2026-02-23T06:03:29.357044070Z [err]      at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+2026-02-23T06:03:29.357050890Z [err]      at async /app/dist/index.cjs:74:31371
+2026-02-23T06:03:29.357056389Z [err]      at async WM (/app/dist/index.cjs:657:15776) {
+2026-02-23T06:03:29.357062179Z [err]    length: 110,
+2026-02-23T06:03:29.357067739Z [err]    severity: 'ERROR',
+2026-02-23T06:03:29.357072709Z [err]    code: '42703',
+2026-02-23T06:03:29.357076849Z [err]    detail: undefined,
+2026-02-23T06:03:29.357082869Z [err]    hint: undefined,
+2026-02-23T06:03:29.357089269Z [inf]  [DB] Running migrations...
+2026-02-23T06:03:29.357091159Z [err]    position: '68',
+2026-02-23T06:03:29.357094269Z [inf]  [DB] Migrations path: /app/dist/migrations
+2026-02-23T06:03:29.357097639Z [inf]  [DB] Migrations completed successfully.
+2026-02-23T06:03:29.357101599Z [inf]  6:03:28 AM [express] serving on port 5000
+2026-02-23T06:03:29.357104799Z [inf]  [SCHEDULER] Fortune scheduler initialized (unified)
+2026-02-23T06:03:29.357108319Z [inf]  [SCHEDULER] Server started after 07:00 KST (current: 15:03 KST), checking for missed fortunes...
+2026-02-23T06:03:29.357111909Z [inf]  [SCHEDULER] Next fortune generation in 15h 56m (07:00 KST)
+2026-02-23T06:03:29.357115399Z [err]  [SCHEDULER] Error checking missed run: error: column "link_token" does not exist
+2026-02-23T06:03:29.357999874Z [err]    file: 'parse_relation.c',
+2026-02-23T06:03:29.358003264Z [err]    line: '3716',
+2026-02-23T06:03:29.358006144Z [err]    routine: 'errorMissingColumn'
+2026-02-23T06:03:29.358009124Z [err]  }
