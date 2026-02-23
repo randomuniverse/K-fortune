@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Shield, Eye, EyeOff, Users, Calendar, Clock, MapPin, ArrowLeft } from "lucide-react";
+import { Shield, Eye, EyeOff, Users, Calendar, Clock, MapPin, ArrowLeft, AlertTriangle, CheckCircle, XCircle, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -176,10 +176,22 @@ export default function Admin() {
               <h1 className="text-2xl font-bold text-purple-100" style={{ fontFamily: "Cinzel" }}>
                 관리자 대시보드
               </h1>
-              <p className="text-purple-400/70 text-sm flex items-center gap-1">
-                <Users className="w-3.5 h-3.5" />
-                등록 사용자 {users.length}명
-              </p>
+              <div className="flex items-center gap-3 mt-1">
+                <p className="text-purple-400/70 text-sm flex items-center gap-1">
+                  <Users className="w-3.5 h-3.5" />
+                  총 {users.length}명
+                </p>
+                <span className="text-purple-700">|</span>
+                <p className="text-green-400/70 text-sm flex items-center gap-1">
+                  <CheckCircle className="w-3.5 h-3.5" />
+                  연동 {users.filter(u => u.telegramChatId).length}명
+                </p>
+                <span className="text-purple-700">|</span>
+                <p className="text-red-400/70 text-sm flex items-center gap-1">
+                  <XCircle className="w-3.5 h-3.5" />
+                  미연동 {users.filter(u => !u.telegramChatId).length}명
+                </p>
+              </div>
             </div>
           </div>
           <Button
@@ -215,8 +227,21 @@ export default function Admin() {
                           <p className="text-purple-200 text-sm" data-testid={`text-telegram-${user.id}`}>
                             @{user.telegramHandle || user.telegramId}
                           </p>
-                          {user.telegramChatId && (
-                            <p className="text-green-400/60 text-[10px]">연동됨</p>
+                          {user.telegramChatId ? (
+                            <p className="text-green-400/70 text-[10px] flex items-center gap-1">
+                              <CheckCircle className="w-3 h-3" /> 연동됨 · 운세 수신 가능
+                            </p>
+                          ) : (
+                            <div className="space-y-1">
+                              <p className="text-red-400/70 text-[10px] flex items-center gap-1">
+                                <XCircle className="w-3 h-3" /> 미연동 · 운세 수신 불가
+                              </p>
+                              {(user.telegramHandle || user.telegramId || "").includes("@") && (user.telegramHandle || user.telegramId || "").includes(".") && (
+                                <p className="text-amber-400/70 text-[10px] flex items-center gap-1">
+                                  <AlertTriangle className="w-3 h-3" /> 이메일 형식 — 텔레그램 핸들 아님
+                                </p>
+                              )}
+                            </div>
                           )}
                         </div>
                         <div>
