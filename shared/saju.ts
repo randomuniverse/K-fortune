@@ -851,7 +851,6 @@ const SAMHAP_SALS: SamhapSalDef[] = [
   {name:"육해살",hanja:"六害煞",category:"흉신",description:"관계에서 오는 해로움. 배신, 중상모략, 인간관계로 인한 피해.",personality:"관계의 칼날 — 믿는 자에게 상처받는 배신의 굴레",groups:[11,5,2,8]},
   {name:"장성",hanja:"將星",category:"중성",description:"장군의 별. 강한 리더십과 통솔력, 카리스마. 권위와 지도력이 있다.",personality:"타고난 장군 — 무리를 이끄는 카리스마와 통솔력의 화신",groups:[0,6,3,9]},
   {name:"지살",hanja:"地煞",category:"흉신",description:"지상의 재액. 이동, 변화, 사고의 기운. 이사나 이직이 잦다.",personality:"대지의 방랑자 — 한 곳에 머물지 못하고 이동과 변화를 거듭하는 자",groups:[8,2,11,5]},
-  {name:"천살",hanja:"天煞",category:"흉신",description:"하늘의 재액. 예기치 못한 사건, 천재지변, 하늘의 시험. 구설수에 주의.",personality:"하늘의 시험대 — 예측 불가능한 운명의 반전을 견뎌내는 자",groups:[4,10,7,1]},
 ];
 
 const SAMHAP_GROUPS: number[][] = [[8,0,4],[2,6,10],[11,3,7],[5,9,1]];

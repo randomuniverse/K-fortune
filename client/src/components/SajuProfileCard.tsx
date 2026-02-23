@@ -1,6 +1,7 @@
-import { motion } from "framer-motion";
+import { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { Card } from "@/components/ui/card";
-import { Flame, Droplets, Mountain, Wind, Gem, User, Sparkles, Brain, Shield, Target, Zap, Clock, MapPin, Palette, UtensilsCrossed, TrendingUp, AlertTriangle, Star, Moon, Briefcase, Wallet, Compass, Heart, Plane, Lightbulb } from "lucide-react";
+import { Flame, Droplets, Mountain, Wind, Gem, User, Sparkles, Brain, Shield, Target, Zap, Clock, MapPin, Palette, UtensilsCrossed, TrendingUp, AlertTriangle, Star, Moon, Briefcase, Wallet, Compass, Heart, Plane, Lightbulb, ChevronDown } from "lucide-react";
 import type { SajuChart } from "@shared/saju";
 import type { ZodiacInfo } from "@shared/schema";
 import { analyzeSajuPersonality, analyzeSinsalIntegrated } from "@shared/saju";
@@ -66,6 +67,93 @@ function Section({ icon: Icon, title, children, delay = 0 }: { icon: any; title:
   );
 }
 
+function SinsalSection({ sals, overlappingNames, delay }: { sals: SpecialSal[]; overlappingNames: Set<string>; delay: number }) {
+  const [showBad, setShowBad] = useState(false);
+  const gilSals = sals.filter(s => s.category === "길신");
+  const hyungSals = sals.filter(s => s.category === "흉신");
+  const neutralSals = sals.filter(s => s.category === "중성" || !s.category);
+  const categoryConfig = {
+    길신: { label: "길신(吉神) — 하늘이 준 축복", sals: gilSals, gradient: "from-emerald-500/10 to-teal-500/10", border: "border-emerald-500/20", iconColor: "text-emerald-400", textColor: "text-emerald-300", subColor: "text-emerald-200/70", badge: "bg-emerald-500/20 text-emerald-300" },
+    흉신: { label: "흉신(凶神) — 시련 속 성장의 열쇠", sals: hyungSals, gradient: "from-red-500/10 to-orange-500/10", border: "border-red-500/20", iconColor: "text-red-400", textColor: "text-red-300", subColor: "text-red-200/70", badge: "bg-red-500/20 text-red-300" },
+    중성: { label: "중성(中性) — 양면의 가능성", sals: neutralSals, gradient: "from-amber-500/10 to-yellow-500/10", border: "border-amber-500/20", iconColor: "text-amber-400", textColor: "text-amber-300", subColor: "text-amber-200/70", badge: "bg-amber-500/20 text-amber-300" },
+  };
+
+  const renderSalCards = (cfg: typeof categoryConfig["길신"], key: string) => {
+    if (cfg.sals.length === 0) return null;
+    return cfg.sals.map((sal, i) => (
+      <div key={`${key}-${i}`} className={`bg-gradient-to-r ${cfg.gradient} border ${cfg.border} rounded-xl p-4 ${overlappingNames.has(sal.name) ? 'ring-1 ring-yellow-400/40' : ''}`}>
+        <div className="flex items-center gap-2 mb-2 flex-wrap">
+          <Zap className={`w-4 h-4 ${cfg.iconColor}`} />
+          <span className={`text-sm font-bold ${cfg.textColor}`}>{sal.name} ({sal.hanja})</span>
+          {sal.foundIn && <span className="text-[9px] px-1.5 py-0.5 rounded bg-white/10 text-white/40">{sal.foundIn}</span>}
+          {overlappingNames.has(sal.name) && <span className="text-[9px] px-1.5 py-0.5 rounded bg-yellow-500/20 text-yellow-300 font-bold">올해 극대화</span>}
+        </div>
+        <p className={`text-xs ${cfg.subColor} mb-2 font-medium`}>{sal.personality}</p>
+        <p className="text-xs text-white/70 leading-relaxed">{sal.description}</p>
+      </div>
+    ));
+  };
+
+  return (
+    <Section icon={Zap} title={`원국 신살(原局神煞) — 타고난 기운 (${sals.length}개)`} delay={delay}>
+      <div className="space-y-4">
+        {gilSals.length > 0 && (
+          <div className="space-y-2">
+            <div className="flex items-center gap-2 mb-1">
+              <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${categoryConfig.길신.badge}`}>{categoryConfig.길신.label}</span>
+              <span className="text-[10px] text-white/30">{gilSals.length}개</span>
+            </div>
+            {renderSalCards(categoryConfig.길신, "gil")}
+          </div>
+        )}
+        {neutralSals.length > 0 && (
+          <div className="space-y-2">
+            <div className="flex items-center gap-2 mb-1">
+              <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${categoryConfig.중성.badge}`}>{categoryConfig.중성.label}</span>
+              <span className="text-[10px] text-white/30">{neutralSals.length}개</span>
+            </div>
+            {renderSalCards(categoryConfig.중성, "neutral")}
+          </div>
+        )}
+        {hyungSals.length > 0 && (
+          <div className="space-y-2">
+            <div className="flex items-center gap-2 mb-1">
+              <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${categoryConfig.흉신.badge}`}>{categoryConfig.흉신.label}</span>
+              <span className="text-[10px] text-white/30">{hyungSals.length}개</span>
+              <button
+                onClick={() => setShowBad(!showBad)}
+                className="ml-auto flex items-center gap-1 text-[10px] text-white/40 hover:text-white/60 transition-colors"
+                data-testid="button-toggle-bad-sals"
+              >
+                {showBad ? "접기" : "펼치기"}
+                <ChevronDown className={`w-3 h-3 transition-transform ${showBad ? 'rotate-180' : ''}`} />
+              </button>
+            </div>
+            <div className="bg-white/[0.02] border border-white/5 rounded-lg p-3">
+              <p className="text-[11px] text-white/50 leading-relaxed">
+                흉신은 약점이 아닌 성장의 씨앗입니다. 이 기운들은 더 단련될 영역을 알려주며, 인식하는 것만으로도 절반은 극복됩니다.
+              </p>
+            </div>
+            <AnimatePresence>
+              {showBad && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: "auto" }}
+                  exit={{ opacity: 0, height: 0 }}
+                  transition={{ duration: 0.3 }}
+                  className="space-y-2 overflow-hidden"
+                >
+                  {renderSalCards(categoryConfig.흉신, "bad")}
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+        )}
+      </div>
+    </Section>
+  );
+}
+
 export function SajuDeepAnalysis({ chart, birthDate, birthTime, userName, gender }: SajuProps) {
   const genderVal = (gender === "여" || gender === "female") ? "female" : "male" as "male" | "female" | undefined;
   const personality = analyzeSajuPersonality(chart, genderVal);
@@ -126,45 +214,26 @@ export function SajuDeepAnalysis({ chart, birthDate, birthTime, userName, gender
       {personality.specialSals.length > 0 && (() => {
         const sinsalData: SinsalAnalysis = analyzeSinsalIntegrated(chart, new Date().getFullYear(), genderVal);
         const overlappingNames = new Set(sinsalData.overlapping.map(o => o.name));
+        const mergedSals = (() => {
+          const merged = new Map<string, typeof personality.specialSals[0] & { foundInSet: Set<string> }>();
+          for (const sal of personality.specialSals) {
+            if (merged.has(sal.name)) {
+              const existing = merged.get(sal.name)!;
+              if (sal.foundIn) existing.foundInSet.add(sal.foundIn);
+            } else {
+              const foundInSet = new Set<string>();
+              if (sal.foundIn) foundInSet.add(sal.foundIn);
+              merged.set(sal.name, { ...sal, foundInSet });
+            }
+          }
+          return Array.from(merged.values()).map(({ foundInSet, ...rest }) => ({
+            ...rest,
+            foundIn: Array.from(foundInSet).join(" · ") || rest.foundIn,
+          }));
+        })();
         return (
           <>
-            <Section icon={Zap} title={`원국 신살(原局神煞) — 타고난 기운 (${personality.specialSals.length}개)`} delay={0.15}>
-              <div className="space-y-4">
-                {(() => {
-                  const gilSals = personality.specialSals.filter((s: any) => s.category === "길신");
-                  const hyungSals = personality.specialSals.filter((s: any) => s.category === "흉신");
-                  const neutralSals = personality.specialSals.filter((s: any) => s.category === "중성" || !s.category);
-                  const categoryConfig = {
-                    길신: { label: "길신(吉神) — 하늘이 준 축복", sals: gilSals, gradient: "from-emerald-500/10 to-teal-500/10", border: "border-emerald-500/20", iconColor: "text-emerald-400", textColor: "text-emerald-300", subColor: "text-emerald-200/70", badge: "bg-emerald-500/20 text-emerald-300" },
-                    흉신: { label: "흉신(凶神) — 시련 속 성장의 열쇠", sals: hyungSals, gradient: "from-red-500/10 to-orange-500/10", border: "border-red-500/20", iconColor: "text-red-400", textColor: "text-red-300", subColor: "text-red-200/70", badge: "bg-red-500/20 text-red-300" },
-                    중성: { label: "중성(中性) — 양면의 가능성", sals: neutralSals, gradient: "from-amber-500/10 to-yellow-500/10", border: "border-amber-500/20", iconColor: "text-amber-400", textColor: "text-amber-300", subColor: "text-amber-200/70", badge: "bg-amber-500/20 text-amber-300" },
-                  };
-                  return Object.entries(categoryConfig).map(([key, cfg]) => {
-                    if (cfg.sals.length === 0) return null;
-                    return (
-                      <div key={key} className="space-y-2">
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${cfg.badge}`}>{cfg.label}</span>
-                          <span className="text-[10px] text-white/30">{cfg.sals.length}개</span>
-                        </div>
-                        {cfg.sals.map((sal: any, i: number) => (
-                          <div key={i} className={`bg-gradient-to-r ${cfg.gradient} border ${cfg.border} rounded-xl p-4 ${overlappingNames.has(sal.name) ? 'ring-1 ring-yellow-400/40' : ''}`}>
-                            <div className="flex items-center gap-2 mb-2 flex-wrap">
-                              <Zap className={`w-4 h-4 ${cfg.iconColor}`} />
-                              <span className={`text-sm font-bold ${cfg.textColor}`}>{sal.name} ({sal.hanja})</span>
-                              {sal.foundIn && <span className="text-[9px] px-1.5 py-0.5 rounded bg-white/10 text-white/40">{sal.foundIn}</span>}
-                              {overlappingNames.has(sal.name) && <span className="text-[9px] px-1.5 py-0.5 rounded bg-yellow-500/20 text-yellow-300 font-bold">올해 극대화</span>}
-                            </div>
-                            <p className={`text-xs ${cfg.subColor} mb-2 font-medium`}>{sal.personality}</p>
-                            <p className="text-xs text-white/70 leading-relaxed">{sal.description}</p>
-                          </div>
-                        ))}
-                      </div>
-                    );
-                  });
-                })()}
-              </div>
-            </Section>
+            <SinsalSection sals={mergedSals} overlappingNames={overlappingNames} delay={0.15} />
             {sinsalData.dynamicSinsal.length > 0 && (
               <Section icon={Sparkles} title={`${sinsalData.year}년 세운 신살(歲運神煞) — 올해의 기운 (${sinsalData.dynamicSinsal.length}개)`} delay={0.17}>
                 <div className="space-y-2">
