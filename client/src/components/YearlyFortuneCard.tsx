@@ -15,7 +15,7 @@ interface Props {
   chart: SajuChart;
   userName: string;
   telegramId: string;
-  yearlySubTab: "guardian" | "saju" | "ziwei" | "zodiac";
+  yearlySubTab: "overview" | "saju" | "ziwei" | "zodiac";
   ziweiData?: ZiWeiResult;
   zodiacInfo?: ZodiacInfo;
 }
@@ -300,7 +300,7 @@ export function YearlyFortuneCard({ chart, userName, telegramId, yearlySubTab, z
               </p>
               <p className="text-xs text-indigo-400/80 mt-3">
                 <Sparkles className="w-3 h-3 inline mr-1" />
-                "운명 분석" 탭에서 <span className="font-bold">가디언 리포트</span>를 생성하면 연간 운세가 자동으로 함께 생성됩니다.
+                "운명 종합 분석" 탭에서 <span className="font-bold">가디언 리포트</span>를 먼저 생성하면 연간 운세가 자동으로 함께 생성됩니다.
               </p>
             </div>
           </div>
@@ -311,7 +311,7 @@ export function YearlyFortuneCard({ chart, userName, telegramId, yearlySubTab, z
 
   const regenerateButton = null;
 
-  if (yearlySubTab === "guardian") {
+  if (yearlySubTab === "overview") {
     return (
       <motion.div
         initial={{ opacity: 0, y: 20 }}
@@ -326,7 +326,7 @@ export function YearlyFortuneCard({ chart, userName, telegramId, yearlySubTab, z
         {aiYearly && (
           <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
             <div className="flex flex-wrap items-center gap-2 mb-2">
-              <h3 className="text-sm font-bold text-white/40 uppercase tracking-widest ml-1">3체계 교차 검증 종합</h3>
+              <h3 className="text-sm font-bold text-white/40 uppercase tracking-widest ml-1">연간 운세 종합 분석</h3>
               <span className="px-2 py-0.5 rounded-full bg-white/5 border border-white/10 text-white/50 text-[10px] font-bold flex items-center gap-1">
                 <Activity className="w-3 h-3" /> 일치도 {aiYearly.coherenceScore}%
               </span>

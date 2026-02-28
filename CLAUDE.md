@@ -1,120 +1,60 @@
-# CLAUDE.md — AI Dev Assistant Rules
-> 이 파일은 Claude Code가 자동으로 읽는 설정 파일입니다.
-> 모든 프로젝트 루트에 저장하세요.
+# CLAUDE.md — K-fortune Project Rules
 
----
+## Project Overview
+K-fortune: 사주팔자/자미두수/별자리 기반 AI 운세 앱
+Owner: Ricky / Random Universe (rndmunvs.com)
+Stack: React + Express + PostgreSQL (Drizzle ORM) + Railway
 
-## 🧠 Workflow Orchestration
+## Project Structure
+- Frontend: React + TypeScript (Vite)
+- Backend: Express + TypeScript (ESM)
+- DB: PostgreSQL + Drizzle ORM
+- AI: Anthropic Claude (claude-sonnet-4-20250514)
+- Messaging: Telegram Bot API
+- Deploy: Railway
+- Repo: github.com/randomuniverse/K-fortune
 
-### 1. Plan First (항상 계획 먼저)
-- 3단계 이상이거나 아키텍처 결정이 필요한 작업은 **반드시 계획서 먼저 작성**
-- 계획서를 `tasks/todo.md`에 체크리스트 형태로 저장
-- 사용자 승인 없이 구현 시작 금지
-- 방향이 틀어질 것 같으면 **즉시 멈추고 재계획** — 계속 밀어붙이지 말 것
+## Workflow Orchestration
 
-### 2. Subagent Strategy (서브에이전트 활용)
-- 메인 컨텍스트를 깨끗하게 유지하기 위해 서브에이전트 적극 활용
-- 리서치, 탐색, 병렬 분석은 서브에이전트에 오프로드
-- 복잡한 문제는 서브에이전트를 더 투입해서 해결
-- 각 서브에이전트는 **하나의 태스크만** 집중
+### 1. Plan First
+- 3단계 이상 작업은 반드시 계획 먼저 작성
+- 계획 확인 후 구현 시작
+- 진행 중 방향이 틀리면 즉시 멈추고 재계획
 
-### 3. Verification Before Done (완료 전 검증)
-- 작동한다는 걸 **증명하기 전에** 완료 체크 절대 금지
-- 변경 전후 동작 diff 확인
-- 스스로 물어볼 것: "시니어 엔지니어가 이걸 승인할까?"
-- 테스트 실행, 로그 확인, 정확성 입증 필수
+### 2. Verification Before Done
+- 작업 완료 전 반드시 작동 확인
+- "완료했다" 선언 전 테스트 필수
+- PR 전 lint/type 체크
 
-### 4. Demand Elegance (우아함 요구)
-- 비자명한 변경사항은 항상 "더 우아한 방법이 있을까?" 자문
-- 핵(hack) 같은 느낌이 들면: "지금 알고 있는 모든 것을 바탕으로 우아한 해결책 구현"
-- 단순하고 명백한 수정은 과도한 설계 금지
-- 제출 전에 자신의 작업에 스스로 도전할 것
+### 3. Self-Improvement Loop
+- Ricky 피드백 후 즉시 교훈 기록
+- 같은 실수 반복 금지
+- 세션 시작 시 이전 교훈 확인
 
-### 5. Autonomous Bug Fixing (자율 버그 수정)
-- 버그 리포트를 받으면: 그냥 고칠 것. 손잡아 달라고 요청 금지
-- 로그, 에러, 실패한 테스트를 직접 찾아서 해결
-- 사용자 컨텍스트 전환 불필요
-- CI 테스트 실패는 방법을 알려주지 않아도 스스로 수정
+### 4. Autonomous Bug Fixing
+- 버그 리포트 받으면 즉시 수정
+- 손잡아 달라는 요청 없이 해결
+- 로그/에러 확인 후 근본 원인 수정
 
----
+### 5. Minimal Impact
+- 변경은 필요한 부분만
+- 불필요한 코드 추가 금지
+- 임시방편 금지 — 근본 해결만
 
-## 📋 Task Management
+## Communication Rules
+- 한국어로 소통
+- 드라이하고 핵심만
+- 과도한 설명 금지
+- 완료 시 한 줄 요약만
 
-1. **Plan First**: 계획을 `tasks/todo.md`에 체크 가능한 항목으로 작성
-2. **Verify Plan**: 구현 시작 전 체크인
-3. **Track Progress**: 진행하면서 항목 완료 표시
-4. **Explain Changes**: 각 단계에서 하이레벨 요약 제공
-5. **Document Results**: `tasks/todo.md`에 리뷰 섹션 추가
-6. **Capture Lessons**: 수정 후 `tasks/lessons.md` 업데이트
+## Git Rules
+- 커밋 메시지: 한국어 or 영어 간결하게
+- 작업 완료 후 자동 push
+- main 브랜치 직접 push 금지
 
----
-
-## 🔁 Self-Improvement Loop (핵심!)
-
-- 사용자로부터 **수정을 받을 때마다**: `tasks/lessons.md`에 패턴 기록
-- 같은 실수를 방지하는 규칙을 스스로 작성
-- 실수율이 떨어질 때까지 교훈을 반복 개선
-- 관련 프로젝트의 세션 시작 시 교훈 검토
-
-### lessons.md 작성 형식
-```
-## [날짜] - [실수 카테고리]
-**상황**: 무슨 일이 있었나
-**실수**: 무엇을 잘못했나
-**규칙**: 다음에 어떻게 할 것인가
-```
-
----
-
-## ⚙️ Core Principles
-
-- **Simplicity First**: 가능한 한 단순하게 변경. 최소한의 코드에 영향.
-- **No Laziness**: 근본 원인을 찾을 것. 임시 수정 없음. 시니어 개발자 기준.
-- **Minimal Impact**: 필요한 것만 변경. 버그 도입 금지.
-- **No Over-Engineering**: 요청하지 않은 기능 추가 금지. 현재 필요한 것만.
-
----
-
-## 🛠️ Stack-Specific Rules
-
-### React / Next.js (웹 앱)
-- 컴포넌트는 단일 책임 원칙 준수
-- Props drilling 3단계 이상이면 Context 또는 상태관리 제안
-- `any` 타입 사용 금지 — 항상 proper typing
-- 클라이언트/서버 컴포넌트 경계 명확히 유지
-
-### Python (백엔드 / 스크립트)
-- 함수는 하나의 일만 할 것
-- 타입 힌트 항상 사용
-- 예외 처리는 구체적으로 (bare `except` 금지)
-- 복잡한 로직엔 docstring 필수
-
-### Replit 환경
-- 환경변수는 반드시 Replit Secrets 사용 (코드에 하드코딩 금지)
-- 포트 설정은 `0.0.0.0`으로 바인딩
-- `replit.nix` 또는 패키지 설정 변경 시 사용자에게 알림
-- 배포 전 `.replit` 설정 파일 확인
-
----
-
-## 🚫 절대 하지 말 것
-
+## 절대 하지 말 것
 - 사용자 승인 없이 대규모 리팩토링 시작
 - 작동 증명 없이 "완료됨" 선언
 - 같은 에러에 대해 세 번 이상 같은 시도 반복
 - 요청하지 않은 기능 추가
 - 임시방편(hack) 해결책을 영구적인 것처럼 적용
-
----
-
-## 📁 프로젝트 파일 구조 (권장)
-
-```
-project-root/
-├── CLAUDE.md          ← 이 파일
-├── tasks/
-│   ├── todo.md        ← 현재 작업 계획 및 진행상황
-│   └── lessons.md     ← Claude가 학습한 교훈 축적
-└── ... (프로젝트 파일들)
-```
-
