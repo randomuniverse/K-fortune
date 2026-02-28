@@ -3,7 +3,7 @@
 ## Project Overview
 K-fortune: 사주팔자/자미두수/별자리 기반 AI 운세 앱
 Owner: Ricky / Random Universe (rndmunvs.com)
-Stack: React + FastAPI + Supabase + Railway
+Stack: React + Express + PostgreSQL (Drizzle ORM) + Railway
 
 ## Workflow Orchestration
 
@@ -33,9 +33,11 @@ Stack: React + FastAPI + Supabase + Railway
 - 임시방편 금지 — 근본 해결만
 
 ## Project Structure
-- Frontend: React
-- Backend: FastAPI (Python)
-- DB: Supabase
+- Frontend: React + TypeScript (Vite)
+- Backend: Express + TypeScript (ESM)
+- DB: PostgreSQL + Drizzle ORM
+- AI: OpenAI GPT-4o
+- Messaging: Telegram Bot API
 - Deploy: Railway
 - Repo: github.com/randomuniverse/K-fortune
 

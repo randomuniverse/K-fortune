@@ -1,6 +1,6 @@
 import { storage } from "./storage";
 import { getZodiacSign, getZodiacInfo, type FortuneData } from "@shared/schema";
-import { calculateFullSaju, checkGanYeoJiDong, calculateDaewoonDynamicStars, analyzeSajuPersonality, calculateTimeGuide, generateDailySajuInsight } from "@shared/saju";
+import { calculateFullSaju, checkGanYeoJiDong, calculateDaewoonDynamicStars, analyzeSajuPersonality, calculateTimeGuide, generateDailySajuInsight, analyzeSinsalIntegrated, getTenGodName } from "@shared/saju";
 import { calculateZiWei } from "@shared/ziwei";
 import Anthropic from "@anthropic-ai/sdk";
 import { z } from "zod";
@@ -221,6 +221,18 @@ export async function generateFortuneForUser(user: {
   const sajuInsight = generateDailySajuInsight(sajuChart, sajuPersonality, todayStemIdx, todayBranchIdx);
   const yongShinRemedy = sajuPersonality.yongShinRemedy;
 
+  // === v2.1: AI 프롬프트 보강용 추가 데이터 계산 ===
+  const currentYear = koreaTime.getFullYear();
+  const sinsalAnalysis = analyzeSinsalIntegrated(sajuChart, currentYear, genderVal);
+  const daewoonStars = calculateDaewoonDynamicStars(sajuChart, currentYear);
+  const userBirthYear = parseInt(user.birthDate.split('-')[0]);
+  const activeDaeun = sajuChart.daeun.find(d => currentYear >= d.year && currentYear < d.year + 10);
+  const dailyStemRelation = getTenGodName(sajuChart.dayPillar.stemIndex, todayStemIdx);
+  // 지지 본기 장간 매핑 (BRANCH_HIDDEN_STEMS 각 첫 번째 값)
+  const branchMainStems = [9, 5, 0, 1, 4, 2, 3, 5, 6, 7, 4, 8];
+  const dailyBranchRelation = getTenGodName(sajuChart.dayPillar.stemIndex, branchMainStems[todayBranchIdx]);
+  const isGanYeoJiDong = checkGanYeoJiDong(sajuChart);
+
   // === 1회 통합 호출: 사주 + 별자리 + 자미두수 분석 + 교차검증 동시 수행 ===
   const lifeStars = ziweiResult.stars.life.map(s => `${s.name}(${s.keyword})`).join(", ") || "명무정성(유연한 운명)";
   const wealthStars = ziweiResult.stars.wealth.map(s => `${s.name}(${s.keyword})`).join(", ") || "없음";
@@ -236,9 +248,15 @@ export async function generateFortuneForUser(user: {
 - 점성술 전문 용어(Trine, Square, Conjunction 등) 한국어로 풀어서 서술
 
 ━━━━ [1. 사주 분석 지침] ━━━━
+제공된 4주 전체(년/월/일/시)와 각 기둥의 십성을 반드시 참조하세요.
 일진(${todayStem}${todayBranch})과 일주(${sajuChart.dayPillar.stemHanja}${sajuChart.dayPillar.branchHanja})의 형/충/회/합/원진 관계를 분석하세요.
+일진 천간과 일간의 십성 관계(User 데이터에 명시)를 근거로 오늘의 에너지 흐름을 판단하세요.
 용신(${sajuChart.yongShin.elementHanja})이 오늘 힘을 받는지, 극을 당하는지 확인하세요.
-재물/직장/대인관계의 유불리를 명확히 판단하세요.
+오행 비율의 편향과 일간 강약을 고려하여 재물/직장/대인관계의 유불리를 판단하세요.
+세운 동적 신살과 삼재 정보가 있다면 반드시 sajuCaution이나 sajuSpecial에 반영하세요.
+현재 대운과 대운 동적 별이 있다면 오늘의 운세에 대운의 큰 흐름도 함께 반영하세요.
+구조 패턴(식상생재, 관인상생 등)이 있다면 오늘 일진과의 시너지/갈등을 판단하세요.
+사주 인사이트와 시간대별 가이드는 참조하되, 독자적으로 재해석하여 서술하세요.
 
 ━━━━ [2. 별자리 분석 지침] ━━━━
 오늘 날짜(${dateStr}) 기준, ${zodiacInfo.rulingPlanet}과 주요 행성(태양/달/화성/목성/토성)이 ${zodiacSign}에 미치는 영향을 분석하세요.
@@ -287,16 +305,36 @@ export async function generateFortuneForUser(user: {
 
   const consolidatedUserPrompt = `오늘 날짜: ${dateStr}
 
-[사주 데이터]
-일주: ${sajuChart.dayPillar.stemHanja}${sajuChart.dayPillar.branchHanja} (일간/${sajuChart.dayBranchTenGod.name})
-용신: ${sajuChart.yongShin.elementHanja}(${sajuChart.yongShin.element})
-오늘 일진: ${todayStem}${todayBranch} (천간:${todayStem}/지지:${todayBranch})
+━━━━ [사주 원국 데이터] ━━━━
+■ 4주(四柱):
+  년주: ${sajuChart.yearPillar.stemHanja}${sajuChart.yearPillar.branchHanja} (${sajuChart.yearTenGod.name}/${sajuChart.yearBranchTenGod.name})
+  월주: ${sajuChart.monthPillar.stemHanja}${sajuChart.monthPillar.branchHanja} (${sajuChart.monthTenGod.name}/${sajuChart.monthBranchTenGod.name})
+  일주: ${sajuChart.dayPillar.stemHanja}${sajuChart.dayPillar.branchHanja} (일간/${sajuChart.dayBranchTenGod.name})
+  시주: ${sajuChart.hourPillar.stemHanja}${sajuChart.hourPillar.branchHanja} (${sajuChart.hourTenGod.name}/${sajuChart.hourBranchTenGod.name})
+■ 일간 강약: ${sajuChart.dayMasterStrength}
+■ 용신: ${sajuChart.yongShin.elementHanja}(${sajuChart.yongShin.element}) — ${sajuChart.yongShin.reason}
+■ 오행 비율: ${sajuChart.fiveElementRatios.map(r => `${r.elementHanja}(${r.ratio}%)`).join(' / ')}
+■ 간여지동: ${isGanYeoJiDong ? "해당 (일간과 일지가 같은 오행)" : "해당 없음"}
+■ 구조 패턴: ${sajuPersonality.structurePatterns.length > 0 ? sajuPersonality.structurePatterns.map(p => `${p.name}(${p.hanja})`).join(', ') : "특별 패턴 없음"}
+■ 원국 신살: ${sajuPersonality.specialSals.slice(0, 8).map(s => `${s.name}(${s.category}, ${s.foundIn || '원국'})`).join(', ') || "없음"}
+■ 세운(${currentYear}년) 동적 신살: ${sinsalAnalysis.dynamicSinsal.map(s => s.name).join(', ') || "없음"}${sinsalAnalysis.overlapping.length > 0 ? `\n  → 원국+세운 중복 강화: ${sinsalAnalysis.overlapping.map(s => s.name).join(', ')}` : ''}${sinsalAnalysis.samjae ? `\n  → 삼재: ${sinsalAnalysis.samjae.name} — ${sinsalAnalysis.samjae.description}` : ''}
+■ 현재 대운: ${activeDaeun ? `${activeDaeun.stemHanja}${activeDaeun.branchHanja} (${activeDaeun.age}세~${activeDaeun.age + 9}세)` : "대운 정보 없음"}${daewoonStars.length > 0 ? `\n■ 대운 동적 별: ${daewoonStars.map(s => `${s.name}(${s.source})`).join(', ')}` : ''}
 
-[별자리 데이터]
+━━━━ [오늘 일진 분석] ━━━━
+■ 오늘 일진: ${todayStem}${todayBranch}
+■ 일진↔일간 천간 관계: ${dailyStemRelation}
+■ 일진↔일간 지지 관계: ${dailyBranchRelation}
+■ 사주 인사이트: ${sajuInsight}
+■ 시간대별 가이드:
+  오전: ${timeGuide.morning.score}점 — ${timeGuide.morning.message}
+  오후: ${timeGuide.afternoon.score}점 — ${timeGuide.afternoon.message}
+  저녁: ${timeGuide.evening.score}점 — ${timeGuide.evening.message}
+
+━━━━ [별자리 데이터] ━━━━
 별자리: ${zodiacSign} (${zodiacInfo.signEn})
 주관 행성: ${zodiacInfo.rulingPlanet}
 
-[자미두수 데이터]
+━━━━ [자미두수 데이터] ━━━━
 명궁: ${ziweiResult.lifePalace}궁 / 국: ${ziweiResult.bureau.name}(${ziweiResult.bureau.desc})
 명궁 주성: ${lifeStars}
 재백궁: ${wealthStars} / 부처궁: ${spouseStars}

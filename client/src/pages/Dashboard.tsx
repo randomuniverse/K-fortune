@@ -18,7 +18,7 @@ import { GuardianReport } from "@/components/GuardianReport";
 
 type MainTabId = "today" | "yearly" | "destiny";
 type DestinyTabId = "summary" | "saju" | "ziwei" | "zodiac";
-type YearlyTabId = "guardian" | "saju" | "ziwei" | "zodiac";
+type YearlyTabId = "overview" | "saju" | "ziwei" | "zodiac";
 
 const MAIN_TABS: { id: MainTabId; label: string; icon: any }[] = [
   { id: "today", label: "오늘의 운세", icon: Sun },
@@ -27,7 +27,7 @@ const MAIN_TABS: { id: MainTabId; label: string; icon: any }[] = [
 ];
 
 const YEARLY_TABS: { id: YearlyTabId; label: string; icon: any }[] = [
-  { id: "guardian", label: "가디언 총평", icon: LayoutDashboard },
+  { id: "overview", label: "연간 총평", icon: LayoutDashboard },
   { id: "saju", label: "사주 총평", icon: Compass },
   { id: "ziwei", label: "자미두수 총평", icon: Star },
   { id: "zodiac", label: "별자리 총평", icon: Moon },
@@ -58,7 +58,7 @@ export default function Dashboard() {
   
   const [isSendingTelegram, setIsSendingTelegram] = useState(false);
   const [activeTab, setActiveTab] = useState<MainTabId>("today");
-  const [yearlySubTab, setYearlySubTab] = useState<YearlyTabId>("guardian");
+  const [yearlySubTab, setYearlySubTab] = useState<YearlyTabId>("overview");
   const [destinySubTab, setDestinySubTab] = useState<DestinyTabId>("summary");
   const [fortunesShown, setFortunesShown] = useState(FORTUNES_PER_PAGE);
   const [telegramLinkClicked, setTelegramLinkClicked] = useState(false);
