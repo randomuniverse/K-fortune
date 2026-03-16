@@ -41,38 +41,86 @@ export async function sendTelegramMessage(chatId: string, text: string): Promise
   }
 }
 
-// 텔레그램 메시지 포맷팅 함수 (3자 교차 검증 반영)
+// 점수 시각화 바
+function scoreBar(score: number): string {
+  const filled = Math.round(score / 10);
+  return "█".repeat(filled) + "░".repeat(10 - filled);
+}
+
+// 점수 변화 표시
+function deltaText(delta: number | undefined): string {
+  if (delta == null || delta === 0) return "";
+  return delta > 0 ? ` ↑+${delta}` : ` ↓${delta}`;
+}
+
+// 텔레그램 메시지 포맷팅 함수
 export function formatFortuneForTelegram(data: FortuneData, userName: string, dateStr: string, zodiacSign: string): string {
-  const keywords = data.commonKeywords && data.commonKeywords.length > 0
-    ? data.commonKeywords.join(", ")
-    : "";
+  let msg = `<b>☀️ ${dateStr}</b>\n`;
+  msg += `${userName}님의 오늘\n\n`;
 
-  let msg = `<b>[오늘의 운세] ${dateStr}</b>\n`;
-  msg += `${userName}님\n\n`;
-
-  if (keywords) {
-    msg += `🔗 공통 키워드: ${keywords}`;
-    if (data.coherenceScore != null) msg += `(일치도: ${data.coherenceScore}%)`;
-    msg += `\n\n`;
+  // 신탁 한 줄
+  if (data.oracleLine) {
+    msg += `<i>"${data.oracleLine}"</i>\n\n`;
   }
 
+  // 종합 점수 + 변화
+  msg += `📊 에너지: ${scoreBar(data.combinedScore)} ${data.combinedScore}점${deltaText(data.scoreDelta)}\n`;
+  msg += `   사주 ${data.sajuScore} · 별자리 ${data.zodiacScore} · 자미두수 ${data.ziweiScore}\n\n`;
+
+  // 핵심 메시지
   if (data.coreMessage) {
-    msg += `💎 <b>오늘의 핵심 메시지:</b>\n${data.coreMessage}\n\n`;
+    msg += `💎 ${data.coreMessage}\n\n`;
   }
 
-  if (data.sajuCaution) {
-    msg += `⚠️ 주의: ${data.sajuCaution}\n\n`;
+  // 키워드
+  if (data.commonKeywords?.length) {
+    msg += `🔑 ${data.commonKeywords.join(" · ")}\n\n`;
   }
 
+  msg += `━━━━━━━━━━━━━━━\n`;
+
+  // 사주
+  msg += `🌙 <b>사주</b>\n${data.sajuSummary}\n`;
+  if (data.sajuSpecial) msg += `✦ ${data.sajuSpecial}\n`;
+  if (data.sajuCaution) msg += `⚠️ ${data.sajuCaution}\n`;
+  msg += `\n`;
+
+  // 별자리
+  msg += `⭐ <b>${zodiacSign}</b>\n`;
+  msg += `연애 ${data.zodiacLove}\n`;
+  msg += `재물 ${data.zodiacMoney}\n`;
+  msg += `건강 ${data.zodiacHealth}\n`;
+  msg += `직장 ${data.zodiacWork}\n\n`;
+
+  // 자미두수
+  msg += `🌟 <b>자미두수</b>\n${data.ziweiMessage}\n\n`;
+
+  msg += `━━━━━━━━━━━━━━━\n`;
+
+  // 시간대별 가이드
+  if (data.timeGuide) {
+    msg += `⏰ <b>시간대별</b>\n`;
+    msg += `오전 ${data.timeGuide.morning.score}점 ${data.timeGuide.morning.message}\n`;
+    msg += `오후 ${data.timeGuide.afternoon.score}점 ${data.timeGuide.afternoon.message}\n`;
+    msg += `저녁 ${data.timeGuide.evening.score}점 ${data.timeGuide.evening.message}\n\n`;
+  }
+
+  // 오늘의 처방
+  if (data.todayPrescription) {
+    msg += `💊 <b>오늘의 처방</b>\n${data.todayPrescription}\n\n`;
+  }
+
+  // 멘토 조언
   if (data.mentorWisdom) {
-    msg += `✦ <b>오늘의 멘토 조언</b>\n${data.mentorWisdom}`;
-    if (data.mentorSource) msg += `\n— ${data.mentorSource}`;
+    msg += `📖 ${data.mentorWisdom}`;
+    if (data.mentorSource) msg += `\n— <i>${data.mentorSource}</i>`;
     msg += `\n\n`;
   }
 
-  msg += `-- 행운 가이드\n`;
-  msg += `방향: ${data.sajuDirection} | 숫자: ${data.luckyNumbers.join(", ")}`;
-  if (data.luckyColor) msg += ` | 색상: ${data.luckyColor}`;
+  // 행운 가이드
+  msg += `🍀 ${data.sajuDirection} · ${data.luckyNumbers.join(", ")}`;
+  if (data.luckyColor) msg += ` · ${data.luckyColor}`;
+  if (data.luckyTime) msg += ` · ${data.luckyTime}`;
 
   return msg;
 }
@@ -146,6 +194,8 @@ const consolidatedDailySchema = z.object({
   oracleLine: z.string(),
   todayPrescription: z.string(),
   luckyNumbers: z.array(z.number()).min(1).max(5),
+  luckyColor: z.string(),
+  luckyTime: z.string(),
   mentorWisdom: z.string(),
   mentorSource: z.string(),
 });
@@ -274,9 +324,11 @@ export async function generateFortuneForUser(user: {
 5. 자미두수 메시지(ziweiMessage): "명궁의 [별이름]이 오늘..." 형태로 자연스럽게 다듬기.
 6. 한 줄 신탁(oracleLine): 자연/계절/동물/원소 은유 포함. 매일 다른 이미지. 상투어 금지.
 7. 오늘의 처방(todayPrescription): 장소/시간/행동이 구체적인 실행 처방 1가지. 추상 조언 금지.
-8. 멘토 조언(mentorWisdom): 오늘 운세 흐름에 정확히 대응. Paul Graham, Naval Ravikant, Ray Dalio, 스토아 철학 등 실제 사고방식 반영. 2~3문장. 마지막 문장은 즉시 실행 가능한 원칙.
-   - 예(재물운 막힌 날): "돈을 쫓을수록 돈은 멀어진다. Paul Graham: '가장 좋은 스타트업은 돈을 목적으로 만들지 않았다.' 오늘은 과정에 집중하고, 하나의 문제를 더 깊이 이해하는 데 에너지를 쏟아라."
-   - mentorSource: 인물명 또는 철학 유형만 간결하게. 예: "Naval Ravikant", "스토아 철학"
+8. 행운의 색상(luckyColor): 오늘 일진의 오행과 용신의 상생 관계에서 도출. 매일 달라야 함. "빨강", "초록", "노랑", "흰색", "보라", "주황", "하늘색" 등 구체적 단일 색상명.
+9. 행운의 시간(luckyTime): 오늘 일진 지지와 사주 천간의 상호작용에서 가장 유리한 시간대. 예: "오전 9-11시", "오후 3-5시" 등.
+10. 멘토 조언(mentorWisdom): 오늘 운세 흐름에 정확히 대응하는 2~3문장. 마지막 문장은 즉시 실행 가능한 원칙.
+   - 반드시 매일 다른 인물/철학을 사용. 연속 사용 금지. 풀: 세네카, 마르쿠스 아우렐리우스, 에픽테토스, 노자, 장자, 공자, 맹자, 워렌 버핏, 찰리 멍거, 피터 드러커, 제프 베조스, 일론 머스크, 스티브 잡스, Naval Ravikant, Paul Graham, 니체, 쇼펜하우어, 미야모토 무사시, 손자, 빅토르 프랭클 등
+   - mentorSource: 인물명만 간결하게
 
 이모지 없이, 반드시 아래 JSON 형식으로만 응답하세요:
 {
@@ -297,6 +349,8 @@ export async function generateFortuneForUser(user: {
   "commonKeywords": ["키워드1", "키워드2", "키워드3"],
   "coreMessage": "3체계 공통 핵심 메시지 (1문장, 단정형)",
   "luckyNumbers": [숫자1, 숫자2, 숫자3],
+  "luckyColor": "오늘의 행운 색상 (일진 오행 기반, 매일 달라야 함)",
+  "luckyTime": "오늘의 행운 시간대 (예: 오전 9-11시)",
   "oracleLine": "시적 한 줄 신탁 (자연/계절/동물/원소 은유 필수)",
   "todayPrescription": "구체적 행동 처방 (장소/시간/행동 포함)",
   "mentorWisdom": "오늘 운세에 대응하는 멘토 조언 2~3문장",
@@ -396,8 +450,8 @@ export async function generateFortuneForUser(user: {
     ziweiScore: result.ziweiScore,
     oracleLine: result.oracleLine || undefined,
     todayPrescription: result.todayPrescription || undefined,
-    luckyColor: yongShinRemedy.luckyColor.split("계열")[0] + "계열",
-    luckyTime: yongShinRemedy.luckyTime.split("에")[0],
+    luckyColor: result.luckyColor || yongShinRemedy.luckyColor.split("계열")[0] + "계열",
+    luckyTime: result.luckyTime || yongShinRemedy.luckyTime.split("에")[0],
     timeGuide,
     sajuInsight,
     scoreDelta,
@@ -462,6 +516,8 @@ export async function generateGuardianReport(data: {
 
   const currentYear = new Date().getFullYear();
   const activeDaewoonStars = calculateDaewoonDynamicStars(sc, currentYear);
+  const genderForSinsal = isMale ? "male" : "female" as "male" | "female";
+  const sinsalAnalysis = analyzeSinsalIntegrated(sc, currentYear, genderForSinsal);
 
   const loveAnalysisBlock = `
 ━━━━ 4. 이성운/결혼운 전용 분석 데이터 ━━━━
@@ -500,75 +556,38 @@ export async function generateGuardianReport(data: {
 
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-[문체 시범 — 반드시 이 톤과 깊이를 따르세요]
+[톤과 깊이 참고 — 아래 수준으로 작성하되, 표현은 절대 재사용 금지]
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-아래는 丁火 일간/삼합목국/양인살·화개살·홍염살/무재 사주인 특정 사용자의 톤과 깊이 참고 예시입니다.
+⚠️ 아래는 분석 깊이의 기준선입니다. 이 비유/표현을 그대로 쓰면 실격.
+이 사용자의 실제 일간/오행/살/구조에서 완전히 새로운 비유와 서사를 창작하세요.
 
-⚠️ [절대적 금지] 아래 예시의 문장, 비유, 표현을 절대 재사용하지 마세요.
-- "촛불이 두 자루", "불 위에 불을 얹은", "꺼질 수가 없는 구조", "칼을 쥔 귀족", "정장을 입은 영매" 등의 비유를 그대로 쓰지 마세요.
-- "이건 우연이 아닙니다", "숨으려 하는데 빛이 새어나옵니다" 같은 클리셰도 금지.
-- 이 사용자의 일간/오행/살/구조에 맞는 완전히 새로운 비유와 서사를 창작하세요.
-- 예시의 '톤'(차분한 존댓말 + 날카로운 통찰)과 '깊이'(인과관계 서술, 사주 데이터 기반 추론)만 참고하세요.
-- 같은 사용자가 다시 와도 이전과 다른 관점, 새로운 각도의 해석을 제시해야 합니다.
+— 깊이 기준: 데이터 → 해석 → 체감 현상 —
+"발밑을 보면, 亥·卯·未 — 세 개의 지지가 손을 잡고 하나의 거대한 숲을 이루고 있습니다. 삼합 목국. 나무가 끊임없이 불을 먹여 키우는 구조입니다."
+→ 이처럼 사주의 실제 한자/지지/합을 서사의 뼈대로 사용.
 
---- pastInference 예시 ---
-당신의 사주를 펼치면 정화(丁火)가 두 개, 한여름 午월에 앉아 있습니다. 촛불이 두 자루 나란히 타오르고 있는 형상입니다. 그런데 이 촛불이 보통 촛불이 아닙니다.
+— 깊이 기준: 수치 인용 + 대운 연결 —
+"사주의 화(火)가 41.2%로 극왕합니다. 여기에 51세 대운 丙子가 시작되면서 丙(양화)이 또 들어왔습니다."
+→ 이처럼 실제 오행 비율(%)과 대운 정보를 구체적으로 인용.
 
-발밑을 보면, 亥·卯·未 — 세 개의 지지가 손을 잡고 하나의 거대한 숲을 이루고 있습니다. 삼합 목국. 나무가 끊임없이 불을 먹여 키우는 구조입니다. 배우면 배울수록, 탐구하면 탐구할수록 당신이라는 불꽃은 더 커집니다. 꺼질 수가 없는 구조로 태어난 겁니다.
+— 깊이 기준: 데이터 근거 → 구체적 처방 —
+"첫째 — 불을 끄지 마십시오. 방향만 잡으십시오. 극왕한 화가 2026년 丙午 세운과 만나 최고조에 달하고 있는데, 이 에너지를 억누르면 병이 됩니다."
+→ 이처럼 모든 조언은 사주 데이터의 구체적 근거(오행/신살/대운)에서 출발.
 
-그 위에 壬水 정관이 월간에서 내려다보고 있습니다. 한여름의 뜨거운 불에 시원한 비 한 줄기. 이 물이 없었다면 당신은 진작에 스스로를 태워버렸을 겁니다. 이 壬水가 당신에게 사회적 체면, 절제, 그리고 '아직은 아니다'라고 말해주는 이성의 목소리 역할을 해왔습니다.
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+[개인화 필수 요건 — 빠지면 실격]
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-자미두수로 올라가면, 명궁에 태양성이 앉아 있습니다. 사주에서 촛불인 사람이, 자미두수에서는 태양을 품고 태어난 겁니다. 이건 우연이 아닙니다. 촛불의 섬세함과 태양의 야망이 한 몸에 공존하고 있다는 뜻입니다. 그런데 동시에 — 촛불은 가까이서 비춰야 따뜻하고, 태양은 멀리서 봐야 견딜 수 있습니다. 이 거리감의 모순이 당신 인생 전체를 관통합니다.
-
-서양 별자리는 쌍둥이자리, 주관 행성 수성(Mercury). 사주의 정화가 집중력이라면, 쌍둥이자리의 수성은 확산력입니다. 한 가지에 깊이 빠지면서도 동시에 열 가지가 궁금한 사람. 이 조합이 당신을 '한 우물만 파는 장인'이 아니라 여러 우물의 물맥이 어디서 만나는지 아는 사람으로 만들었습니다.
-
-그리고 양인살이 월지에 칼을 꽂고 앉아 있습니다. 평소에는 보이지 않습니다. 부드럽고, 따뜻하고, 잘 웃는 사람으로 보입니다. 그런데 위기가 오면 — 그 칼이 뽑힙니다. 눈빛이 달라지고, 판단이 빨라지고, 주저하던 사람이 갑자기 전장의 장수가 됩니다. 천을귀인이 일지에 있으니, 그 위기의 순간마다 반드시 누군가가 손을 내밀어줍니다. 천덕귀인이 월간에 있으니, 치명적인 재앙은 번번이 빗겨갑니다.
-
-마지막으로, 화개살과 홍염살이 시주에 나란히 앉아 있습니다. 고독한 예술가의 영혼과, 사람을 불꽃처럼 끌어당기는 매력이 같은 자리에 있는 겁니다. 혼자 있어야 충전되는데, 혼자 두면 사람들이 찾아옵니다. 숨으려 하는데 빛이 새어나옵니다. 이것이 당신의 운명적 구조입니다.
---- pastInference 예시 끝 ---
-
---- currentState 예시 ---
-이런 기운을 가진 사람이 겪는 가장 큰 고통은 '선택'입니다.
-
-촛불은 한 곳을 비춰야 밝습니다. 그런데 태양성은 세상 전체를 비추고 싶어합니다. 쌍둥이자리의 수성은 끊임없이 새로운 것을 속삭입니다. 삼합 목국이 만들어내는 지적 호기심은 바닥을 모릅니다. 그래서 에너지가 여러 방면으로 확산될 때, 정작 집중력을 잃지 않기 위해 스스로와 싸우고 있을 겁니다.
-
-주변은 당신에게 기대합니다. 태양성의 리더십, 양인살의 결단력, 도화살(지금 대운에서 발동 중인)의 매력 — 사람들은 당신이 앞에 서기를 원합니다. 그런데 화개살은 문을 닫고 혼자 작업하고 싶어합니다. 주변의 기대와 내면의 고독 사이에서 '이 길이 맞나?'를 반복하고 있을 겁니다.
-
-자미두수에서 재백궁에 천량성이 앉아 있습니다. 감찰과 원칙의 별입니다. 돈이 들어와도 먼저 '이게 맞는 돈인가'를 따지는 구조입니다. 사주에서 재성(금)이 아예 없는 구조와 정확히 겹칩니다. 돈을 쫓으면 오히려 멀어지고, 자기 분야의 깊이를 쫓으면 돈이 따라오는 운명. 그런데 현실은 당장 돈이 필요한 순간들이 있고, 그때마다 자존심과 현실 사이에서 마찰이 생깁니다.
---- currentState 예시 끝 ---
-
---- bottleneck 예시 ---
-당신의 가장 큰 병목은 한 문장으로 압축됩니다: "과열된 열정과 고독한 내면의 충돌."
-
-화개살과 홍염살이 같은 자리에 있다는 건, 내면의 예술적 고독과 외부를 향한 강렬한 매력이 서로 에너지를 뺏고 있다는 뜻입니다.
-
-사주의 화(火)가 41.2%로 극왕합니다. 여기에 51세 대운 丙子가 시작되면서 丙(양화)이 또 들어왔습니다. 불 위에 불을 얹은 형국입니다. 2026년 세운 丙午까지 겹치면서, 지금 당신의 에너지는 문자 그대로 끓고 있습니다.
-
-이 에너지가 한 방향으로 모이면 — 폭발적인 성취가 옵니다. 이 에너지가 흩어지면 — 당신이 할 수 있는 일에 대한 자신감이 오히려 무너집니다. '나는 이만큼 할 수 있는 사람인데, 왜 결과가 이것밖에 안 되지?' 이 간극이 자존감을 갉아먹습니다.
-
-타인의 의견을 배제하고, 홀로 모든 것을 해결하려는 경향도 병목입니다. 사주에 비겁(丁)이 강하고 양인살까지 있으니, '내가 하면 된다'는 자기 확신이 강합니다. 하지만 재성이 없는 사주에서 혼자 부를 감당하는 건 구조적으로 어렵습니다. 칼은 당신이 쥐되, 칼집은 누군가에게 맡겨야 합니다.
---- bottleneck 예시 끝 ---
-
---- solution 예시 ---
-첫째 — 불을 끄지 마십시오. 방향만 잡으십시오.
-지금 당신 안의 에너지는 과한 게 아니라 방향이 없는 겁니다. 극왕한 화가 2026년 丙午 세운과 만나 최고조에 달하고 있는데, 이 에너지를 억누르면 병이 됩니다. 대신 한 가지 프로젝트를 '올해의 전장'으로 선언하십시오. 양인살은 전장이 있어야 칼이 빛나는 구조입니다. 전장이 없으면 칼끝이 자기 자신을 향합니다.
-
-둘째 — 돈을 쫓지 마십시오. 이름을 쫓으십시오.
-무재 사주의 부는 전문성과 명성에서 옵니다. 자미두수 재백궁의 천량성도 같은 말을 하고 있습니다. 당신의 금맥은 '이 분야에서 이 사람'이라는 인식입니다. 사주의 관인상생 구조가 정확히 이것을 지원합니다. 마케팅, 엔터테인먼트, 기술/IT, 브랜딩 — 이 네 영역 중 하나에서 당신의 이름이 곧 브랜드가 되는 구조를 만드십시오.
-
-셋째 — 고독의 시간을 죄책감 없이 지키십시오.
-화개살이 시주에 있다는 건, 인생 후반부로 갈수록 내면 탐구의 시간이 더 필요해진다는 뜻입니다. 이건 게으름이 아니라 충전입니다. 밖에서 태양처럼 비추고 돌아와서, 문을 닫고 촛불처럼 자기 안을 비추는 시간. 이 리듬이 깨지면 창의력이 마릅니다. 최소 하루 2시간, 누구의 기대에도 응하지 않는 시간을 확보하십시오.
-
-넷째 — 지금 발동한 도화살을 전략적으로 쓰십시오.
-51세 대운 丙子에서 도화살이 처음 켜졌습니다. 사주 원국에는 없던 매력의 기운이 외부에서 들어온 겁니다. 이건 10년간 지속됩니다. 대중 앞에 나서기에 지금보다 좋은 타이밍은 없습니다. 브랜드 론칭, 콘텐츠 발행, 퍼블릭 이미지 구축 — 미루고 있던 것이 있다면 지금이 천문학적으로 가장 정확한 시점입니다.
-
-다섯째 — 칼집이 되어줄 파트너를 찾으십시오.
-재성이 없는 사주에서 큰 부를 감당하려면 비겁(같은 화 기운)의 도움이 필요합니다. 동업자, 공동 창업자, 혹은 실무를 함께 짊어질 파트너. 천을귀인이 일지에 있으니 진심으로 찾으면 반드시 나타납니다. 다만 자미두수 천이궁의 거문성이 경고합니다 — 구설수에 오르기 쉬우니 파트너를 고를 때 말이 많은 사람보다 묵묵히 실행하는 사람을 고르십시오.
-
-여섯째 — 용신 수(水)의 기운을 생활에 심으십시오.
-극왕한 화를 다스리는 유일한 처방입니다. 시간: 밤 9시 이후(해시~자시)에 중요한 사고와 작업을 배치하십시오. 장소: 물가, 바다, 강, 호수. 북쪽 방향의 도시나 해외가 행운을 가져옵니다. 색상: 검정, 남색, 짙은 파랑을 일상에 두십시오. 음식: 해산물, 해조류, 검은콩, 흑미. 주의: 토(土)의 과한 기운을 피하십시오.
---- solution 예시 끝 ---
+1. 일간의 한자(甲/乙/丙/丁/戊/己/庚/辛/壬/癸)를 서사의 주인공으로 삼으세요. "이 사람"이 아니라 "壬水가", "丁火가" 처럼.
+2. 오행 비율의 실제 수치(%)를 pastInference/bottleneck에서 반드시 인용하세요. "화가 강하다" (X) → "화(火)가 38.5%로 사주의 절반 가까이를 차지합니다" (O)
+3. 특수살은 이름만 나열하지 말고, 원국의 어디에 앉아있는지(년지/월지/일지/시지)와 함께 서사에 녹이세요. "양인살이 있다" (X) → "양인살이 월지에 칼을 꽂고 앉아 있습니다" (O)
+4. 올해 세운에서 새로 작동하는 동적 신살과 삼재 정보를 currentState와 bottleneck에 반드시 반영하세요. 올해만의 특수한 기운이 핵심.
+5. 대운에서 새로 해금된 신살(Time-Unlocked Skills)은 "원래 없었는데 지금 발동됨"이라는 시간적 대비로 서술하세요.
+6. 원국+세운 중복 작동 신살은 "올해 극대화"라는 강조 서사 필수.
+7. solution의 모든 항목은 반드시 사주 데이터의 구체적 근거(용신, 오행 비율, 십성, 신살 이름)에서 출발해야 합니다. 근거 없는 추상적 조언("균형을 잡으세요", "열심히 하세요")은 금지.
+8. 용신 개운법은 시간대/장소/색상/음식/활동을 모두 포함하되, 용신의 오행에 정확히 맞는 구체적 처방이어야 합니다.
+9. businessAdvice는 십성 구조(식상생재, 관인상생 등)와 용신 기반의 구체적 업종/직업군 제시 필수.
+10. loveAdvice는 이성운 전용 분석 데이터(섹션 4)를 반드시 참조하고, 재성/관성 유무와 개수에 근거하세요.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 [작성 원칙]
@@ -670,6 +689,16 @@ ${sc.fiveElementRatios?.map((r: any) => `  - ${r.element}(${r.elementHanja}): ${
 
 ■ 구조 패턴: ${sp.structurePatterns?.map((p: any) => `${p.name}(${p.hanja}) — ${p.description}`).join("\n  ") || "없음"}
 
+■ [중요] ${currentYear}년 세운 동적 신살 (올해만 작동하는 기운):
+${sinsalAnalysis.dynamicSinsal?.length > 0
+  ? sinsalAnalysis.dynamicSinsal.map((s: any) => `  - ${s.name}(${s.hanja}): ${s.description} [${s.foundIn}에서 발동]`).join("\n")
+  : "  올해 세운에서 특별히 작동하는 동적 신살 없음"}
+■ 원국+세운 중복 작동 (올해 극대화되는 기운):
+${sinsalAnalysis.overlapping?.length > 0
+  ? sinsalAnalysis.overlapping.map((s: any) => `  - ⚡ ${s.name}(${s.hanja}): 원국에도 있고 올해 세운에서도 작동 → 극대화!`).join("\n")
+  : "  중복 작동 신살 없음"}
+■ 삼재 상태: ${sinsalAnalysis.samjae ? `${sinsalAnalysis.samjae.name} — ${sinsalAnalysis.samjae.description}` : "삼재 해당 없음"}
+
 ■ [중요] ${currentYear}년 현재 활성화된 대운 무기 (Time-Unlocked Skills): ${activeDaewoonStars.length > 0
   ? activeDaewoonStars.map((s: any) => `- [${s.name}(${s.hanja})]: ${s.source}에서 들어와 지금부터 발동됨! (원래 사주엔 없었음) — ${s.description}`).join("\n  ")
   : "특이사항 없음 (현재 대운에서 새로 해금된 신살 없음)"}
@@ -727,6 +756,16 @@ ${loveAnalysisBlock}
 사주가 이야기를 주도하고, 자미두수/별자리가 "같은 방향을 가리키고 있다"고 확인하는 구조로 엮으세요.
 절대로 사용자의 이름을 사용하지 말고, "당신"이라고만 지칭하세요.
 loveAdvice는 섹션 4의 이성운 데이터를 반드시 참조하세요.
+
+[필수 체크리스트 — 아래 항목이 하나라도 빠지면 불합격]
+□ pastInference에 일간 한자(甲~癸)가 최소 3회 등장하는가?
+□ pastInference에 오행 비율 수치(%)가 1회 이상 인용되었는가?
+□ pastInference에 특수살이 원국의 어느 기둥(년/월/일/시)에 있는지 명시했는가?
+□ currentState에 ${currentYear}년 세운 동적 신살/삼재가 반영되었는가?
+□ currentState에 현재 대운 정보가 반영되었는가?
+□ bottleneck에 오행 과다/부족의 구체적 수치가 인용되었는가?
+□ solution의 모든 항목이 사주 데이터 근거(신살명/용신/오행)로 시작하는가?
+□ solution에 용신 개운법(시간/장소/색상/음식)이 포함되었는가?
 `;
 
   try {
@@ -735,7 +774,7 @@ loveAdvice는 섹션 4의 이성운 데이터를 반드시 참조하세요.
     const response = await getAnthropic().messages.create({
       model: "claude-sonnet-4-20250514",
       max_tokens: 8000,
-      temperature: 0.75,
+      temperature: 0.85,
       system: systemPrompt,
       messages: [{ role: "user", content: userPrompt }],
     });
