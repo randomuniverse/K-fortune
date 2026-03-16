@@ -276,6 +276,11 @@ export async function generateFortuneForUser(user: {
   const wealthStars = ziweiResult.stars.wealth.map(s => `${s.name}(${s.keyword})`).join(", ") || "없음";
   const spouseStars = ziweiResult.stars.spouse.map(s => `${s.name}(${s.keyword})`).join(", ") || "없음";
 
+  // 멘토 카테고리 로테이션 (날짜 기반, 매일 다른 카테고리 강제)
+  const mentorCategories = ["투자/비즈니스", "동양 고전", "서양 철학", "심리/자기계발", "과학/리더십"];
+  const dayOfYear = Math.floor((koreaTime.getTime() - new Date(koreaTime.getFullYear(), 0, 0).getTime()) / 86400000);
+  const todayMentorCategory = mentorCategories[dayOfYear % mentorCategories.length];
+
   const consolidatedSystemPrompt = `당신은 동양의 명리학(사주팔자), 서양의 점성술(별자리), 동양의 자미두수(紫微斗數) 세 관점으로 오늘의 운세를 동시에 분석하고 교차 검증하는 '운명 데이터 융합 전문가'입니다.
 
 [공통 금지 사항]
@@ -313,9 +318,16 @@ sajuCaution은 반드시 **오늘 일진과 원국의 충/형/파/해/원진 관
 4. 자미두수 메시지(ziweiMessage): "명궁의 [별이름]이 오늘..." 형태로 자연스럽게 다듬기.
 5. 한 줄 신탁(oracleLine): 자연/계절/동물/원소 은유 포함. 매일 다른 이미지. 상투어 금지.
 6. 오늘의 처방(todayPrescription): 장소/시간/행동이 구체적인 실행 처방 1가지. 추상 조언 금지.
-7. 멘토 조언(mentorWisdom): 오늘 운세 흐름에 정확히 대응하는 2~3문장. 마지막 문장은 즉시 실행 가능한 원칙.
-   - 반드시 매일 다른 인물/철학을 사용. 연속 사용 금지. 풀: 세네카, 마르쿠스 아우렐리우스, 에픽테토스, 노자, 장자, 공자, 맹자, 워렌 버핏, 찰리 멍거, 피터 드러커, 제프 베조스, 일론 머스크, 스티브 잡스, Naval Ravikant, Paul Graham, 니체, 쇼펜하우어, 미야모토 무사시, 손자, 빅토르 프랭클 등
-   - mentorSource: 인물명만 간결하게
+7. 멘토 조언(mentorWisdom): 아래 멘토 풀에서 오늘 운세 흐름에 가장 맞는 인물 1명을 골라, 그 인물이 **실제로 한 말(명언/저서 인용)**을 기반으로 2~3문장 작성. 날조 금지. 마지막 문장은 실행 가능한 원칙.
+   - mentorSource: "인물명" 형식 (예: "세네카", "워렌 버핏")
+   - ⚠️ 절대 규칙: 같은 인물 2일 연속 사용 금지. 최소 7일 간격. 아래 풀에서 골고루 순환할 것.
+   - 🎯 오늘은 [${todayMentorCategory}] 카테고리에서 선택하세요. (시스템이 자동 로테이션)
+   - 멘토 풀 (50명, 반드시 이 안에서만 선택):
+     [투자/비즈니스] 워렌 버핏, 찰리 멍거, 레이 달리오, 피터 린치, 조지 소로스, 제프 베조스, 일론 머스크, 스티브 잡스, 빌 게이츠, 샘 올트먼, Naval Ravikant, Paul Graham, 피터 드러커, 피터 틸
+     [동양 고전] 노자, 장자, 공자, 맹자, 손자, 한비자, 왕양명, 미야모토 무사시, 퇴계 이황, 율곡 이이
+     [서양 철학] 세네카, 마르쿠스 아우렐리우스, 에픽테토스, 니체, 쇼펜하우어, 키르케고르, 몽테뉴, 파스칼
+     [심리/자기계발] 빅토르 프랭클, 칼 융, 알프레드 아들러, 미하이 칙센트미하이, 나심 탈레브, 라이언 홀리데이, 제임스 클리어
+     [과학/리더십] 리처드 파인만, 찰스 다윈, 넬슨 만델라, 윈스턴 처칠, 벤저민 프랭클린, 레오나르도 다빈치, 앨버트 아인슈타인
 
 이모지 없이, 반드시 아래 JSON 형식으로만 응답하세요:
 {
@@ -336,8 +348,8 @@ sajuCaution은 반드시 **오늘 일진과 원국의 충/형/파/해/원진 관
   "coreMessage": "3체계 공통 핵심 메시지 (1문장, 단정형)",
   "oracleLine": "시적 한 줄 신탁 (자연/계절/동물/원소 은유 필수)",
   "todayPrescription": "구체적 행동 처방 (장소/시간/행동 포함)",
-  "mentorWisdom": "오늘 운세에 대응하는 멘토 조언 2~3문장",
-  "mentorSource": "조언 출처"
+  "mentorWisdom": "실제 명언 기반 멘토 조언 2~3문장 (날조 금지)",
+  "mentorSource": "인물명 (50명 풀에서 매일 다른 인물)"
 }`;
 
   const consolidatedUserPrompt = `오늘 날짜: ${dateStr}
