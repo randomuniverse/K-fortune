@@ -41,38 +41,86 @@ export async function sendTelegramMessage(chatId: string, text: string): Promise
   }
 }
 
-// 텔레그램 메시지 포맷팅 함수 (3자 교차 검증 반영)
+// 점수 시각화 바
+function scoreBar(score: number): string {
+  const filled = Math.round(score / 10);
+  return "█".repeat(filled) + "░".repeat(10 - filled);
+}
+
+// 점수 변화 표시
+function deltaText(delta: number | undefined): string {
+  if (delta == null || delta === 0) return "";
+  return delta > 0 ? ` ↑+${delta}` : ` ↓${delta}`;
+}
+
+// 텔레그램 메시지 포맷팅 함수
 export function formatFortuneForTelegram(data: FortuneData, userName: string, dateStr: string, zodiacSign: string): string {
-  const keywords = data.commonKeywords && data.commonKeywords.length > 0
-    ? data.commonKeywords.join(", ")
-    : "";
+  let msg = `<b>☀️ ${dateStr}</b>\n`;
+  msg += `${userName}님의 오늘\n\n`;
 
-  let msg = `<b>[오늘의 운세] ${dateStr}</b>\n`;
-  msg += `${userName}님\n\n`;
-
-  if (keywords) {
-    msg += `🔗 공통 키워드: ${keywords}`;
-    if (data.coherenceScore != null) msg += `(일치도: ${data.coherenceScore}%)`;
-    msg += `\n\n`;
+  // 신탁 한 줄
+  if (data.oracleLine) {
+    msg += `<i>"${data.oracleLine}"</i>\n\n`;
   }
 
+  // 종합 점수 + 변화
+  msg += `📊 에너지: ${scoreBar(data.combinedScore)} ${data.combinedScore}점${deltaText(data.scoreDelta)}\n`;
+  msg += `   사주 ${data.sajuScore} · 별자리 ${data.zodiacScore} · 자미두수 ${data.ziweiScore}\n\n`;
+
+  // 핵심 메시지
   if (data.coreMessage) {
-    msg += `💎 <b>오늘의 핵심 메시지:</b>\n${data.coreMessage}\n\n`;
+    msg += `💎 ${data.coreMessage}\n\n`;
   }
 
-  if (data.sajuCaution) {
-    msg += `⚠️ 주의: ${data.sajuCaution}\n\n`;
+  // 키워드
+  if (data.commonKeywords?.length) {
+    msg += `🔑 ${data.commonKeywords.join(" · ")}\n\n`;
   }
 
+  msg += `━━━━━━━━━━━━━━━\n`;
+
+  // 사주
+  msg += `🌙 <b>사주</b>\n${data.sajuSummary}\n`;
+  if (data.sajuSpecial) msg += `✦ ${data.sajuSpecial}\n`;
+  if (data.sajuCaution) msg += `⚠️ ${data.sajuCaution}\n`;
+  msg += `\n`;
+
+  // 별자리
+  msg += `⭐ <b>${zodiacSign}</b>\n`;
+  msg += `연애 ${data.zodiacLove}\n`;
+  msg += `재물 ${data.zodiacMoney}\n`;
+  msg += `건강 ${data.zodiacHealth}\n`;
+  msg += `직장 ${data.zodiacWork}\n\n`;
+
+  // 자미두수
+  msg += `🌟 <b>자미두수</b>\n${data.ziweiMessage}\n\n`;
+
+  msg += `━━━━━━━━━━━━━━━\n`;
+
+  // 시간대별 가이드
+  if (data.timeGuide) {
+    msg += `⏰ <b>시간대별</b>\n`;
+    msg += `오전 ${data.timeGuide.morning.score}점 ${data.timeGuide.morning.message}\n`;
+    msg += `오후 ${data.timeGuide.afternoon.score}점 ${data.timeGuide.afternoon.message}\n`;
+    msg += `저녁 ${data.timeGuide.evening.score}점 ${data.timeGuide.evening.message}\n\n`;
+  }
+
+  // 오늘의 처방
+  if (data.todayPrescription) {
+    msg += `💊 <b>오늘의 처방</b>\n${data.todayPrescription}\n\n`;
+  }
+
+  // 멘토 조언
   if (data.mentorWisdom) {
-    msg += `✦ <b>오늘의 멘토 조언</b>\n${data.mentorWisdom}`;
-    if (data.mentorSource) msg += `\n— ${data.mentorSource}`;
+    msg += `📖 ${data.mentorWisdom}`;
+    if (data.mentorSource) msg += `\n— <i>${data.mentorSource}</i>`;
     msg += `\n\n`;
   }
 
-  msg += `-- 행운 가이드\n`;
-  msg += `방향: ${data.sajuDirection} | 숫자: ${data.luckyNumbers.join(", ")}`;
-  if (data.luckyColor) msg += ` | 색상: ${data.luckyColor}`;
+  // 행운 가이드
+  msg += `🍀 ${data.sajuDirection} · ${data.luckyNumbers.join(", ")}`;
+  if (data.luckyColor) msg += ` · ${data.luckyColor}`;
+  if (data.luckyTime) msg += ` · ${data.luckyTime}`;
 
   return msg;
 }
@@ -146,6 +194,8 @@ const consolidatedDailySchema = z.object({
   oracleLine: z.string(),
   todayPrescription: z.string(),
   luckyNumbers: z.array(z.number()).min(1).max(5),
+  luckyColor: z.string(),
+  luckyTime: z.string(),
   mentorWisdom: z.string(),
   mentorSource: z.string(),
 });
@@ -274,9 +324,11 @@ export async function generateFortuneForUser(user: {
 5. 자미두수 메시지(ziweiMessage): "명궁의 [별이름]이 오늘..." 형태로 자연스럽게 다듬기.
 6. 한 줄 신탁(oracleLine): 자연/계절/동물/원소 은유 포함. 매일 다른 이미지. 상투어 금지.
 7. 오늘의 처방(todayPrescription): 장소/시간/행동이 구체적인 실행 처방 1가지. 추상 조언 금지.
-8. 멘토 조언(mentorWisdom): 오늘 운세 흐름에 정확히 대응. Paul Graham, Naval Ravikant, Ray Dalio, 스토아 철학 등 실제 사고방식 반영. 2~3문장. 마지막 문장은 즉시 실행 가능한 원칙.
-   - 예(재물운 막힌 날): "돈을 쫓을수록 돈은 멀어진다. Paul Graham: '가장 좋은 스타트업은 돈을 목적으로 만들지 않았다.' 오늘은 과정에 집중하고, 하나의 문제를 더 깊이 이해하는 데 에너지를 쏟아라."
-   - mentorSource: 인물명 또는 철학 유형만 간결하게. 예: "Naval Ravikant", "스토아 철학"
+8. 행운의 색상(luckyColor): 오늘 일진의 오행과 용신의 상생 관계에서 도출. 매일 달라야 함. "빨강", "초록", "노랑", "흰색", "보라", "주황", "하늘색" 등 구체적 단일 색상명.
+9. 행운의 시간(luckyTime): 오늘 일진 지지와 사주 천간의 상호작용에서 가장 유리한 시간대. 예: "오전 9-11시", "오후 3-5시" 등.
+10. 멘토 조언(mentorWisdom): 오늘 운세 흐름에 정확히 대응하는 2~3문장. 마지막 문장은 즉시 실행 가능한 원칙.
+   - 반드시 매일 다른 인물/철학을 사용. 연속 사용 금지. 풀: 세네카, 마르쿠스 아우렐리우스, 에픽테토스, 노자, 장자, 공자, 맹자, 워렌 버핏, 찰리 멍거, 피터 드러커, 제프 베조스, 일론 머스크, 스티브 잡스, Naval Ravikant, Paul Graham, 니체, 쇼펜하우어, 미야모토 무사시, 손자, 빅토르 프랭클 등
+   - mentorSource: 인물명만 간결하게
 
 이모지 없이, 반드시 아래 JSON 형식으로만 응답하세요:
 {
@@ -297,6 +349,8 @@ export async function generateFortuneForUser(user: {
   "commonKeywords": ["키워드1", "키워드2", "키워드3"],
   "coreMessage": "3체계 공통 핵심 메시지 (1문장, 단정형)",
   "luckyNumbers": [숫자1, 숫자2, 숫자3],
+  "luckyColor": "오늘의 행운 색상 (일진 오행 기반, 매일 달라야 함)",
+  "luckyTime": "오늘의 행운 시간대 (예: 오전 9-11시)",
   "oracleLine": "시적 한 줄 신탁 (자연/계절/동물/원소 은유 필수)",
   "todayPrescription": "구체적 행동 처방 (장소/시간/행동 포함)",
   "mentorWisdom": "오늘 운세에 대응하는 멘토 조언 2~3문장",
@@ -396,8 +450,8 @@ export async function generateFortuneForUser(user: {
     ziweiScore: result.ziweiScore,
     oracleLine: result.oracleLine || undefined,
     todayPrescription: result.todayPrescription || undefined,
-    luckyColor: yongShinRemedy.luckyColor.split("계열")[0] + "계열",
-    luckyTime: yongShinRemedy.luckyTime.split("에")[0],
+    luckyColor: result.luckyColor || yongShinRemedy.luckyColor.split("계열")[0] + "계열",
+    luckyTime: result.luckyTime || yongShinRemedy.luckyTime.split("에")[0],
     timeGuide,
     sajuInsight,
     scoreDelta,
