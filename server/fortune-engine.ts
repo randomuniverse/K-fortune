@@ -117,12 +117,7 @@ export function formatFortuneForTelegram(data: FortuneData, userName: string, da
     msg += `\n\n`;
   }
 
-  // 행운 가이드
-  msg += `🍀 ${data.sajuDirection} · ${data.luckyNumbers.join(", ")}`;
-  if (data.luckyColor) msg += ` · ${data.luckyColor}`;
-  if (data.luckyTime) msg += ` · ${data.luckyTime}`;
-
-  return msg;
+  return msg.trimEnd();
 }
 
 function getKoreaTime() {
@@ -154,10 +149,6 @@ function parseJson<T>(raw: string, schema: z.ZodSchema<T>): T | null {
     }
     
     const parsed = JSON.parse(cleaned);
-    if (parsed.lucky_numbers && !parsed.luckyNumbers) {
-      parsed.luckyNumbers = parsed.lucky_numbers;
-      delete parsed.lucky_numbers;
-    }
     return schema.parse(parsed);
   } catch (e: any) {
     console.error(`[parseJson] 파싱 실패: ${e.message}`);
@@ -193,9 +184,6 @@ const consolidatedDailySchema = z.object({
   coreMessage: z.string(),
   oracleLine: z.string(),
   todayPrescription: z.string(),
-  luckyNumbers: z.array(z.number()).min(1).max(5),
-  luckyColor: z.string(),
-  luckyTime: z.string(),
   mentorWisdom: z.string(),
   mentorSource: z.string(),
 });
@@ -303,7 +291,9 @@ export async function generateFortuneForUser(user: {
 일진 천간과 일간의 십성 관계(User 데이터에 명시)를 근거로 오늘의 에너지 흐름을 판단하세요.
 용신(${sajuChart.yongShin.elementHanja})이 오늘 힘을 받는지, 극을 당하는지 확인하세요.
 오행 비율의 편향과 일간 강약을 고려하여 재물/직장/대인관계의 유불리를 판단하세요.
-세운 동적 신살과 삼재 정보가 있다면 반드시 sajuCaution이나 sajuSpecial에 반영하세요.
+세운 동적 신살과 삼재는 1년간 지속되는 배경 기운이므로, sajuCaution에서 매일 반복 언급하지 마세요.
+sajuCaution은 반드시 **오늘 일진과 원국의 충/형/파/해/원진 관계**에서 도출하세요. 어제와 다른 일진이므로 주의사항도 매일 달라야 합니다.
+삼재/탕화살 등 연간 신살은 sajuSummary에서 배경으로만 간략히 언급하세요.
 현재 대운과 대운 동적 별이 있다면 오늘의 운세에 대운의 큰 흐름도 함께 반영하세요.
 구조 패턴(식상생재, 관인상생 등)이 있다면 오늘 일진과의 시너지/갈등을 판단하세요.
 사주 인사이트와 시간대별 가이드는 참조하되, 독자적으로 재해석하여 서술하세요.
@@ -320,21 +310,17 @@ export async function generateFortuneForUser(user: {
 1. 일치도(coherenceScore): 3체계 흐름이 얼마나 유사한지 0~100. 3개 모두 길/흉이면 90+, 엇갈리면 낮게.
 2. 공통 키워드(commonKeywords): 3체계에서 공통으로 발견되는 주제 3~5개.
 3. 핵심 메시지(coreMessage): 3체계가 만장일치로 가리키는 오늘의 운명 한 문장. 단정형 필수.
-4. 행운의 숫자(luckyNumbers): 사주 오행과 자미두수 국(局) 참조하여 3개.
-5. 자미두수 메시지(ziweiMessage): "명궁의 [별이름]이 오늘..." 형태로 자연스럽게 다듬기.
-6. 한 줄 신탁(oracleLine): 자연/계절/동물/원소 은유 포함. 매일 다른 이미지. 상투어 금지.
-7. 오늘의 처방(todayPrescription): 장소/시간/행동이 구체적인 실행 처방 1가지. 추상 조언 금지.
-8. 행운의 색상(luckyColor): 오늘 일진의 오행과 용신의 상생 관계에서 도출. 매일 달라야 함. "빨강", "초록", "노랑", "흰색", "보라", "주황", "하늘색" 등 구체적 단일 색상명.
-9. 행운의 시간(luckyTime): 오늘 일진 지지와 사주 천간의 상호작용에서 가장 유리한 시간대. 예: "오전 9-11시", "오후 3-5시" 등.
-10. 멘토 조언(mentorWisdom): 오늘 운세 흐름에 정확히 대응하는 2~3문장. 마지막 문장은 즉시 실행 가능한 원칙.
+4. 자미두수 메시지(ziweiMessage): "명궁의 [별이름]이 오늘..." 형태로 자연스럽게 다듬기.
+5. 한 줄 신탁(oracleLine): 자연/계절/동물/원소 은유 포함. 매일 다른 이미지. 상투어 금지.
+6. 오늘의 처방(todayPrescription): 장소/시간/행동이 구체적인 실행 처방 1가지. 추상 조언 금지.
+7. 멘토 조언(mentorWisdom): 오늘 운세 흐름에 정확히 대응하는 2~3문장. 마지막 문장은 즉시 실행 가능한 원칙.
    - 반드시 매일 다른 인물/철학을 사용. 연속 사용 금지. 풀: 세네카, 마르쿠스 아우렐리우스, 에픽테토스, 노자, 장자, 공자, 맹자, 워렌 버핏, 찰리 멍거, 피터 드러커, 제프 베조스, 일론 머스크, 스티브 잡스, Naval Ravikant, Paul Graham, 니체, 쇼펜하우어, 미야모토 무사시, 손자, 빅토르 프랭클 등
    - mentorSource: 인물명만 간결하게
 
 이모지 없이, 반드시 아래 JSON 형식으로만 응답하세요:
 {
   "sajuScore": 0~100,
-  "sajuDirection": "동/서/남/북/중앙 중 택1",
-  "sajuCaution": "오늘 특히 조심해야 할 점 (충/살 작용 기반, 단정형)",
+  "sajuCaution": "오늘 일진과 원국의 충/형/파/해 관계에서 도출한 주의점 (연간 신살 반복 금지, 단정형)",
   "sajuSpecial": "오늘의 특이사항 (귀인/합 등 긍정적 요소)",
   "sajuSummary": "오늘의 사주 총평 (인과관계 명시)",
   "zodiacScore": 0~100,
@@ -348,9 +334,6 @@ export async function generateFortuneForUser(user: {
   "coherenceScore": 0~100,
   "commonKeywords": ["키워드1", "키워드2", "키워드3"],
   "coreMessage": "3체계 공통 핵심 메시지 (1문장, 단정형)",
-  "luckyNumbers": [숫자1, 숫자2, 숫자3],
-  "luckyColor": "오늘의 행운 색상 (일진 오행 기반, 매일 달라야 함)",
-  "luckyTime": "오늘의 행운 시간대 (예: 오전 9-11시)",
   "oracleLine": "시적 한 줄 신탁 (자연/계절/동물/원소 은유 필수)",
   "todayPrescription": "구체적 행동 처방 (장소/시간/행동 포함)",
   "mentorWisdom": "오늘 운세에 대응하는 멘토 조언 2~3문장",
@@ -431,7 +414,7 @@ export async function generateFortuneForUser(user: {
 
   const fortuneData: FortuneData = {
     sajuScore: result.sajuScore,
-    sajuDirection: result.sajuDirection,
+    sajuDirection: result.sajuDirection || "중앙",
     sajuCaution: result.sajuCaution,
     sajuSpecial: result.sajuSpecial,
     sajuSummary: result.sajuSummary,
@@ -441,7 +424,7 @@ export async function generateFortuneForUser(user: {
     zodiacHealth: result.zodiacHealth,
     zodiacWork: result.zodiacWork,
     zodiacSummary: result.zodiacSummary,
-    luckyNumbers: result.luckyNumbers || [3, 7, 9],
+    luckyNumbers: [],
     ziweiMessage: result.ziweiMessage,
     combinedScore: finalCombinedScore,
     coherenceScore: result.coherenceScore,
@@ -450,8 +433,6 @@ export async function generateFortuneForUser(user: {
     ziweiScore: result.ziweiScore,
     oracleLine: result.oracleLine || undefined,
     todayPrescription: result.todayPrescription || undefined,
-    luckyColor: result.luckyColor || yongShinRemedy.luckyColor.split("계열")[0] + "계열",
-    luckyTime: result.luckyTime || yongShinRemedy.luckyTime.split("에")[0],
     timeGuide,
     sajuInsight,
     scoreDelta,
