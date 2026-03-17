@@ -2,18 +2,18 @@ import { storage } from "./storage";
 import { getZodiacSign, getZodiacInfo, type FortuneData } from "@shared/schema";
 import { calculateFullSaju, checkGanYeoJiDong, calculateDaewoonDynamicStars, analyzeSajuPersonality, calculateTimeGuide, generateDailySajuInsight, analyzeSinsalIntegrated, getTenGodName } from "@shared/saju";
 import { calculateZiWei } from "@shared/ziwei";
-import Anthropic from "@anthropic-ai/sdk";
+import OpenAI from "openai";
 import { z } from "zod";
 import pRetry from "p-retry";
 
-let _anthropic: Anthropic | null = null;
-function getAnthropic(): Anthropic {
-  if (!_anthropic) {
-    _anthropic = new Anthropic({
-      apiKey: process.env.ANTHROPIC_API_KEY || "missing",
+let _openai: OpenAI | null = null;
+function getOpenAI(): OpenAI {
+  if (!_openai) {
+    _openai = new OpenAI({
+      apiKey: process.env.OPENAI_API_KEY || "missing",
     });
   }
-  return _anthropic;
+  return _openai;
 }
 
 export async function sendTelegramMessage(chatId: string, text: string): Promise<boolean> {
@@ -194,17 +194,20 @@ export interface FortuneGenerationResult {
 async function generateWithClaude(sys: string, usr: string, label: string, temperature = 0.4, maxTokens = 4096): Promise<string> {
   return pRetry(
     async () => {
-      const c = await getAnthropic().messages.create({
-        model: "claude-sonnet-4-20250514",
+      const c = await getOpenAI().chat.completions.create({
+        model: "gpt-4o",
         max_tokens: maxTokens,
         temperature,
-        system: sys,
-        messages: [{ role: "user", content: usr }],
+        messages: [
+          { role: "system", content: sys },
+          { role: "user", content: usr },
+        ],
       });
-      console.log(`[Claude] ${label} stop_reason=${c.stop_reason}, usage=${JSON.stringify(c.usage)}`);
-      const content = c.content[0].type === "text" ? c.content[0].text : "";
+      const usage = c.usage;
+      console.log(`[GPT] ${label} finish_reason=${c.choices[0].finish_reason}, usage=${JSON.stringify(usage)}`);
+      const content = c.choices[0].message.content || "";
       if (!content.trim()) {
-        throw new Error(`Empty response from Claude for ${label}`);
+        throw new Error(`Empty response from GPT for ${label}`);
       }
       return content;
     },
@@ -214,7 +217,7 @@ async function generateWithClaude(sys: string, usr: string, label: string, tempe
       maxTimeout: 5000,
       onFailedAttempt: (context) => {
         console.warn(
-          `[FORTUNE] ${label} Claude 호출 실패 (시도 ${context.attemptNumber}/${context.attemptNumber + context.retriesLeft}): ${context.error.message}`
+          `[FORTUNE] ${label} GPT 호출 실패 (시도 ${context.attemptNumber}/${context.attemptNumber + context.retriesLeft}): ${context.error.message}`
         );
       },
     }
@@ -333,6 +336,7 @@ sajuCaution은 반드시 **오늘 일진과 원국의 충/형/파/해/원진 관
 이모지 없이, 반드시 아래 JSON 형식으로만 응답하세요:
 {
   "sajuScore": 0~100,
+  "sajuDirection": "용신 기반 오늘의 행운 방향 (북/남/동/서/중앙 중 하나)",
   "sajuCaution": "오늘 일진과 원국의 충/형/파/해 관계에서 도출한 주의점 (연간 신살 반복 금지, 단정형)",
   "sajuSpecial": "오늘의 특이사항 (귀인/합 등 긍정적 요소)",
   "sajuSummary": "오늘의 사주 총평 (인과관계 명시)",
