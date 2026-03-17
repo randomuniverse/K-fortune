@@ -55,64 +55,26 @@ function deltaText(delta: number | undefined): string {
 
 // 텔레그램 메시지 포맷팅 함수
 export function formatFortuneForTelegram(data: FortuneData, userName: string, dateStr: string, zodiacSign: string): string {
-  let msg = `<b>☀️ ${dateStr}</b>\n`;
-  msg += `${userName}님의 오늘\n\n`;
+  let msg = `<b>☀️ ${dateStr} ${userName}님의 오늘</b>\n\n`;
 
-  // 신탁 한 줄
-  if (data.oracleLine) {
-    msg += `<i>"${data.oracleLine}"</i>\n\n`;
-  }
-
-  // 종합 점수 + 변화
-  msg += `📊 에너지: ${scoreBar(data.combinedScore)} ${data.combinedScore}점${deltaText(data.scoreDelta)}\n`;
-  msg += `   사주 ${data.sajuScore} · 별자리 ${data.zodiacScore} · 자미두수 ${data.ziweiScore}\n\n`;
-
-  // 핵심 메시지
-  if (data.coreMessage) {
-    msg += `💎 ${data.coreMessage}\n\n`;
-  }
-
-  // 키워드
+  // 공통 키워드
   if (data.commonKeywords?.length) {
     msg += `🔑 ${data.commonKeywords.join(" · ")}\n\n`;
   }
 
-  msg += `━━━━━━━━━━━━━━━\n`;
-
-  // 사주
-  msg += `🌙 <b>사주</b>\n${data.sajuSummary}\n`;
-  if (data.sajuSpecial) msg += `✦ ${data.sajuSpecial}\n`;
-  if (data.sajuCaution) msg += `⚠️ ${data.sajuCaution}\n`;
-  msg += `\n`;
-
-  // 별자리
-  msg += `⭐ <b>${zodiacSign}</b>\n`;
-  msg += `연애 ${data.zodiacLove}\n`;
-  msg += `재물 ${data.zodiacMoney}\n`;
-  msg += `건강 ${data.zodiacHealth}\n`;
-  msg += `직장 ${data.zodiacWork}\n\n`;
-
-  // 자미두수
-  msg += `🌟 <b>자미두수</b>\n${data.ziweiMessage}\n\n`;
-
-  msg += `━━━━━━━━━━━━━━━\n`;
-
-  // 시간대별 가이드
-  if (data.timeGuide) {
-    msg += `⏰ <b>시간대별</b>\n`;
-    msg += `오전 ${data.timeGuide.morning.score}점 ${data.timeGuide.morning.message}\n`;
-    msg += `오후 ${data.timeGuide.afternoon.score}점 ${data.timeGuide.afternoon.message}\n`;
-    msg += `저녁 ${data.timeGuide.evening.score}점 ${data.timeGuide.evening.message}\n\n`;
+  // 오늘의 핵심 메시지
+  if (data.coreMessage) {
+    msg += `💎 ${data.coreMessage}\n\n`;
   }
 
-  // 오늘의 처방
-  if (data.todayPrescription) {
-    msg += `💊 <b>오늘의 처방</b>\n${data.todayPrescription}\n\n`;
+  // 주의
+  if (data.sajuCaution) {
+    msg += `⚠️ ${data.sajuCaution}\n\n`;
   }
 
-  // 멘토 조언
+  // 오늘의 멘토 조언
   if (data.mentorWisdom && data.mentorSource) {
-    msg += `📖 <i>"${data.mentorWisdom}"</i>\n— ${data.mentorSource}\n\n`;
+    msg += `📖 <i>"${data.mentorWisdom}"</i>\n— ${data.mentorSource}\n`;
   }
 
   return msg.trimEnd();
