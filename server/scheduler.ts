@@ -1,5 +1,6 @@
 import { storage } from "./storage";
 import { generateFortuneForUser, sendTelegramMessage } from "./fortune-engine";
+import { runMigrations } from "./db";
 import pRetry from "p-retry";
 import pLimit from "p-limit";
 
@@ -168,7 +169,8 @@ export function startScheduler() {
 const args = process.argv.slice(2);
 if (args.includes("--run-now")) {
   console.log("[SCHEDULER] Manual run triggered");
-  runDailyFortunes()
+  runMigrations()
+    .then(() => runDailyFortunes())
     .then(() => {
       console.log("[SCHEDULER] Manual run completed");
       process.exit(0);
