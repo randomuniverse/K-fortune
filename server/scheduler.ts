@@ -159,9 +159,13 @@ function scheduleNext() {
 export function startScheduler() {
   console.log("[SCHEDULER] Fortune scheduler initialized (unified)");
 
-  checkMissedRun().catch((err) => {
-    console.error("[SCHEDULER] Error checking missed run:", err);
-  });
+  if (process.env.NODE_ENV === "production") {
+    checkMissedRun().catch((err) => {
+      console.error("[SCHEDULER] Error checking missed run:", err);
+    });
+  } else {
+    console.log("[SCHEDULER] 개발 환경에서는 missed run 체크를 건너뜁니다.");
+  }
 
   scheduleNext();
 }
